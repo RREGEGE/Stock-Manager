@@ -1,6 +1,6 @@
 namespace Portfolio.Data;
 
-// 설계서 5.1 테이블 (1단계 범위: ApiToken은 2단계, DailySnapshot은 F-08에서 추가)
+// 설계서 5.1 테이블 (DailySnapshot은 F-08에서 추가)
 
 public class Holding
 {
@@ -42,6 +42,13 @@ public class PriceCache
     public decimal Price { get; set; }
     public decimal PrevClose { get; set; }
     public DateTimeOffset FetchedAt { get; set; }
+}
+
+public class ApiToken
+{
+    public int Id { get; set; }
+    public string AccessToken { get; set; } = "";   // Data Protection으로 암호화한 값 (설계서 7.2)
+    public DateTimeOffset ExpiresAt { get; set; }
 }
 
 public class AppSetting
