@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>모바일 대시보드</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#23395B}a:hover{color:#1B1F24}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #F5F5F2; color: #1B1F24; font-family: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; font-variant-numeric: tabular-nums; overflow: hidden">
+
+<header style="background: #1B1F24; color: #F5F5F2; padding: 16px 20px 18px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<div style="font-weight: 700; font-size: 17px">포트폴리오</div>
+<div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #C9CCD1">
+<span style="width: 7px; height: 7px; border-radius: 50%; background: #4CC38A; display: inline-block"></span>09:41 갱신
+</div>
+</div>
+<div>
+<div style="font-size: 13px; color: #C9CCD1">총 평가금액</div>
+<div style="margin-top: 4px; font-size: 30px; font-weight: 700; letter-spacing: -0.02em">100,000,000<span style="font-size: 16px; font-weight: 500; margin-left: 2px">원</span></div>
+<div style="margin-top: 4px; font-size: 14px; color: #FF8A80; font-weight: 600">+4,500,000원 (+4.71%)</div>
+</div>
+</header>
+
+<div style="flex-grow: 1; overflow: hidden; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+
+<section aria-labelledby="m-group" style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 18px">
+<h2 id="m-group" style="margin: 0 0 14px; font-size: 15px; font-weight: 600">그룹별 비중</h2>
+<div style="display: flex; align-items: center; gap: 18px">
+<div role="img" aria-label="그룹별 비중: 주식 60%, 채권 20%, 배당 20%" style="position: relative; width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(#23395B 0 60%, #E08A2E 60% 80%, #6BB3A8 80% 100%); flex-shrink: 0">
+<div style="position: absolute; top: 20px; left: 20px; right: 20px; bottom: 20px; border-radius: 50%; background: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700">1억 원</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; flex-grow: 1">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 14px"><span style="width: 10px; height: 10px; border-radius: 2px; background: #23395B"></span><span style="flex-grow: 1">주식</span><span style="font-weight: 600">60.0%</span></div>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 14px"><span style="width: 10px; height: 10px; border-radius: 2px; background: #E08A2E"></span><span style="flex-grow: 1">채권</span><span style="font-weight: 600">20.0%</span></div>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 14px"><span style="width: 10px; height: 10px; border-radius: 2px; background: #6BB3A8"></span><span style="flex-grow: 1">배당</span><span style="font-weight: 600">20.0%</span></div>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="m-target" style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 18px">
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px">
+<h2 id="m-target" style="margin: 0; font-size: 15px; font-weight: 600">목표 대비</h2>
+<span style="font-size: 12px; color: #5F646B">세로선 = 목표</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div>
+<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px"><span style="font-weight: 600">주식</span><span style="color: #8A4A0F; font-weight: 600">+10.0%p 초과</span></div>
+<div style="position: relative; height: 8px; border-radius: 4px; background: #ECECE7"><div style="width: 60%; height: 8px; border-radius: 4px; background: #23395B"></div><div style="position: absolute; top: -4px; left: 50%; width: 2px; height: 16px; background: #1B1F24"></div></div>
+</div>
+<div>
+<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px"><span style="font-weight: 600">채권</span><span style="color: #1F4C86; font-weight: 600">-10.0%p 부족</span></div>
+<div style="position: relative; height: 8px; border-radius: 4px; background: #ECECE7"><div style="width: 20%; height: 8px; border-radius: 4px; background: #E08A2E"></div><div style="position: absolute; top: -4px; left: 30%; width: 2px; height: 16px; background: #1B1F24"></div></div>
+</div>
+<div>
+<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px"><span style="font-weight: 600">배당</span><span style="color: #1E6B47; font-weight: 600">목표 도달</span></div>
+<div style="position: relative; height: 8px; border-radius: 4px; background: #ECECE7"><div style="width: 20%; height: 8px; border-radius: 4px; background: #6BB3A8"></div><div style="position: absolute; top: -4px; left: 20%; width: 2px; height: 16px; background: #1B1F24"></div></div>
+</div>
+</div>
+<a href="Rebalance.dc.html" style="margin-top: 16px; display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 8px; background: #23395B; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 600">추가매수 계산하기</a>
+</section>
+
+</div>
+
+<nav aria-label="주 메뉴" style="flex-shrink: 0; background: #FFFFFF; border-top: 1px solid #E3E3DE; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 6px 4px 20px">
+<a href="Main.dc.html" aria-current="page" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: #23395B; font-size: 11px; font-weight: 600">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9v9z"></path><path d="M14 3.3A9 9 0 0 1 20.7 10H14z"></path></svg>대시보드</a>
+<a href="Holdings.dc.html" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: #5F646B; font-size: 11px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg>보유 종목</a>
+<a href="Rebalance.dc.html" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: #5F646B; font-size: 11px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 7h8"></path><path d="M8 12h2"></path><path d="M14 12h2"></path><path d="M8 16h2"></path><path d="M14 16h2"></path></svg>추가매수</a>
+<a href="Groups.dc.html" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: #5F646B; font-size: 11px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>그룹 관리</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

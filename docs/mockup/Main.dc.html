@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>포트폴리오 대시보드</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#23395B}a:hover{color:#1B1F24}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #F5F5F2; color: #1B1F24; font-family: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; font-variant-numeric: tabular-nums">
+<header style="background: #1B1F24; color: #F5F5F2">
+<div style="max-width: 1200px; margin: 0 auto; padding: 8px 24px; min-height: 64px; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px">
+<div style="font-weight: 700; font-size: 18px; letter-spacing: -0.01em">포트폴리오</div>
+<nav aria-label="주 메뉴" style="display: flex; flex-wrap: wrap; gap: 4px; flex-grow: 1">
+<a href="Main.dc.html" aria-current="page" style="color: #FFFFFF; text-decoration: none; padding: 12px 14px; border-radius: 8px; background: #343940; font-size: 14px; font-weight: 600">대시보드</a>
+<a href="Holdings.dc.html" style="color: #C9CCD1; text-decoration: none; padding: 12px 14px; border-radius: 8px; font-size: 14px">보유 종목</a>
+<a href="Rebalance.dc.html" style="color: #C9CCD1; text-decoration: none; padding: 12px 14px; border-radius: 8px; font-size: 14px">추가매수 계산</a>
+<a href="Groups.dc.html" style="color: #C9CCD1; text-decoration: none; padding: 12px 14px; border-radius: 8px; font-size: 14px">그룹 관리</a>
+</nav>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #C9CCD1">
+<span style="width: 8px; height: 8px; border-radius: 50%; background: #4CC38A; display: inline-block"></span>
+<span>장중 · 09:41 시세 갱신</span>
+</div>
+</div>
+</header>
+
+<main style="max-width: 1200px; margin: 0 auto; padding: 32px 24px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+<div>
+<h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em">대시보드</h1>
+<p style="margin: 6px 0 0; font-size: 14px; color: #5F646B">삼성증권 계좌 · 보유수량 최종 수정 9월 28일</p>
+</div>
+<a href="Rebalance.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 8px; background: #23395B; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 600">추가매수 계산하기</a>
+</div>
+
+<section aria-label="요약" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+<div style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 20px 22px">
+<div style="font-size: 13px; color: #5F646B">총 평가금액</div>
+<div style="margin-top: 8px; font-size: 30px; font-weight: 700; letter-spacing: -0.02em">100,000,000<span style="font-size: 16px; font-weight: 500; margin-left: 2px">원</span></div>
+<div style="margin-top: 6px; font-size: 13px; color: #5F646B">예수금 제외</div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 20px 22px">
+<div style="font-size: 13px; color: #5F646B">매입금액</div>
+<div style="margin-top: 8px; font-size: 30px; font-weight: 700; letter-spacing: -0.02em">95,500,000<span style="font-size: 16px; font-weight: 500; margin-left: 2px">원</span></div>
+<div style="margin-top: 6px; font-size: 13px; color: #5F646B">수량 × 평균매입단가</div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 20px 22px">
+<div style="font-size: 13px; color: #5F646B">평가손익</div>
+<div style="margin-top: 8px; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; color: #C0312A">+4,500,000<span style="font-size: 16px; font-weight: 500; margin-left: 2px">원</span></div>
+<div style="margin-top: 6px; font-size: 13px; color: #C0312A; font-weight: 600">+4.71%</div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 20px 22px">
+<div style="font-size: 13px; color: #5F646B">보유 종목</div>
+<div style="margin-top: 8px; font-size: 30px; font-weight: 700; letter-spacing: -0.02em">7<span style="font-size: 16px; font-weight: 500; margin-left: 2px">개</span></div>
+<div style="margin-top: 6px; font-size: 13px; color: #5F646B">미분류 0개 · 시세 지연 0개</div>
+</div>
+</section>
+
+<section aria-label="비중" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px">
+
+<div style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 22px">
+<h2 style="margin: 0 0 18px; font-size: 16px; font-weight: 600">그룹별 비중</h2>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 24px">
+<div role="img" aria-label="그룹별 비중 도넛 차트: 주식 60%, 채권 20%, 배당 20%" style="position: relative; width: 168px; height: 168px; border-radius: 50%; background: conic-gradient(#23395B 0 60%, #E08A2E 60% 80%, #6BB3A8 80% 100%); flex-shrink: 0">
+<div style="position: absolute; top: 26px; left: 26px; right: 26px; bottom: 26px; border-radius: 50%; background: #FFFFFF; display: flex; flex-direction: column; align-items: center; justify-content: center">
+<div style="font-size: 12px; color: #5F646B">3개 그룹</div>
+<div style="font-size: 18px; font-weight: 700">1억 원</div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px; flex-grow: 1; min-width: 120px">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 10px; font-size: 14px">
+<span style="width: 12px; height: 12px; border-radius: 3px; background: {{g.color}}; flex-shrink: 0"></span>
+<span style="flex-grow: 1">{{g.name}}</span>
+<span style="font-weight: 600">{{g.curText}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 22px">
+<h2 style="margin: 0 0 18px; font-size: 16px; font-weight: 600">종목별 비중</h2>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 24px">
+<div role="img" aria-label="종목별 비중 도넛 차트" style="position: relative; width: 168px; height: 168px; border-radius: 50%; background: conic-gradient(#23395B 0 24%, #3F5B86 24% 48%, #7189AE 48% 60%, #E08A2E 60% 70%, #F2B56E 70% 80%, #4E9B90 80% 92%, #A3D3CB 92% 100%); flex-shrink: 0">
+<div style="position: absolute; top: 26px; left: 26px; right: 26px; bottom: 26px; border-radius: 50%; background: #FFFFFF; display: flex; flex-direction: column; align-items: center; justify-content: center">
+<div style="font-size: 12px; color: #5F646B">7개 종목</div>
+<div style="font-size: 18px; font-weight: 700">1억 원</div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; flex-grow: 1; min-width: 150px">
+<sc-for list="{{holdings}}" as="h" hint-placeholder-count="7">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px">
+<span style="width: 10px; height: 10px; border-radius: 2px; background: {{h.color}}; flex-shrink: 0"></span>
+<span style="flex-grow: 1">{{h.name}}</span>
+<span style="font-weight: 600">{{h.weightText}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 22px; display: flex; flex-direction: column">
+<h2 style="margin: 0 0 6px; font-size: 16px; font-weight: 600">목표 대비</h2>
+<p style="margin: 0 0 18px; font-size: 13px; color: #5F646B">막대 = 현재 비중, 세로선 = 목표 비중</p>
+<div style="display: flex; flex-direction: column; gap: 18px; flex-grow: 1">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+<div>
+<div style="display: flex; align-items: baseline; gap: 8px; font-size: 14px; margin-bottom: 8px">
+<span style="font-weight: 600; flex-grow: 1">{{g.name}}</span>
+<span style="color: #5F646B; font-size: 13px">{{g.curText}} / 목표 {{g.tgtText}}</span>
+<span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: {{g.diffBg}}; color: {{g.diffFg}}">{{g.diffText}}</span>
+</div>
+<div style="position: relative; height: 10px; border-radius: 5px; background: #ECECE7">
+<div style="height: 10px; border-radius: 5px; width: {{g.curW}}; background: {{g.color}}"></div>
+<div style="position: absolute; top: -4px; left: {{g.tgtW}}; width: 2px; height: 18px; background: #1B1F24"></div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+</section>
+
+<section aria-labelledby="h-holdings" style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 22px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px">
+<h2 id="h-holdings" style="margin: 0; font-size: 16px; font-weight: 600">보유 종목</h2>
+<a href="Holdings.dc.html" style="font-size: 14px; font-weight: 600; padding: 12px 4px">편집하기</a>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px">
+<thead>
+<tr style="color: #5F646B; font-size: 13px; text-align: left">
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE">종목명</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE">그룹</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE; text-align: right">평가금액</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE; text-align: right">비중</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE; text-align: right">손익률</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{holdings}}" as="h" hint-placeholder-count="7">
+<tr>
+<td style="padding: 12px 8px; border-bottom: 1px solid #EFEFEA; font-weight: 500">{{h.name}}</td>
+<td style="padding: 12px 8px; border-bottom: 1px solid #EFEFEA"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{h.groupColor}}"></span>{{h.groupName}}</span></td>
+<td style="padding: 12px 8px; border-bottom: 1px solid #EFEFEA; text-align: right">{{h.evalText}}</td>
+<td style="padding: 12px 8px; border-bottom: 1px solid #EFEFEA; text-align: right">{{h.weightText}}</td>
+<td style="padding: 12px 8px; border-bottom: 1px solid #EFEFEA; text-align: right; font-weight: 600; color: {{h.plColor}}">{{h.plText}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<p style="margin: 12px 0 0; font-size: 12px; color: #5F646B">비중은 소수점 1자리 반올림으로, 합계가 100.0%가 아닐 수 있습니다.</p>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1220}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const G = {
+      s: { name: '주식', color: '#23395B', target: 0.5 },
+      b: { name: '채권', color: '#E08A2E', target: 0.3 },
+      d: { name: '배당', color: '#6BB3A8', target: 0.2 }
+    };
+    const H = [
+      { name: 'KOSPI200 ETF', g: 's', qty: 600, avg: 36000, price: 40000, color: '#23395B' },
+      { name: '미국 S&P500 ETF', g: 's', qty: 1200, avg: 17500, price: 20000, color: '#3F5B86' },
+      { name: '반도체 개별주 A', g: 's', qty: 100, avg: 130000, price: 120000, color: '#7189AE' },
+      { name: '국고채 10년 ETF', g: 'b', qty: 100, avg: 102000, price: 100000, color: '#E08A2E' },
+      { name: '미국채 10년 ETF', g: 'b', qty: 1000, avg: 10500, price: 10000, color: '#F2B56E' },
+      { name: '고배당 ETF', g: 'd', qty: 800, avg: 13000, price: 15000, color: '#4E9B90' },
+      { name: '리츠 ETF', g: 'd', qty: 1600, avg: 5500, price: 5000, color: '#A3D3CB' }
+    ];
+    const won = (n) => Math.round(n).toLocaleString('ko-KR') + '원';
+    const pct = (x) => (x * 100).toFixed(1) + '%';
+    const total = H.reduce((s, h) => s + h.qty * h.price, 0);
+    const holdings = H.map((h) => {
+      const ev = h.qty * h.price;
+      const pl = (h.price - h.avg) / h.avg;
+      return {
+        name: h.name, color: h.color,
+        groupName: G[h.g].name, groupColor: G[h.g].color,
+        evalText: won(ev), weightText: pct(ev / total),
+        plText: (pl >= 0 ? '+' : '') + (pl * 100).toFixed(2) + '%',
+        plColor: pl >= 0 ? '#C0312A' : '#1F5FAF'
+      };
+    });
+    const groups = Object.keys(G).map((k) => {
+      const cur = H.filter((h) => h.g === k).reduce((s, h) => s + h.qty * h.price, 0) / total;
+      const diff = cur - G[k].target;
+      const over = diff > 0.0005, under = diff < -0.0005;
+      return {
+        name: G[k].name, color: G[k].color,
+        curText: pct(cur), tgtText: pct(G[k].target),
+        curW: (cur * 100).toFixed(1) + '%', tgtW: (G[k].target * 100).toFixed(1) + '%',
+        diffText: over ? '+' + (diff * 100).toFixed(1) + '%p 초과' : under ? (diff * 100).toFixed(1) + '%p 부족' : '목표 도달',
+        diffBg: over ? '#FBEBDD' : under ? '#E3ECF7' : '#E4F3EC',
+        diffFg: over ? '#8A4A0F' : under ? '#1F4C86' : '#1E6B47'
+      };
+    });
+    return { holdings, groups };
+  }
+}
+</script>
+</body>
+</html>

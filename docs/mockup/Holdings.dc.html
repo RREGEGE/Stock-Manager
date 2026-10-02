@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>보유 종목</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#23395B}a:hover{color:#1B1F24}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #F5F5F2; color: #1B1F24; font-family: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; font-variant-numeric: tabular-nums">
+<header style="background: #1B1F24; color: #F5F5F2">
+<div style="max-width: 1200px; margin: 0 auto; padding: 8px 24px; min-height: 64px; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px">
+<div style="font-weight: 700; font-size: 18px; letter-spacing: -0.01em">포트폴리오</div>
+<nav aria-label="주 메뉴" style="display: flex; flex-wrap: wrap; gap: 4px; flex-grow: 1">
+<a href="Main.dc.html" style="color: #C9CCD1; text-decoration: none; padding: 12px 14px; border-radius: 8px; font-size: 14px">대시보드</a>
+<a href="Holdings.dc.html" aria-current="page" style="color: #FFFFFF; text-decoration: none; padding: 12px 14px; border-radius: 8px; background: #343940; font-size: 14px; font-weight: 600">보유 종목</a>
+<a href="Rebalance.dc.html" style="color: #C9CCD1; text-decoration: none; padding: 12px 14px; border-radius: 8px; font-size: 14px">추가매수 계산</a>
+<a href="Groups.dc.html" style="color: #C9CCD1; text-decoration: none; padding: 12px 14px; border-radius: 8px; font-size: 14px">그룹 관리</a>
+</nav>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #C9CCD1">
+<span style="width: 8px; height: 8px; border-radius: 50%; background: #4CC38A; display: inline-block"></span>
+<span>장중 · 09:41 시세 갱신</span>
+</div>
+</div>
+</header>
+
+<main style="max-width: 1200px; margin: 0 auto; padding: 32px 24px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+
+<div>
+<h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em">보유 종목</h1>
+<p style="margin: 6px 0 0; font-size: 14px; color: #5F646B">삼성증권 잔고 화면의 수량과 평균매입단가를 옮겨 적습니다. 현재가는 자동으로 갱신됩니다.</p>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+
+<section aria-labelledby="h-list" style="flex: 2 1 640px; min-width: 0; background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 22px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px">
+<h2 id="h-list" style="margin: 0; font-size: 16px; font-weight: 600">7개 종목</h2>
+<button type="button" style="min-height: 44px; padding: 0 16px; border: 1px solid #23395B; border-radius: 8px; background: #FFFFFF; color: #23395B; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">종목 추가</button>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 760px; border-collapse: collapse; font-size: 14px">
+<thead>
+<tr style="color: #5F646B; font-size: 13px; text-align: left">
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE">종목명</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE">그룹</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE; text-align: right">수량</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE; text-align: right">평균매입단가</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE; text-align: right">현재가</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE; text-align: right">평가금액</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE; text-align: right">손익률</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE">수정일</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">작업</span></th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{holdings}}" as="h" hint-placeholder-count="7">
+<tr style="background: {{h.rowBg}}">
+<td style="padding: 10px 8px; border-bottom: 1px solid #EFEFEA; font-weight: 500">{{h.name}}</td>
+<td style="padding: 10px 8px; border-bottom: 1px solid #EFEFEA"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{h.groupColor}}"></span>{{h.groupName}}</span></td>
+<td style="padding: 10px 8px; border-bottom: 1px solid #EFEFEA; text-align: right">{{h.qtyText}}</td>
+<td style="padding: 10px 8px; border-bottom: 1px solid #EFEFEA; text-align: right">{{h.avgText}}</td>
+<td style="padding: 10px 8px; border-bottom: 1px solid #EFEFEA; text-align: right">{{h.priceText}}</td>
+<td style="padding: 10px 8px; border-bottom: 1px solid #EFEFEA; text-align: right">{{h.evalText}}</td>
+<td style="padding: 10px 8px; border-bottom: 1px solid #EFEFEA; text-align: right; font-weight: 600; color: {{h.plColor}}">{{h.plText}}</td>
+<td style="padding: 10px 8px; border-bottom: 1px solid #EFEFEA; font-size: 13px; color: #5F646B">{{h.updated}}</td>
+<td style="padding: 4px 8px; border-bottom: 1px solid #EFEFEA; text-align: right"><button type="button" aria-label="{{h.editLabel}}" style="min-height: 44px; min-width: 44px; padding: 0 10px; border: 0; background: transparent; color: #23395B; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">수정</button></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+
+<div style="margin-top: 20px; padding-top: 18px; border-top: 1px solid #E3E3DE; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px">
+<label for="cash" style="font-size: 14px; font-weight: 600">예수금</label>
+<div style="display: flex; align-items: center; gap: 6px">
+<input id="cash" type="text" inputmode="numeric" value="0" style="width: 160px; min-height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid #C9C9C2; border-radius: 8px; font: inherit; font-size: 14px; text-align: right">
+<span style="font-size: 14px; color: #5F646B">원</span>
+</div>
+<label style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; min-height: 44px"><input type="checkbox" style="width: 18px; height: 18px; margin: 0">총 보유금액에 포함</label>
+</div>
+</section>
+
+<section aria-labelledby="h-form" style="flex: 1 1 320px; background: #FFFFFF; border: 1px solid #23395B; border-radius: 12px; padding: 22px; display: flex; flex-direction: column; gap: 18px">
+<div>
+<h2 id="h-form" style="margin: 0; font-size: 16px; font-weight: 600">종목 추가</h2>
+<p style="margin: 4px 0 0; font-size: 13px; color: #5F646B">이미 보유 중인 종목을 고르면 기존 행을 수정합니다.</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="search" style="font-size: 13px; font-weight: 600">종목 검색</label>
+<input id="search" type="search" value="리츠" placeholder="종목명 또는 6자리 코드" style="min-height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid #23395B; border-radius: 8px; font: inherit; font-size: 14px">
+<ul aria-label="검색 결과" style="list-style: none; margin: 0; padding: 4px; border: 1px solid #E3E3DE; border-radius: 8px; display: flex; flex-direction: column; gap: 2px">
+<li><button type="button" style="width: 100%; min-height: 44px; padding: 0 10px; border: 0; border-radius: 6px; background: #EEF1F6; font: inherit; font-size: 14px; text-align: left; display: flex; justify-content: space-between; align-items: center; cursor: pointer"><span style="font-weight: 600">리츠 ETF</span><span style="font-size: 12px; color: #5F646B">보유 중 · 수정</span></button></li>
+<li><button type="button" style="width: 100%; min-height: 44px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; font: inherit; font-size: 14px; text-align: left; display: flex; justify-content: space-between; align-items: center; cursor: pointer"><span>리츠 개별주 B</span><span style="font-size: 12px; color: #5F646B">신규</span></button></li>
+</ul>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="qty" style="font-size: 13px; font-weight: 600">수량 (주)</label>
+<input id="qty" type="text" inputmode="numeric" value="1,600" style="min-height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid #C9C9C2; border-radius: 8px; font: inherit; font-size: 14px; text-align: right">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="avg" style="font-size: 13px; font-weight: 600">평균매입단가 (원)</label>
+<input id="avg" type="text" inputmode="numeric" value="5,500" style="min-height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid #C9C9C2; border-radius: 8px; font: inherit; font-size: 14px; text-align: right">
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="group" style="font-size: 13px; font-weight: 600">그룹</label>
+<select id="group" style="min-height: 44px; box-sizing: border-box; padding: 0 10px; border: 1px solid #C9C9C2; border-radius: 8px; font: inherit; font-size: 14px; background: #FFFFFF">
+<option>주식</option>
+<option>채권</option>
+<option selected>배당</option>
+<option>미분류</option>
+</select>
+</div>
+
+<div style="padding: 12px 14px; border-radius: 8px; background: #F5F5F2; font-size: 13px; display: flex; justify-content: space-between">
+<span style="color: #5F646B">현재가 5,000원 기준 평가금액</span>
+<span style="font-weight: 600">8,000,000원</span>
+</div>
+
+<div style="display: flex; gap: 8px; justify-content: flex-end">
+<button type="button" style="min-height: 44px; padding: 0 16px; border: 1px solid #C9C9C2; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 14px; cursor: pointer">취소</button>
+<button type="button" style="min-height: 44px; padding: 0 20px; border: 0; border-radius: 8px; background: #23395B; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">저장</button>
+</div>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":940}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const G = { s: ['주식', '#23395B'], b: ['채권', '#E08A2E'], d: ['배당', '#6BB3A8'] };
+    const H = [
+      ['KOSPI200 ETF', 's', 600, 36000, 40000, '9월 28일'],
+      ['미국 S&P500 ETF', 's', 1200, 17500, 20000, '9월 28일'],
+      ['반도체 개별주 A', 's', 100, 130000, 120000, '9월 12일'],
+      ['국고채 10년 ETF', 'b', 100, 102000, 100000, '8월 30일'],
+      ['미국채 10년 ETF', 'b', 1000, 10500, 10000, '8월 30일'],
+      ['고배당 ETF', 'd', 800, 13000, 15000, '9월 28일'],
+      ['리츠 ETF', 'd', 1600, 5500, 5000, '9월 3일']
+    ];
+    const n = (x) => x.toLocaleString('ko-KR');
+    const holdings = H.map((r, i) => {
+      const pl = (r[4] - r[3]) / r[3];
+      return {
+        name: r[0], groupName: G[r[1]][0], groupColor: G[r[1]][1],
+        qtyText: n(r[2]), avgText: n(r[3]), priceText: n(r[4]),
+        evalText: n(r[2] * r[4]),
+        plText: (pl >= 0 ? '+' : '') + (pl * 100).toFixed(2) + '%',
+        plColor: pl >= 0 ? '#C0312A' : '#1F5FAF',
+        updated: r[5], editLabel: r[0] + ' 수정',
+        rowBg: i === 6 ? '#EEF1F6' : 'transparent'
+      };
+    });
+    return { holdings };
+  }
+}
+</script>
+</body>
+</html>

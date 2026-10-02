@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>그룹 관리</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#23395B}a:hover{color:#1B1F24}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #F5F5F2; color: #1B1F24; font-family: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; font-variant-numeric: tabular-nums">
+<header style="background: #1B1F24; color: #F5F5F2">
+<div style="max-width: 1200px; margin: 0 auto; padding: 8px 24px; min-height: 64px; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px">
+<div style="font-weight: 700; font-size: 18px; letter-spacing: -0.01em">포트폴리오</div>
+<nav aria-label="주 메뉴" style="display: flex; flex-wrap: wrap; gap: 4px; flex-grow: 1">
+<a href="Main.dc.html" style="color: #C9CCD1; text-decoration: none; padding: 12px 14px; border-radius: 8px; font-size: 14px">대시보드</a>
+<a href="Holdings.dc.html" style="color: #C9CCD1; text-decoration: none; padding: 12px 14px; border-radius: 8px; font-size: 14px">보유 종목</a>
+<a href="Rebalance.dc.html" style="color: #C9CCD1; text-decoration: none; padding: 12px 14px; border-radius: 8px; font-size: 14px">추가매수 계산</a>
+<a href="Groups.dc.html" aria-current="page" style="color: #FFFFFF; text-decoration: none; padding: 12px 14px; border-radius: 8px; background: #343940; font-size: 14px; font-weight: 600">그룹 관리</a>
+</nav>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #C9CCD1">
+<span style="width: 8px; height: 8px; border-radius: 50%; background: #4CC38A; display: inline-block"></span>
+<span>장중 · 09:41 시세 갱신</span>
+</div>
+</div>
+</header>
+
+<main style="max-width: 1200px; margin: 0 auto; padding: 32px 24px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+
+<div>
+<h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em">그룹 관리</h1>
+<p style="margin: 6px 0 0; font-size: 14px; color: #5F646B">그룹별 목표 비중을 정합니다. 합계가 100%여야 저장되고, 추가매수 계산에 바로 반영됩니다.</p>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+
+<section aria-labelledby="h-groups" style="flex: 2 1 600px; min-width: 0; background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 22px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px">
+<h2 id="h-groups" style="margin: 0; font-size: 16px; font-weight: 600">그룹과 목표 비중</h2>
+<button type="button" style="min-height: 44px; padding: 0 16px; border: 1px solid #23395B; border-radius: 8px; background: #FFFFFF; color: #23395B; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">그룹 추가</button>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 580px; border-collapse: collapse; font-size: 14px">
+<thead>
+<tr style="color: #5F646B; font-size: 13px; text-align: right">
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE; text-align: left">그룹</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE">종목 수</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE">현재 비중</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE">목표 비중</th>
+<th scope="col" style="padding: 10px 8px; font-weight: 500; border-bottom: 1px solid #E3E3DE">차이</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+<tr style="text-align: right">
+<td style="padding: 8px; border-bottom: 1px solid #EFEFEA; text-align: left"><span style="display: inline-flex; align-items: center; gap: 10px; font-weight: 600"><span style="width: 14px; height: 14px; border-radius: 3px; background: {{r.color}}"></span>{{r.name}}</span></td>
+<td style="padding: 8px; border-bottom: 1px solid #EFEFEA">{{r.count}}</td>
+<td style="padding: 8px; border-bottom: 1px solid #EFEFEA">{{r.curText}}</td>
+<td style="padding: 8px; border-bottom: 1px solid #EFEFEA">
+<span style="display: inline-flex; align-items: center; gap: 6px">
+<input type="text" inputmode="decimal" aria-label="{{r.inputLabel}}" value="{{r.tgt}}" onChange="{{r.onChange}}" style="width: 72px; min-height: 44px; box-sizing: border-box; padding: 0 10px; border: 1px solid #C9C9C2; border-radius: 8px; font: inherit; font-size: 14px; text-align: right">
+<span style="color: #5F646B">%</span>
+</span>
+</td>
+<td style="padding: 8px; border-bottom: 1px solid #EFEFEA; font-weight: 600; color: {{r.diffColor}}">{{r.diffText}}</td>
+</tr>
+</sc-for>
+<tr style="text-align: right">
+<td style="padding: 14px 8px; text-align: left; font-weight: 600">합계</td>
+<td style="padding: 14px 8px">7</td>
+<td style="padding: 14px 8px">100.0%</td>
+<td style="padding: 14px 8px; font-weight: 700; color: {{sumColor}}">{{sumText}}</td>
+<td style="padding: 14px 8px"></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div style="margin-top: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<p role="status" style="margin: 0; font-size: 13px; color: {{sumColor}}; font-weight: 600">{{statusText}}</p>
+<div style="display: flex; gap: 8px">
+<button type="button" onClick="{{reset}}" style="min-height: 44px; padding: 0 16px; border: 1px solid #C9C9C2; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 14px; cursor: pointer">되돌리기</button>
+<button type="button" disabled="{{invalid}}" style="min-height: 44px; padding: 0 20px; border: 0; border-radius: 8px; background: {{saveBg}}; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">저장</button>
+</div>
+</div>
+</section>
+
+<div style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 24px">
+<section aria-labelledby="h-unc" style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 22px">
+<h2 id="h-unc" style="margin: 0 0 6px; font-size: 16px; font-weight: 600">미분류 종목</h2>
+<p style="margin: 0; font-size: 14px; color: #5F646B">모든 종목에 그룹이 지정되어 있습니다.</p>
+</section>
+<section aria-labelledby="h-help" style="background: #FFFFFF; border: 1px solid #E3E3DE; border-radius: 12px; padding: 22px">
+<h2 id="h-help" style="margin: 0 0 10px; font-size: 16px; font-weight: 600">그룹 삭제 시</h2>
+<p style="margin: 0; font-size: 14px; color: #5F646B; line-height: 1.6">소속 종목은 미분류로 옮겨지고, 목표 비중은 다른 그룹에 다시 나눠 입력해야 합니다.</p>
+</section>
+</div>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const G = [
+      { id: 's', name: '주식', color: '#23395B', count: 3, cur: 60, def: 50 },
+      { id: 'b', name: '채권', color: '#E08A2E', count: 2, cur: 20, def: 30 },
+      { id: 'd', name: '배당', color: '#6BB3A8', count: 2, cur: 20, def: 20 }
+    ];
+    const st = this.state || {};
+    const t = st.targets || { s: '50', b: '30', d: '20' };
+    const num = (v) => { const x = parseFloat(String(v).replace(/[^0-9.]/g, '')); return isNaN(x) ? 0 : x; };
+    const sum = G.reduce((s, g) => s + num(t[g.id]), 0);
+    const ok = Math.abs(sum - 100) < 0.001;
+    const rows = G.map((g) => {
+      const d = g.cur - num(t[g.id]);
+      return {
+        name: g.name, color: g.color, count: g.count,
+        curText: g.cur.toFixed(1) + '%',
+        tgt: t[g.id], inputLabel: g.name + ' 목표 비중',
+        onChange: (e) => this.setState({ targets: { ...t, [g.id]: e.target.value } }),
+        diffText: Math.abs(d) < 0.05 ? '0.0%p' : (d > 0 ? '+' : '') + d.toFixed(1) + '%p',
+        diffColor: d > 0.05 ? '#8A4A0F' : d < -0.05 ? '#1F4C86' : '#1E6B47'
+      };
+    });
+    return {
+      rows,
+      sumText: sum.toFixed(1) + '%',
+      sumColor: ok ? '#1E6B47' : '#B42318',
+      statusText: ok ? '합계 100% · 저장할 수 있습니다' : '합계가 100%가 되도록 조정하세요 (현재 ' + sum.toFixed(1) + '%)',
+      invalid: !ok,
+      saveBg: ok ? '#23395B' : '#9AA0A8',
+      reset: () => this.setState({ targets: { s: '50', b: '30', d: '20' } })
+    };
+  }
+}
+</script>
+</body>
+</html>
