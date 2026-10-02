@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Portfolio.Core;
 using Portfolio.Data;
 
 namespace Portfolio.Tests;
@@ -22,6 +23,14 @@ public sealed class TestDb : IDisposable, IDbContextFactory<PortfolioDbContext>
 
     // 같은 in-memory DB를 쓰는 새 컨텍스트 (싱글턴 서비스 테스트용)
     public PortfolioDbContext CreateDbContext() => new(_options);
+
+    // 10.4 시드 현재가를 FakePriceProvider → PriceUpdater 경로로 반영한 가격 캐시
+    public async Task<PriceStore> SeedPriceStoreAsync()
+    {
+        var store = new PriceStore();
+        await new PriceUpdater(this, new FakePriceProvider(SeedData.Prices), store).RefreshHoldingsAsync();
+        return store;
+    }
 
     public void Dispose()
     {
