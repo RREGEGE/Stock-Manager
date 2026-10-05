@@ -32,6 +32,7 @@ public sealed class TestApp : WebApplicationFactory<Program>
         builder.UseSetting("DataDirectory", DataDirectory);
         builder.UseSetting("SymbolMaster:AutoRefresh", "false");
         builder.UseSetting("Backup:Enabled", "false");
+        builder.UseSetting("Launch:OpenBrowser", "false");
         foreach (var (key, value) in _settings)
             builder.UseSetting(key, value);
     }

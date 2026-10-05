@@ -29,8 +29,8 @@ dotnet test Portfolio.sln
 
 ### 실제 사용 (본인 기기에서만)
 
-1. `scripts\set-password.cmd` — 로그인 비밀번호 설정 (처음 한 번)
-2. `scripts\run.cmd` — 앱 실행 후 http://127.0.0.1:5137 접속
+1. `scripts\install.cmd` — 실행 파일을 만들어 설치하고 바탕화면에 **포트폴리오** 바로가기 생성 (처음 한 번, 코드 갱신 후 다시)
+2. 바탕화면의 **포트폴리오** 아이콘 더블클릭 — 앱이 켜지고 화면이 자동으로 열림. 처음 실행 때 검은 창에서 비밀번호 설정
 3. KIS 키는 `%LOCALAPPDATA%\Portfolio\settings.json`에 넣습니다 (첫 실행 때 값이 빈 채로 생성)
 
 휴대폰·다른 PC 접속(Tailscale), 홈 화면에 추가, 백업·복원은 [`docs/operations.md`](docs/operations.md)에 있습니다.
