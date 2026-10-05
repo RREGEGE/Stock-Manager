@@ -61,6 +61,13 @@ public sealed class SettingsRepository(IDbContextFactory<PortfolioDbContext> dbF
 
     public Task SetPasswordHashAsync(string hash, CancellationToken ct = default) => SetAsync(PasswordHashKey, hash, ct);
 
+    // 로그인 아이디 (계정은 1개)
+    public const string UserNameKey = "Auth.UserName";
+
+    public Task<string?> GetUserNameAsync(CancellationToken ct = default) => GetAsync(UserNameKey, ct);
+
+    public Task SetUserNameAsync(string userName, CancellationToken ct = default) => SetAsync(UserNameKey, userName, ct);
+
     private async Task<string?> GetAsync(string key, CancellationToken ct)
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct);

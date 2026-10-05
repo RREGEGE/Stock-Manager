@@ -3,6 +3,7 @@
 @inject PortfolioNotifier Notifier
 @inject Microsoft.Extensions.Options.IOptions<PricePollingOptions> PollingOptions
 @inject Microsoft.Extensions.Options.IOptions<Portfolio.Web.Auth.AuthOptions> AuthSettings
+@inject NavigationManager Navigation
 
 <PageTitle>설정</PageTitle>
 
@@ -46,11 +47,14 @@
         @if (AuthSettings.Value.Enabled)
         {
             <section aria-labelledby="h-login" class="card settings-card">
-                <h2 id="h-login" class="card-title">로그인</h2>
-                <p class="note">이 기기의 로그인을 끝냅니다. 비밀번호 변경은 앱을 실행하는 PC에서 <code>scripts\set-password.cmd</code>로 합니다.</p>
-                <div>
-                    <a href="logout" class="btn" data-enhance-nav="false">로그아웃</a>
+                <h2 id="h-login" class="card-title">계정</h2>
+                <p class="account-name">아이디 <strong>@_userName</strong></p>
+                <div class="account-actions">
+                    @* 쿠키를 다루는 화면이라 새로 불러와야 한다 (화면 안 이동이 아니라 페이지 이동) *@
+                    <button type="button" class="btn" @onclick="@(() => Navigation.NavigateTo("account/password", forceLoad: true))">비밀번호 변경</button>
+                    <button type="button" class="btn" @onclick="@(() => Navigation.NavigateTo("logout", forceLoad: true))">로그아웃</button>
                 </div>
+                <p class="note">비밀번호를 바꾸면 다른 기기는 모두 다시 로그인해야 합니다. 비밀번호를 잊었으면 앱을 실행하는 PC에서 <code>scripts\set-password.cmd</code>로 다시 정합니다.</p>
             </section>
         }
     }
@@ -60,6 +64,7 @@
     private bool _loaded;
     private int _interval;
     private bool _includeCash;
+    private string? _userName;
     private string? _intervalMessage;
     private bool _intervalError;
 
@@ -67,6 +72,7 @@
     {
         _interval = await SettingsRepo.GetPollingIntervalSecondsAsync() ?? PollingOptions.Value.IntervalSeconds;
         _includeCash = await SettingsRepo.GetIncludeCashAsync();
+        _userName = await SettingsRepo.GetUserNameAsync();
         _loaded = true;
     }
 

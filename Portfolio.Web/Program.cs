@@ -14,6 +14,10 @@ using Portfolio.Web.Dev;
 using Portfolio.Web.Hosting;
 using Portfolio.Web.Services;
 
+// 실행 파일을 더블클릭(바로가기)으로 띄워도 설정 파일·wwwroot를 찾게 하고, 검은 창의 한글이 깨지지 않게 한다
+AppLauncher.UseExecutableDirectoryIfNeeded();
+try { Console.OutputEncoding = System.Text.Encoding.UTF8; } catch (IOException) { /* 창이 없는 실행 */ }
+
 var builder = WebApplication.CreateBuilder(args);
 
 // 운영 데이터 폴더 (저장소 밖). 개발 환경에서는 DataDirectory를 직접 지정했을 때만 쓴다.
@@ -34,8 +38,22 @@ builder.Services.AddSingleton(paths);
 builder.WebHost.UseStaticWebAssets();
 
 // 접속 주소: 따로 지정하지 않으면 이 PC 안에서만 듣는다. 다른 기기는 tailscale serve를 거쳐 들어온다.
+const string DefaultUrl = "http://127.0.0.1:5137";
 if (string.IsNullOrWhiteSpace(builder.Configuration["urls"]))
-    builder.WebHost.UseUrls("http://127.0.0.1:5137");
+    builder.WebHost.UseUrls(DefaultUrl);
+
+// 실행 파일로 켰을 때: 화면을 자동으로 연다. 이미 켜져 있으면 화면만 열고 끝낸다.
+var launch = builder.Configuration.GetSection(LaunchOptions.SectionName).Get<LaunchOptions>() ?? new LaunchOptions();
+// 사람이 직접 띄운 창에서만 화면을 연다 (테스트·도구가 출력을 받아 가는 실행에서는 열지 않는다)
+bool openWindow = launch.OpenBrowser && Environment.UserInteractive && !Console.IsOutputRedirected;
+bool isSetPassword = args.Contains(SetPasswordCommand.Name);
+string? localUrl = AppLauncher.PickLocalUrl((builder.Configuration["urls"] ?? DefaultUrl).Split(';', StringSplitOptions.RemoveEmptyEntries));
+if (openWindow && !isSetPassword && localUrl is not null && AppLauncher.IsAlreadyListening(localUrl))
+{
+    Console.WriteLine($"이미 실행 중입니다. 화면을 엽니다: {localUrl}");
+    AppLauncher.OpenWindow(localUrl);
+    return 0;
+}
 
 // tailscale serve(이 PC의 프록시)가 붙여 주는 원래 주소·HTTPS 여부를 받아들인다. 기본값으로 로컬 프록시만 신뢰한다.
 builder.Services.Configure<ForwardedHeadersOptions>(o =>
@@ -107,13 +125,13 @@ builder.Services.AddSingleton<GroupRepository>();
 builder.Services.AddSingleton<SettingsRepository>();
 builder.Services.AddSingleton<PortfolioService>();
 
-// 로그인: 비밀번호 1개, 쿠키로 90일 유지 (설계서 7.3 개인 사용 단계의 간소화)
+// 로그인: 계정 1개(아이디 + 비밀번호), 쿠키로 90일 유지 (설계서 7.3 개인 사용 단계의 간소화)
 var authOptions = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
 if (!authOptions.Enabled && priceSource != PriceSource.Fake)
     throw new InvalidOperationException("Auth:Enabled=false는 가짜 시세(PriceSource=Fake)일 때만 쓸 수 있습니다. 실제 보유 내역은 로그인 없이 열 수 없습니다.");
 
 builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection(AuthOptions.SectionName));
-builder.Services.AddSingleton<PasswordService>();
+builder.Services.AddSingleton<AccountService>();
 builder.Services.AddSingleton<LoginThrottle>();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(o =>
@@ -128,7 +146,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         // 비밀번호가 바뀌면 이전에 발급한 로그인 쿠키를 모두 무효로 한다 (기기 분실 대비)
         o.Events.OnValidatePrincipal = async context =>
         {
-            var passwords = context.HttpContext.RequestServices.GetRequiredService<PasswordService>();
+            var passwords = context.HttpContext.RequestServices.GetRequiredService<AccountService>();
             string? current = await passwords.GetStampAsync(context.HttpContext.RequestAborted);
             if (current is null || context.Principal?.FindFirst(AuthOptions.StampClaim)?.Value != current)
             {
@@ -154,11 +172,12 @@ await using (var db = await app.Services.GetRequiredService<IDbContextFactory<Po
         await SeedData.ApplyAsync(db);   // 개발용 DB에만, 보유종목이 비어 있을 때만 넣는다
 }
 
-// `set-password`: 웹 서버를 띄우지 않고 비밀번호만 설정하고 끝낸다
-if (args.Contains(SetPasswordCommand.Name))
+// `set-password`: 비밀번호를 잊었을 때의 복구용. 웹 서버를 띄우지 않고 비밀번호만 다시 정하고 끝낸다.
+// (가입과 평소의 비밀번호 변경은 웹 화면에서 한다)
+if (isSetPassword)
 {
     return await SetPasswordCommand.RunAsync(
-        app.Services.GetRequiredService<PasswordService>(), SetPasswordCommand.ReadHidden, Console.Out);
+        app.Services.GetRequiredService<AccountService>(), SetPasswordCommand.ReadHidden, Console.Out);
 }
 
 // Configure the HTTP request pipeline.
@@ -192,6 +211,16 @@ app.Lifetime.ApplicationStarted.Register(() =>
     ListenAddressCheck.WarnIfExposed(app.Urls, logger);
     if (useDataDirectory)
         logger.LogInformation("데이터 폴더: {DataDirectory}", paths.DataDirectory);
+
+    if (openWindow && AppLauncher.PickLocalUrl(app.Urls) is { } url)
+    {
+        try { Console.Title = "포트폴리오 - 이 창을 닫으면 앱이 꺼집니다"; } catch (IOException) { }
+        Console.WriteLine();
+        Console.WriteLine($"  포트폴리오가 켜졌습니다: {url}");
+        Console.WriteLine("  화면이 자동으로 열립니다. 이 창을 닫으면 앱이 꺼집니다.");
+        Console.WriteLine();
+        AppLauncher.OpenWindow(url);
+    }
 });
 
 app.Run();

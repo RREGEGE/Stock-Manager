@@ -1,9 +1,0 @@
-.login-page { min-height: 100vh; box-sizing: border-box; padding: 24px 16px; display: flex; align-items: center; justify-content: center; }
-.login-card { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 18px; }
-.login-title { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
-.login-form { display: flex; flex-direction: column; gap: 14px; }
-.login-form .input { width: 100%; }
-.login-button { width: 100%; }
-.login-text { margin: 0; font-size: 14px; color: var(--text-muted); line-height: 1.6; }
-.login-code { margin: 0; padding: 12px 14px; border-radius: 8px; background: var(--bg-page); font-size: 13px; overflow-x: auto; }
-.login-card .note { margin: 0; }
