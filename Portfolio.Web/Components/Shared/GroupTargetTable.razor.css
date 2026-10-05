@@ -1,0 +1,27 @@
+.group-card { flex: 2 1 600px; min-width: 0; }
+.group-table { min-width: 580px; }
+.group-table td { padding: 8px; }
+
+.group-name { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; }
+.group-swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+.target-input { display: inline-flex; align-items: center; gap: 6px; }
+.target-input .input { width: 72px; padding: 0 10px; }
+
+td.action { padding: 4px 8px; text-align: right; }
+
+.sum-row td { padding: 14px 8px; border-bottom: 0; }
+.sum-target { font-weight: 700; }
+
+.edit-row td { background: var(--bg-page); }
+.edit-panel { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; padding: 6px 4px; }
+.edit-panel .input { width: 180px; }
+.color-input { width: 64px; height: 44px; padding: 2px; border: 1px solid var(--line-input); border-radius: 8px; background: #FFFFFF; box-sizing: border-box; cursor: pointer; }
+.order { display: flex; gap: 6px; }
+.edit-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
+.confirm-text { font-size: 13px; font-weight: 600; color: var(--error); }
+.edit-panel .field-error { flex-basis: 100%; }
+
+.footer { margin-top: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.status { margin: 0; font-size: 13px; font-weight: 600; }
+.footer-buttons { display: flex; gap: 8px; }

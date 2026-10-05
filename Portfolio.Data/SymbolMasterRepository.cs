@@ -13,6 +13,31 @@ public sealed class SymbolMasterRepository(IDbContextFactory<PortfolioDbContext>
     public static bool IsRefreshDue(DateTimeOffset? updatedAt, DateTimeOffset now) =>
         updatedAt is null || now - updatedAt.Value >= RefreshInterval;
 
+    // 종목명 일부 또는 종목코드 앞부분으로 검색한다 (설계서 5.4-1). 코드가 정확히 맞는 종목, 이름이 검색어로 시작하는 종목 순.
+    public async Task<IReadOnlyList<SymbolInfo>> SearchAsync(string? query, int limit = 8, CancellationToken ct = default)
+    {
+        query = (query ?? "").Trim();
+        if (query.Length == 0) return [];
+
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        string upper = query.ToUpperInvariant();
+        // LIKE는 영문 대소문자를 구분하지 않는다 (kodex → KODEX). 검색어의 %, _는 문자 그대로 찾는다.
+        string like = "%" + query.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
+        var matches = await db.SymbolMasters.AsNoTracking()
+            .Where(s => EF.Functions.Like(s.SymbolName, like, "\\") || s.SymbolCode.StartsWith(upper))
+            .Take(200)
+            .ToListAsync(ct);
+
+        return matches
+            .OrderBy(s => s.SymbolCode == upper ? 0 : 1)
+            .ThenBy(s => s.SymbolName.StartsWith(query, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+            .ThenBy(s => s.SymbolName.Length)
+            .ThenBy(s => s.SymbolName, StringComparer.Ordinal)
+            .Take(limit)
+            .Select(s => new SymbolInfo(s.SymbolCode, s.SymbolName, s.Market))
+            .ToList();
+    }
+
     public async Task<DateTimeOffset?> GetUpdatedAtAsync(CancellationToken ct = default)
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct);

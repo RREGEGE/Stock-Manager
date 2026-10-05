@@ -1,0 +1,82 @@
+@page "/settings"
+@inject SettingsRepository SettingsRepo
+@inject PortfolioNotifier Notifier
+@inject Microsoft.Extensions.Options.IOptions<PricePollingOptions> PollingOptions
+
+<PageTitle>설정</PageTitle>
+
+@* 목업이 없는 화면: 같은 카드 양식을 쓴다 (설계서 9.3). 변경은 즉시 적용한다 (설계서 6장). *@
+<main class="page-main">
+    <div class="page-head">
+        <div>
+            <h1>설정</h1>
+            <p>변경하면 바로 적용됩니다.</p>
+        </div>
+    </div>
+
+    @if (_loaded)
+    {
+        <section aria-labelledby="h-polling" class="card settings-card">
+            <h2 id="h-polling" class="card-title">시세 갱신</h2>
+            <div class="field">
+                <label for="interval">장중 시세 폴링 주기 (초)</label>
+                <div class="inline">
+                    <input id="interval" type="number" class="input input-num" inputmode="numeric"
+                           min="@SettingsRepository.MinPollingIntervalSeconds" max="@SettingsRepository.MaxPollingIntervalSeconds"
+                           value="@_interval" @onchange="SaveIntervalAsync" />
+                    <span class="muted">초</span>
+                </div>
+            </div>
+            <p class="note">@(SettingsRepository.MinPollingIntervalSeconds)~@(SettingsRepository.MaxPollingIntervalSeconds)초. 장중(평일 09:00~15:30)에만 이 주기로 조회하고, 다음 조회부터 적용됩니다.</p>
+            @if (_intervalMessage is not null)
+            {
+                <p class="status @(_intervalError ? "text-error" : "text-ok")" role="status">@_intervalMessage</p>
+            }
+        </section>
+
+        <section aria-labelledby="h-cash" class="card settings-card">
+            <h2 id="h-cash" class="card-title">예수금</h2>
+            <label class="check">
+                <input type="checkbox" checked="@_includeCash" @onchange="SaveIncludeCashAsync" />총 보유금액에 예수금 포함
+            </label>
+            <p class="note">포함하면 대시보드에 '현금' 항목이 따로 표시됩니다. 예수금 금액은 보유 종목 화면에서 입력합니다.</p>
+        </section>
+    }
+</main>
+
+@code {
+    private bool _loaded;
+    private int _interval;
+    private bool _includeCash;
+    private string? _intervalMessage;
+    private bool _intervalError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _interval = await SettingsRepo.GetPollingIntervalSecondsAsync() ?? PollingOptions.Value.IntervalSeconds;
+        _includeCash = await SettingsRepo.GetIncludeCashAsync();
+        _loaded = true;
+    }
+
+    private async Task SaveIntervalAsync(ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out int seconds)
+            || seconds < SettingsRepository.MinPollingIntervalSeconds || seconds > SettingsRepository.MaxPollingIntervalSeconds)
+        {
+            _intervalError = true;
+            _intervalMessage = $"{SettingsRepository.MinPollingIntervalSeconds}~{SettingsRepository.MaxPollingIntervalSeconds} 사이의 숫자를 입력하세요.";
+            return;
+        }
+        await SettingsRepo.SetPollingIntervalSecondsAsync(seconds);
+        _interval = seconds;
+        _intervalError = false;
+        _intervalMessage = $"{seconds}초로 저장했습니다.";
+    }
+
+    private async Task SaveIncludeCashAsync(ChangeEventArgs e)
+    {
+        _includeCash = e.Value is true;
+        await SettingsRepo.SetIncludeCashAsync(_includeCash);
+        Notifier.NotifyChanged();
+    }
+}

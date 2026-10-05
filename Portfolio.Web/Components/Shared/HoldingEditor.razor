@@ -1,0 +1,180 @@
+@inject PortfolioService Portfolio
+
+@* 종목 검색·수량·단가·그룹 입력 패널 (설계서 5.4, 9.3, 9.5) *@
+<section aria-labelledby="h-form" class="card card-active editor">
+    <div>
+        <h2 id="h-form" class="card-title">@(_existing ? "종목 수정" : "종목 추가")</h2>
+        <p class="card-sub">이미 보유 중인 종목을 고르면 기존 행을 수정합니다.</p>
+    </div>
+
+    <SymbolSearch @ref="_search" HeldCodes="HeldCodes" SelectedCode="@_symbol?.SymbolCode" OnSelected="SelectSymbol" />
+
+    @if (_symbol is not null)
+    {
+        <div class="chosen">
+            <span class="chosen-name">@_symbol.SymbolName</span>
+            <span class="chosen-code">@_symbol.SymbolCode · @(_existing ? "보유 중" : "신규")</span>
+        </div>
+    }
+
+    <div class="pair">
+        <div class="field">
+            <label for="qty">수량 (주)</label>
+            <MoneyInput Id="qty" @bind-Value="_quantity" Max="1_000_000_000m" />
+        </div>
+        <div class="field">
+            <label for="avg">평균매입단가 (원)</label>
+            <MoneyInput Id="avg" @bind-Value="_avgPrice" Max="1_000_000_000m" />
+        </div>
+    </div>
+
+    <div class="field">
+        <label for="group">그룹</label>
+        <select id="group" class="select" @bind="_groupValue">
+            @foreach (var g in Model.State.Groups)
+            {
+                <option value="@g.Id">@g.Name</option>
+            }
+            <option value="0">@PortfolioCalculator.UnclassifiedGroupName</option>
+        </select>
+    </div>
+
+    <div class="preview">
+        @if (CurrentPrice is { } price)
+        {
+            <span class="muted">현재가 @DisplayFormat.Won(price) 기준 평가금액</span>
+            <span class="preview-value">@DisplayFormat.Won(price * _quantity)</span>
+        }
+        else
+        {
+            <span class="muted">저장하면 현재가를 조회해 평가금액을 계산합니다.</span>
+        }
+    </div>
+
+    @if (_error is not null)
+    {
+        <p class="field-error" role="alert">@_error</p>
+    }
+
+    @if (_confirmDelete)
+    {
+        <div class="confirm" role="alertdialog" aria-label="삭제 확인">
+            <span>@(_symbol?.SymbolName)을(를) 삭제할까요?</span>
+            <div class="actions">
+                <button type="button" class="btn" @onclick="() => _confirmDelete = false">아니요</button>
+                <button type="button" class="btn btn-danger" @onclick="DeleteAsync">삭제</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="buttons">
+            @if (_existing)
+            {
+                <button type="button" class="btn btn-danger delete" @onclick="() => _confirmDelete = true">삭제</button>
+            }
+            <button type="button" class="btn" @onclick="Reset">취소</button>
+            <button type="button" class="btn btn-primary" disabled="@_saving" @onclick="SaveAsync">저장</button>
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public PortfolioViewModel Model { get; set; } = default!;
+    [Parameter] public EventCallback<string?> OnSelectionChanged { get; set; }   // 표의 선택 행 표시용
+
+    private SymbolSearch? _search;
+    private SymbolInfo? _symbol;
+    private bool _existing;
+    private decimal _quantity;
+    private decimal _avgPrice;
+    private string _groupValue = "0";
+    private string? _error;
+    private bool _confirmDelete;
+    private bool _saving;
+
+    private IReadOnlySet<string> HeldCodes => Model.State.HoldingRows.Keys.ToHashSet();
+
+    // 처음에는 첫 번째 그룹을 골라 둔다
+    protected override void OnInitialized() =>
+        _groupValue = (Model.State.Groups.FirstOrDefault()?.Id ?? 0).ToString();
+    private decimal? CurrentPrice =>
+        _symbol is not null && Portfolio.GetPrice(_symbol.SymbolCode) is { Price: > 0 } e ? e.Price : null;
+
+    // 표에서 '수정'을 눌렀을 때
+    public async Task EditAsync(HoldingRow row)
+    {
+        await SelectSymbol(new SymbolInfo(row.View.SymbolCode, row.View.SymbolName, ""));
+        if (_search is not null) await _search.SetQueryAsync(row.View.SymbolName);
+    }
+
+    // '종목 추가'를 눌렀을 때
+    public Task BeginAddAsync() => Reset();
+
+    private async Task SelectSymbol(SymbolInfo symbol)
+    {
+        _symbol = symbol;
+        _error = null;
+        _confirmDelete = false;
+        // 이미 등록된 종목이면 신규 추가가 아니라 해당 행 수정 (설계서 5.4-3)
+        if (Model.State.HoldingRows.TryGetValue(symbol.SymbolCode, out var held))
+        {
+            _existing = true;
+            _quantity = held.Quantity;
+            _avgPrice = held.AvgPrice;
+            _groupValue = (held.GroupId ?? 0).ToString();
+        }
+        else
+        {
+            _existing = false;
+            _quantity = 0;
+            _avgPrice = 0;
+            _groupValue = (Model.State.Groups.FirstOrDefault()?.Id ?? 0).ToString();
+        }
+        await OnSelectionChanged.InvokeAsync(_existing ? symbol.SymbolCode : null);
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_symbol is null) { _error = "종목을 검색해 선택하세요."; return; }
+        if (_quantity < 1) { _error = "수량은 1주 이상이어야 합니다."; return; }
+        if (_avgPrice <= 0) { _error = "평균매입단가는 0원보다 커야 합니다."; return; }
+
+        _saving = true;
+        try
+        {
+            int groupId = int.Parse(_groupValue);
+            await Portfolio.SaveHoldingAsync(_symbol.SymbolCode, _symbol.SymbolName, (long)_quantity, _avgPrice,
+                groupId == 0 ? null : groupId);
+            await Reset();
+        }
+        catch (ArgumentException ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (_symbol is null) return;
+        await Portfolio.DeleteHoldingAsync(_symbol.SymbolCode);
+        await Reset();
+    }
+
+    private async Task Reset()
+    {
+        _symbol = null;
+        _existing = false;
+        _quantity = 0;
+        _avgPrice = 0;
+        _groupValue = (Model.State.Groups.FirstOrDefault()?.Id ?? 0).ToString();
+        _error = null;
+        _confirmDelete = false;
+        _search?.Clear();
+        await OnSelectionChanged.InvokeAsync(null);
+    }
+}

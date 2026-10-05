@@ -1,0 +1,16 @@
+@* 현재 비중 막대 + 목표선 + 차이 배지 (설계서 9.3, 9.5) *@
+<div class="target-bar">
+    <div class="target-head">
+        <span class="target-name">@Row.Name</span>
+        <span class="target-values">@DisplayFormat.Percent1(Row.Current) / 목표 @DisplayFormat.Percent1(Row.Target)</span>
+        <span class="target-diff @Row.Tone">@Row.DiffText</span>
+    </div>
+    <div class="target-track">
+        <div class="target-fill" style="width: @PortfolioViewModel.CssPercent(Row.Current); background: @Row.Color"></div>
+        <div class="target-line" style="left: @PortfolioViewModel.CssPercent(Row.Target)"></div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public TargetRow Row { get; set; } = default!;
+}

@@ -1,0 +1,38 @@
+.donut-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; }
+
+.donut { position: relative; width: 168px; height: 168px; border-radius: 50%; flex-shrink: 0; }
+.donut-hole {
+    position: absolute; top: 26px; left: 26px; right: 26px; bottom: 26px; border-radius: 50%; background: #FFFFFF;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.donut-label { font-size: 12px; color: var(--text-muted); }
+.donut-value { font-size: 18px; font-weight: 700; }
+
+.legend { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; min-width: 120px; }
+.legend-item {
+    display: flex; align-items: center; gap: 10px; font-size: 14px;
+    width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font-family: inherit; text-align: left;
+}
+button.legend-item { cursor: pointer; border-radius: 6px; }
+button.legend-item:hover .legend-name { text-decoration: underline; }
+button.legend-item.selected { background: var(--primary-soft); box-shadow: 0 0 0 4px var(--primary-soft); }
+.legend-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+.legend-name { flex-grow: 1; }
+.legend-value { font-weight: 600; }
+
+.dense .legend { gap: 8px; min-width: 150px; }
+.dense .legend-item { gap: 8px; font-size: 13px; }
+.dense .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+/* 모바일 목업: 120px 도넛, 가운데는 금액만 */
+@media (max-width: 639.98px) {
+    .donut-wrap { gap: 18px; flex-wrap: nowrap; }
+    .donut { width: 120px; height: 120px; }
+    .donut-hole { top: 20px; left: 20px; right: 20px; bottom: 20px; }
+    .donut-label { display: none; }
+    .donut-value { font-size: 14px; }
+    .legend { gap: 10px; min-width: 0; }
+    .legend-item { gap: 8px; }
+    .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+    .dense .legend { min-width: 0; }
+}

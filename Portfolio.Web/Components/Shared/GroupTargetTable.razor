@@ -1,0 +1,225 @@
+@inject PortfolioService Portfolio
+
+@* 그룹 목록, 목표 비중 입력 + 합계 검증 (설계서 6장 그룹 관리, 9.3, 9.5, AC-11) *@
+<section aria-labelledby="h-groups" class="card group-card">
+    <div class="card-head">
+        <h2 id="h-groups" class="card-title">그룹과 목표 비중</h2>
+        <button type="button" class="btn btn-outline" @onclick="AddGroupAsync">그룹 추가</button>
+    </div>
+    <div class="table-scroll">
+        <table class="table group-table">
+            <thead>
+                <tr>
+                    <th scope="col">그룹</th>
+                    <th scope="col" class="num">종목 수</th>
+                    <th scope="col" class="num">현재 비중</th>
+                    <th scope="col" class="num">목표 비중</th>
+                    <th scope="col" class="num">차이</th>
+                    <th scope="col"><span class="sr-only">작업</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var g in Model.State.Groups)
+                {
+                    var group = g;
+                    decimal current = CurrentOf(group.Name);
+                    decimal diff = current * 100m - TargetOf(group.Id);
+                    <tr>
+                        <td><span class="group-name"><span class="group-swatch" style="background: @group.Color"></span>@group.Name</span></td>
+                        <td class="num">@CountOf(group.Name)</td>
+                        <td class="num">@DisplayFormat.Percent1(current)</td>
+                        <td class="num">
+                            <span class="target-input">
+                                <input type="text" inputmode="decimal" class="input input-num" aria-label="@(group.Name + " 목표 비중")"
+                                       value="@_targets.GetValueOrDefault(group.Id, "0")"
+                                       @oninput="e => OnTargetInput(group.Id, e)" />
+                                <span class="muted">%</span>
+                            </span>
+                        </td>
+                        <td class="num strong @(diff > 0.05m ? "text-over" : diff < -0.05m ? "text-under" : "text-ok")">
+                            @(Math.Abs(diff) < 0.05m ? "0.0%p" : DisplayFormat.SignedPoint1(diff / 100m))
+                        </td>
+                        <td class="action">
+                            <button type="button" class="btn btn-text" aria-label="@(group.Name + " 편집")"
+                                    @onclick="() => ToggleEdit(group)">@(_editId == group.Id ? "닫기" : "편집")</button>
+                        </td>
+                    </tr>
+                    @if (_editId == group.Id)
+                    {
+                        <tr class="edit-row">
+                            <td colspan="6">
+                                <div class="edit-panel">
+                                    <div class="field">
+                                        <label for="@($"gname-{group.Id}")">이름</label>
+                                        <input id="@($"gname-{group.Id}")" class="input" maxlength="50" @bind="_editName" />
+                                    </div>
+                                    <div class="field">
+                                        <label for="@($"gcolor-{group.Id}")">색상</label>
+                                        <input id="@($"gcolor-{group.Id}")" type="color" class="color-input" @bind="_editColor" />
+                                    </div>
+                                    <div class="field">
+                                        <span class="field-label">순서</span>
+                                        <div class="order">
+                                            <button type="button" class="btn btn-sm" aria-label="위로" @onclick="() => MoveAsync(group.Id, -1)">▲</button>
+                                            <button type="button" class="btn btn-sm" aria-label="아래로" @onclick="() => MoveAsync(group.Id, 1)">▼</button>
+                                        </div>
+                                    </div>
+                                    <div class="edit-buttons">
+                                        @if (_confirmDeleteId == group.Id)
+                                        {
+                                            <span class="confirm-text">소속 종목은 미분류로 옮겨집니다. 삭제할까요?</span>
+                                            <button type="button" class="btn" @onclick="() => _confirmDeleteId = null">아니요</button>
+                                            <button type="button" class="btn btn-danger" @onclick="() => DeleteAsync(group.Id)">삭제</button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-danger" @onclick="() => _confirmDeleteId = group.Id">그룹 삭제</button>
+                                            <button type="button" class="btn btn-outline" @onclick="() => SaveGroupAsync(group.Id)">이름·색상 저장</button>
+                                        }
+                                    </div>
+                                    @if (_editError is not null)
+                                    {
+                                        <p class="field-error" role="alert">@_editError</p>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                <tr class="sum-row">
+                    <td class="strong">합계</td>
+                    <td class="num">@Model.Rows.Count</td>
+                    <td class="num">@DisplayFormat.Percent1(Model.TargetRows.Sum(r => r.Current))</td>
+                    <td class="num sum-target @(IsValid ? "text-ok" : "text-error")">@SumText</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p role="status" class="status @(IsValid ? "text-ok" : "text-error")">@StatusText</p>
+        <div class="footer-buttons">
+            <button type="button" class="btn" @onclick="ResetTargets">되돌리기</button>
+            <button type="button" class="btn btn-primary" disabled="@(!IsValid || _saving)" @onclick="SaveTargetsAsync">저장</button>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public PortfolioViewModel Model { get; set; } = default!;
+
+    // 입력 중인 목표 비중(%) 문자열. 시세 갱신으로 화면이 다시 그려져도 유지한다.
+    private readonly Dictionary<int, string> _targets = [];
+    private bool _saving;
+    private bool _justSaved;
+
+    private int? _editId;
+    private string _editName = "";
+    private string _editColor = "";
+    private string? _editError;
+    private int? _confirmDeleteId;
+
+    protected override void OnParametersSet()
+    {
+        var ids = Model.State.Groups.Select(g => g.Id).ToHashSet();
+        foreach (var stale in _targets.Keys.Where(id => !ids.Contains(id)).ToList())
+            _targets.Remove(stale);
+        foreach (var g in Model.State.Groups)
+            _targets.TryAdd(g.Id, FormatTarget(g.TargetWeight));
+    }
+
+    private static string FormatTarget(decimal weight) =>
+        (weight * 100m).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    private decimal TargetOf(int groupId) => DisplayFormat.ParseNumber(_targets.GetValueOrDefault(groupId));
+    private decimal Sum => Model.State.Groups.Sum(g => TargetOf(g.Id));
+    private bool IsValid => Model.State.Groups.Count > 0 && Math.Abs(Sum - 100m) < 0.001m;
+    private string SumText => Sum.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "%";
+    private string StatusText => _justSaved && IsValid ? "저장했습니다 · 추가매수 계산에 반영됩니다"
+        : IsValid ? "합계 100% · 저장할 수 있습니다"
+        : $"합계가 100%가 되도록 조정하세요 (현재 {SumText})";
+
+    private decimal CurrentOf(string groupName) => Model.TargetRows.FirstOrDefault(r => r.Name == groupName)?.Current ?? 0m;
+    private int CountOf(string groupName) => Model.Rows.Count(r => r.View.GroupName == groupName);
+
+    private void OnTargetInput(int groupId, ChangeEventArgs e)
+    {
+        _targets[groupId] = e.Value?.ToString() ?? "";
+        _justSaved = false;
+    }
+
+    private void ResetTargets()
+    {
+        foreach (var g in Model.State.Groups)
+            _targets[g.Id] = FormatTarget(g.TargetWeight);
+        _justSaved = false;
+    }
+
+    private async Task SaveTargetsAsync()
+    {
+        if (!IsValid) return;
+        _saving = true;
+        try
+        {
+            await Portfolio.SaveTargetsAsync(Model.State.Groups.ToDictionary(g => g.Id, g => TargetOf(g.Id) / 100m));
+            _justSaved = true;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task AddGroupAsync()
+    {
+        // 겹치지 않는 기본 이름으로 추가한 뒤 바로 편집 줄을 연다
+        var names = Model.State.Groups.Select(g => g.Name).ToHashSet();
+        string name = "새 그룹";
+        for (int i = 2; names.Contains(name); i++) name = $"새 그룹 {i}";
+
+        var added = await Portfolio.AddGroupAsync(name);
+        _targets[added.Id] = "0";
+        OpenEdit(added);
+    }
+
+    private void ToggleEdit(AssetGroup group)
+    {
+        if (_editId == group.Id) { _editId = null; return; }
+        OpenEdit(group);
+    }
+
+    private void OpenEdit(AssetGroup group)
+    {
+        _editId = group.Id;
+        _editName = group.Name;
+        _editColor = group.Color;
+        _editError = null;
+        _confirmDeleteId = null;
+    }
+
+    private async Task SaveGroupAsync(int id)
+    {
+        try
+        {
+            await Portfolio.UpdateGroupAsync(id, _editName, _editColor);
+            _editId = null;
+        }
+        catch (ArgumentException ex)
+        {
+            _editError = ex.Message;
+        }
+    }
+
+    private Task MoveAsync(int id, int direction) => Portfolio.MoveGroupAsync(id, direction);
+
+    private async Task DeleteAsync(int id)
+    {
+        await Portfolio.DeleteGroupAsync(id);
+        _targets.Remove(id);
+        _editId = null;
+        _confirmDeleteId = null;
+        _justSaved = false;
+    }
+}

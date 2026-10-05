@@ -1,0 +1,53 @@
+@page "/holdings"
+@inherits LiveComponentBase
+
+<PageTitle>보유 종목</PageTitle>
+
+<main class="page-main">
+    <div class="page-head">
+        <div>
+            <h1>보유 종목</h1>
+            <p>삼성증권 잔고 화면의 수량과 평균매입단가를 옮겨 적습니다. 현재가는 자동으로 갱신됩니다.</p>
+        </div>
+    </div>
+
+    @if (Model is { } m)
+    {
+        <div class="split">
+            <section aria-labelledby="h-list" class="card list-card">
+                <div class="card-head">
+                    <h2 id="h-list" class="card-title">@(m.Rows.Count)개 종목</h2>
+                    <button type="button" class="btn btn-outline" @onclick="BeginAdd">종목 추가</button>
+                </div>
+
+                <HoldingTable Rows="m.Rows" Full="true" SelectedCode="@_selectedCode" OnEdit="Edit"
+                              EmptyText="보유 종목이 없습니다. 오른쪽에서 종목을 검색해 추가하세요." />
+
+                <div class="cash-row">
+                    <label for="cash" class="cash-label">예수금</label>
+                    <div class="cash-input">
+                        <MoneyInput Id="cash" Value="m.State.Snapshot.Cash" OnCommitted="SaveCash" />
+                        <span class="muted">원</span>
+                    </div>
+                    <label class="check">
+                        <input type="checkbox" checked="@m.State.IncludeCash" @onchange="SaveIncludeCash" />총 보유금액에 포함
+                    </label>
+                </div>
+            </section>
+
+            <HoldingEditor @ref="_editor" Model="m" OnSelectionChanged="code => _selectedCode = code" />
+        </div>
+    }
+</main>
+
+@code {
+    private HoldingEditor? _editor;
+    private string? _selectedCode;
+
+    private Task Edit(HoldingRow row) => _editor?.EditAsync(row) ?? Task.CompletedTask;
+    private Task BeginAdd() => _editor?.BeginAddAsync() ?? Task.CompletedTask;
+
+    private Task SaveCash(decimal amount) => Portfolio.SetCashAsync(amount);
+
+    private Task SaveIncludeCash(ChangeEventArgs e) => Portfolio.SetIncludeCashAsync(e.Value is true);
+}
