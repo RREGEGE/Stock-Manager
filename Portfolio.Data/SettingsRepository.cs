@@ -54,6 +54,13 @@ public sealed class SettingsRepository(IDbContextFactory<PortfolioDbContext> dbF
         return SetAsync(PollingIntervalKey, seconds.ToString(CultureInfo.InvariantCulture), ct);
     }
 
+    // 로그인 비밀번호의 해시 (평문은 저장하지 않는다). 설정한 적이 없으면 null.
+    public const string PasswordHashKey = "Auth.PasswordHash";
+
+    public Task<string?> GetPasswordHashAsync(CancellationToken ct = default) => GetAsync(PasswordHashKey, ct);
+
+    public Task SetPasswordHashAsync(string hash, CancellationToken ct = default) => SetAsync(PasswordHashKey, hash, ct);
+
     private async Task<string?> GetAsync(string key, CancellationToken ct)
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct);
