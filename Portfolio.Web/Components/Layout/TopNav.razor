@@ -1,0 +1,31 @@
+@inherits LiveComponentBase
+
+@* 상단 바: 메뉴, 장 상태·마지막 시세 갱신 시각. 폭 640px 미만에서는 총 평가금액·손익을 담은 헤더로 바뀐다 (설계서 9.3, 9.4) *@
+<header class="topbar">
+    <div class="topbar-inner">
+        <div class="brand">포트폴리오</div>
+        <nav aria-label="주 메뉴" class="topnav">
+            <NavLink href="" Match="NavLinkMatch.All">대시보드</NavLink>
+            <NavLink href="holdings">보유 종목</NavLink>
+            <NavLink href="rebalance">추가매수 계산</NavLink>
+            <NavLink href="groups">그룹 관리</NavLink>
+        </nav>
+        <div class="market">
+            <span class="market-dot @(Model?.State.MarketOpen == true ? "live" : "")"></span>
+            <span class="market-text">@(Model?.MarketText)</span>
+            <span class="market-text-short">@(Model?.MarketTextShort)</span>
+            <NavLink href="settings" class="settings-link">설정</NavLink>
+        </div>
+    </div>
+    @if (Model is { } m)
+    {
+        var s = m.State.Summary;
+        <div class="mobile-total">
+            <div class="mobile-total-label">총 평가금액</div>
+            <div class="mobile-total-amount">@DisplayFormat.Number(s.TotalAmount)<span>원</span></div>
+            <div class="mobile-total-pl @(s.ProfitLoss >= 0 ? "up" : "down")">
+                @DisplayFormat.SignedWon(s.ProfitLoss) (@DisplayFormat.SignedPercent2(s.ReturnRate))
+            </div>
+        </div>
+    }
+</header>

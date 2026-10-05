@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="bunit" Version="2.11.3" />
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="10.0.12" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
@@ -27,6 +28,7 @@
     <ProjectReference Include="..\Portfolio.Core\Portfolio.Core.csproj" />
     <ProjectReference Include="..\Portfolio.Data\Portfolio.Data.csproj" />
     <ProjectReference Include="..\Portfolio.Kis\Portfolio.Kis.csproj" />
+    <ProjectReference Include="..\Portfolio.Web\Portfolio.Web.csproj" />
   </ItemGroup>
 
 </Project>

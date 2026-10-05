@@ -1,0 +1,48 @@
+.topbar { background: var(--header-bg); color: #F5F5F2; }
+
+.topbar-inner {
+    max-width: 1200px; margin: 0 auto; padding: 8px 24px; min-height: 64px; box-sizing: border-box;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px;
+}
+
+.brand { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+
+.topnav { display: flex; flex-wrap: wrap; gap: 4px; flex-grow: 1; }
+
+.topnav ::deep a {
+    color: var(--header-text); text-decoration: none; padding: 12px 14px; border-radius: 8px; font-size: 14px;
+}
+.topnav ::deep a.active { color: #FFFFFF; background: var(--header-active); font-weight: 600; }
+
+.market { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--header-text); }
+.market-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--disabled); display: inline-block; }
+.market-dot.live { background: var(--live); }
+.market-text-short { display: none; }
+
+.market ::deep a.settings-link {
+    margin-left: 8px; padding: 12px 6px; color: var(--header-text); font-size: 13px; text-decoration: none;
+}
+.market ::deep a.settings-link.active { color: #FFFFFF; font-weight: 600; }
+
+.mobile-total { display: none; }
+
+/* 모바일 목업: 메뉴를 숨기고 총 평가금액·손익을 보여 준다 */
+@media (max-width: 639.98px) {
+    .topbar { padding: 16px 20px 18px; display: flex; flex-direction: column; gap: 14px; }
+    .topbar-inner { padding: 0; min-height: 0; gap: 8px; flex-wrap: nowrap; justify-content: space-between; }
+    .brand { font-size: 17px; }
+    .topnav { display: none; }
+    .market { gap: 6px; font-size: 12px; }
+    .market-dot { width: 7px; height: 7px; }
+    .market-text { display: none; }
+    .market-text-short { display: inline; }
+    .market ::deep a.settings-link { margin-left: 4px; font-size: 12px; }
+
+    .mobile-total { display: block; }
+    .mobile-total-label { font-size: 13px; color: var(--header-text); }
+    .mobile-total-amount { margin-top: 4px; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; }
+    .mobile-total-amount span { font-size: 16px; font-weight: 500; margin-left: 2px; }
+    .mobile-total-pl { margin-top: 4px; font-size: 14px; font-weight: 600; }
+    .mobile-total-pl.up { color: var(--up-on-dark); }
+    .mobile-total-pl.down { color: var(--down-on-dark); }
+}

@@ -1,0 +1,15 @@
+@* 요약 카드: 제목·금액·보조 문구 (설계서 9.5) *@
+<div class="summary-card">
+    <div class="summary-title">@Title</div>
+    <div class="summary-value @Tone">@Value<span>@Unit</span></div>
+    <div class="summary-sub @(SubStrong ? "strong " + Tone : "")">@Sub</div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter, EditorRequired] public string Value { get; set; } = "";
+    [Parameter] public string Unit { get; set; } = "원";
+    [Parameter] public string Sub { get; set; } = "";
+    [Parameter] public string Tone { get; set; } = "";       // "up" | "down" | ""
+    [Parameter] public bool SubStrong { get; set; }
+}

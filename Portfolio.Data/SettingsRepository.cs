@@ -1,0 +1,75 @@
+using System.Globalization;
+using Microsoft.EntityFrameworkCore;
+
+namespace Portfolio.Data;
+
+// 예수금과 설정값 (설계서 5.1 CashBalance·AppSetting, 6장 설정)
+public sealed class SettingsRepository(IDbContextFactory<PortfolioDbContext> dbFactory, TimeProvider? clock = null)
+{
+    public const string IncludeCashKey = "IncludeCash";
+    public const string PollingIntervalKey = "PollingIntervalSeconds";
+    public const int MinPollingIntervalSeconds = 10;
+    public const int MaxPollingIntervalSeconds = 3600;
+
+    private const int CashRowId = 1;
+    private readonly TimeProvider _clock = clock ?? TimeProvider.System;
+
+    public async Task<decimal> GetCashAsync(CancellationToken ct = default)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        return (await db.CashBalances.AsNoTracking().SingleOrDefaultAsync(c => c.Id == CashRowId, ct))?.Amount ?? 0m;
+    }
+
+    public async Task SetCashAsync(decimal amount, CancellationToken ct = default)
+    {
+        if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount), "예수금은 0 이상이어야 합니다.");
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var row = await db.CashBalances.SingleOrDefaultAsync(c => c.Id == CashRowId, ct);
+        if (row is null)
+        {
+            row = new CashBalance { Id = CashRowId };
+            db.CashBalances.Add(row);
+        }
+        row.Amount = amount;
+        row.UpdatedAt = _clock.GetUtcNow();
+        await db.SaveChangesAsync(ct);
+    }
+
+    public async Task<bool> GetIncludeCashAsync(CancellationToken ct = default) =>
+        await GetAsync(IncludeCashKey, ct) == "true";
+
+    public Task SetIncludeCashAsync(bool include, CancellationToken ct = default) =>
+        SetAsync(IncludeCashKey, include ? "true" : "false", ct);
+
+    // 저장된 값이 없으면 null (호출하는 쪽이 appsettings 기본값을 쓴다)
+    public async Task<int?> GetPollingIntervalSecondsAsync(CancellationToken ct = default) =>
+        int.TryParse(await GetAsync(PollingIntervalKey, ct), NumberStyles.Integer, CultureInfo.InvariantCulture, out var s)
+            ? Math.Clamp(s, MinPollingIntervalSeconds, MaxPollingIntervalSeconds) : null;
+
+    public Task SetPollingIntervalSecondsAsync(int seconds, CancellationToken ct = default)
+    {
+        if (seconds is < MinPollingIntervalSeconds or > MaxPollingIntervalSeconds)
+            throw new ArgumentOutOfRangeException(nameof(seconds),
+                $"폴링 주기는 {MinPollingIntervalSeconds}~{MaxPollingIntervalSeconds}초여야 합니다.");
+        return SetAsync(PollingIntervalKey, seconds.ToString(CultureInfo.InvariantCulture), ct);
+    }
+
+    private async Task<string?> GetAsync(string key, CancellationToken ct)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        return (await db.AppSettings.AsNoTracking().SingleOrDefaultAsync(s => s.Key == key, ct))?.Value;
+    }
+
+    private async Task SetAsync(string key, string value, CancellationToken ct)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var row = await db.AppSettings.SingleOrDefaultAsync(s => s.Key == key, ct);
+        if (row is null)
+        {
+            row = new AppSetting { Key = key };
+            db.AppSettings.Add(row);
+        }
+        row.Value = value;
+        await db.SaveChangesAsync(ct);
+    }
+}

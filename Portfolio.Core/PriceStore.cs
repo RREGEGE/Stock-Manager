@@ -12,6 +12,16 @@ public sealed class PriceStore
 
     public PriceEntry? Get(string symbolCode) => _entries.GetValueOrDefault(symbolCode);
 
+    // 마지막으로 유효가를 받은 시각 (상단 바의 '시세 갱신' 표시용). 받은 적이 없으면 null.
+    public DateTimeOffset? LatestFetchedAt
+    {
+        get
+        {
+            var times = _entries.Values.Where(e => e.Price > 0).Select(e => e.FetchedAt).ToList();
+            return times.Count > 0 ? times.Max() : null;
+        }
+    }
+
     // 재시작 시 PriceCache의 마지막 유효가를 불러온다. 이미 있는 값은 덮지 않는다.
     public void Restore(IEnumerable<PriceQuote> cached)
     {

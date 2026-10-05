@@ -1,0 +1,35 @@
+@* 숫자만 입력, 쉼표 자동 표시 (설계서 9.5) *@
+<input id="@Id" type="text" inputmode="numeric" autocomplete="off" class="input input-num @Class"
+       aria-label="@AriaLabel" value="@_text" @oninput="OnInput" @onchange="OnCommit" @attributes="Attributes" />
+
+@code {
+    [Parameter] public decimal Value { get; set; }
+    [Parameter] public EventCallback<decimal> ValueChanged { get; set; }
+    [Parameter] public EventCallback<decimal> OnCommitted { get; set; }   // 입력을 마쳤을 때 (포커스 이동·Enter)
+    [Parameter] public decimal Max { get; set; } = 100_000_000_000m;
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? Attributes { get; set; }
+
+    private string _text = "0";
+
+    protected override void OnParametersSet() => _text = DisplayFormat.Number(Value);
+
+    private async Task OnInput(ChangeEventArgs e)
+    {
+        Value = Parse(e.Value?.ToString());
+        _text = DisplayFormat.Number(Value);
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private Task OnCommit(ChangeEventArgs e) => OnCommitted.InvokeAsync(Parse(e.Value?.ToString()));
+
+    // 정수만 받는다 (소수점 주식 미지원, 금액은 원 단위)
+    private decimal Parse(string? text)
+    {
+        var digits = new string((text ?? "").Where(char.IsAsciiDigit).Take(15).ToArray());
+        decimal value = digits.Length > 0 ? decimal.Parse(digits, System.Globalization.CultureInfo.InvariantCulture) : 0m;
+        return Math.Min(value, Max);
+    }
+}

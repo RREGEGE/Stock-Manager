@@ -1,0 +1,43 @@
+@* conic-gradient 도넛 + 범례 (설계서 9.1, 9.5). 범례를 누르면 해당 항목으로 필터한다. *@
+<div class="donut-wrap @(Dense ? "dense" : "")">
+    <div class="donut" role="img" aria-label="@AriaLabel" style="background: @PortfolioViewModel.ConicGradient(Segments)">
+        <div class="donut-hole">
+            <div class="donut-label">@CenterLabel</div>
+            <div class="donut-value">@CenterValue</div>
+        </div>
+    </div>
+    <div class="legend">
+        @foreach (var s in Segments)
+        {
+            var seg = s;
+            if (OnSelect.HasDelegate)
+            {
+                <button type="button" class="legend-item @(SelectedKey == seg.Key ? "selected" : "")"
+                        aria-pressed="@(SelectedKey == seg.Key ? "true" : "false")"
+                        @onclick="() => OnSelect.InvokeAsync(seg.Key)">
+                    <span class="legend-swatch" style="background: @seg.Color"></span>
+                    <span class="legend-name">@seg.Name</span>
+                    <span class="legend-value">@DisplayFormat.Percent1(seg.Ratio)</span>
+                </button>
+            }
+            else
+            {
+                <div class="legend-item">
+                    <span class="legend-swatch" style="background: @seg.Color"></span>
+                    <span class="legend-name">@seg.Name</span>
+                    <span class="legend-value">@DisplayFormat.Percent1(seg.Ratio)</span>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<ChartSegment> Segments { get; set; } = [];
+    [Parameter] public string CenterLabel { get; set; } = "";
+    [Parameter] public string CenterValue { get; set; } = "";
+    [Parameter] public string AriaLabel { get; set; } = "";
+    [Parameter] public bool Dense { get; set; }               // 항목이 많은 종목 도넛용 작은 범례
+    [Parameter] public string? SelectedKey { get; set; }
+    [Parameter] public EventCallback<string> OnSelect { get; set; }
+}

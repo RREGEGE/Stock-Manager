@@ -10,7 +10,8 @@ public sealed class PriceUpdater(
     IDbContextFactory<PortfolioDbContext> dbFactory,
     IPriceProvider priceProvider,
     PriceStore priceStore,
-    ILogger<PriceUpdater>? logger = null)
+    ILogger<PriceUpdater>? logger = null,
+    PortfolioNotifier? notifier = null)
 {
     private readonly ILogger _logger = logger ?? NullLogger<PriceUpdater>.Instance;
 
@@ -52,6 +53,8 @@ public sealed class PriceUpdater(
 
         if (updated.Count > 0)
             await SaveCacheAsync(updated, ct);
+
+        notifier?.NotifyChanged();   // 열려 있는 화면에 갱신을 알린다 (지연 표시 변경 포함)
     }
 
     private async Task SaveCacheAsync(IReadOnlyList<PriceQuote> quotes, CancellationToken ct)

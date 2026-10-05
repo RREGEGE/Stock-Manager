@@ -1,0 +1,80 @@
+@* 보유 종목 표. 열 구성은 Full 매개변수로 고른다 (설계서 9.3, 9.5) *@
+<div class="table-scroll">
+    <table class="table @(Full ? "table-compact" : "")" style="min-width: @(Full ? "760px" : "640px")">
+        <thead>
+            <tr>
+                <th scope="col">종목명</th>
+                <th scope="col">그룹</th>
+                @if (Full)
+                {
+                    <th scope="col" class="num">수량</th>
+                    <th scope="col" class="num">평균매입단가</th>
+                    <th scope="col" class="num">현재가</th>
+                }
+                <th scope="col" class="num">평가금액</th>
+                @if (!Full)
+                {
+                    <th scope="col" class="num">비중</th>
+                }
+                <th scope="col" class="num">손익률</th>
+                @if (Full)
+                {
+                    <th scope="col">수정일</th>
+                    <th scope="col"><span class="sr-only">작업</span></th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Rows)
+            {
+                var row = r;
+                var h = row.View;
+                <tr class="@(SelectedCode == h.SymbolCode ? "selected" : "") @(h.IsStale ? "stale" : "")">
+                    <td class="name">
+                        @h.SymbolName
+                        @if (h.IsStale)
+                        {
+                            <span class="badge badge-stale">시세 지연</span>
+                        }
+                    </td>
+                    <td><span class="group-tag"><span class="dot" style="background: @row.GroupColor"></span>@h.GroupName</span></td>
+                    @if (Full)
+                    {
+                        <td class="num">@DisplayFormat.Number(h.Quantity)</td>
+                        <td class="num">@DisplayFormat.Number(h.AvgPrice)</td>
+                        <td class="num">@(h.CurrentPrice > 0 ? DisplayFormat.Number(h.CurrentPrice) : "-")</td>
+                        <td class="num">@DisplayFormat.Number(h.EvalAmount)</td>
+                    }
+                    else
+                    {
+                        <td class="num">@DisplayFormat.Won(h.EvalAmount)</td>
+                        <td class="num">@DisplayFormat.Percent1(row.Weight)</td>
+                    }
+                    <td class="num strong @(h.CurrentPrice <= 0 ? "" : row.ReturnRate >= 0 ? "up" : "down")">
+                        @(h.CurrentPrice > 0 ? DisplayFormat.SignedPercent2(row.ReturnRate) : "-")
+                    </td>
+                    @if (Full)
+                    {
+                        <td class="updated">@(row.UpdatedAt is { } at ? DisplayFormat.MonthDay(at) : "")</td>
+                        <td class="action">
+                            <button type="button" class="btn btn-text" aria-label="@(h.SymbolName + " 수정")"
+                                    @onclick="() => OnEdit.InvokeAsync(row)">수정</button>
+                        </td>
+                    }
+                </tr>
+            }
+            @if (Rows.Count == 0)
+            {
+                <tr><td colspan="@(Full ? 9 : 5)" class="empty">@EmptyText</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<HoldingRow> Rows { get; set; } = [];
+    [Parameter] public bool Full { get; set; }                 // true: 보유 종목 화면, false: 대시보드
+    [Parameter] public string? SelectedCode { get; set; }
+    [Parameter] public EventCallback<HoldingRow> OnEdit { get; set; }
+    [Parameter] public string EmptyText { get; set; } = "보유 종목이 없습니다.";
+}

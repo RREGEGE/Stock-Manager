@@ -1,0 +1,5 @@
+.settings-card { display: flex; flex-direction: column; gap: 14px; max-width: 640px; }
+.inline { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.inline .input { width: 120px; }
+.settings-card .note { margin: 0; }
+.status { margin: 0; font-size: 13px; font-weight: 600; }

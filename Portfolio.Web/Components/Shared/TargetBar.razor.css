@@ -1,0 +1,22 @@
+.target-head { display: flex; align-items: baseline; gap: 8px; font-size: 14px; margin-bottom: 8px; }
+.target-name { font-weight: 600; flex-grow: 1; }
+.target-values { color: var(--text-muted); font-size: 13px; }
+.target-diff { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.target-diff.over { background: var(--over-bg); color: var(--over-fg); }
+.target-diff.under { background: var(--under-bg); color: var(--under-fg); }
+.target-diff.ok { background: var(--ok-bg); color: var(--ok-fg); }
+
+.target-track { position: relative; height: 10px; border-radius: 5px; background: var(--bg-track); }
+.target-fill { height: 10px; border-radius: 5px; max-width: 100%; }
+.target-line { position: absolute; top: -4px; width: 2px; height: 18px; background: var(--text); }
+
+/* 모바일 목업: 이름과 차이 글자만, 막대 8px */
+@media (max-width: 639.98px) {
+    .target-head { font-size: 13px; margin-bottom: 6px; justify-content: space-between; }
+    .target-values { display: none; }
+    .target-diff { font-size: 13px; padding: 0; border-radius: 0; }
+    .target-diff.over, .target-diff.under, .target-diff.ok { background: transparent; }
+    .target-track { height: 8px; border-radius: 4px; }
+    .target-fill { height: 8px; border-radius: 4px; }
+    .target-line { height: 16px; }
+}

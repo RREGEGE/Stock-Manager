@@ -1,0 +1,8 @@
+.summary-card { background: var(--bg-card); border: 1px solid var(--line-card); border-radius: 12px; padding: 20px 22px; }
+.summary-title { font-size: 13px; color: var(--text-muted); }
+.summary-value { margin-top: 8px; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; }
+.summary-value span { font-size: 16px; font-weight: 500; margin-left: 2px; }
+.summary-sub { margin-top: 6px; font-size: 13px; color: var(--text-muted); }
+.summary-sub.strong { font-weight: 600; }
+.up { color: var(--up); }
+.down { color: var(--down); }

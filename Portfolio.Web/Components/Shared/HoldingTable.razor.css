@@ -1,0 +1,4 @@
+.updated { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+td.action { padding: 4px 8px; text-align: right; }
+td.empty { padding: 24px 8px; color: var(--text-muted); text-align: left; }
+.badge { margin-left: 6px; }
