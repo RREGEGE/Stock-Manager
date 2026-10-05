@@ -159,6 +159,27 @@ public class LoginTests
         Assert.Equal(HttpStatusCode.Redirect, (await browser.GetAsync("/")).StatusCode);
     }
 
+    [Fact]
+    public async Task 비밀번호를_바꾸면_이전에_로그인한_기기는_다시_로그인해야_한다()
+    {
+        using var app = new TestApp();
+        await app.SetPasswordAsync();
+        var phone = app.CreateBrowser();
+        await TestApp.PostLoginAsync(phone, TestApp.TestPassword);
+        Assert.Equal(HttpStatusCode.OK, (await phone.GetAsync("/")).StatusCode);
+
+        // 기기를 잃어버려 PC에서 비밀번호를 바꾼 상황
+        const string newPassword = "test-only-password-2";
+        await app.SetPasswordAsync(newPassword);
+
+        Assert.Equal(HttpStatusCode.Redirect, (await phone.GetAsync("/")).StatusCode);
+
+        var other = app.CreateBrowser();
+        Assert.Equal(HttpStatusCode.OK, (await TestApp.PostLoginAsync(other, TestApp.TestPassword)).StatusCode);   // 옛 비밀번호는 거부
+        Assert.Equal(HttpStatusCode.Redirect, (await TestApp.PostLoginAsync(other, newPassword)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await other.GetAsync("/")).StatusCode);
+    }
+
     [Theory]
     [InlineData("https://evil.example/")]
     [InlineData("//evil.example/")]

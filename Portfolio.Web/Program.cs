@@ -125,6 +125,17 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         o.LoginPath = "/login";
         o.ExpireTimeSpan = AuthOptions.SessionLifetime;
         o.SlidingExpiration = true;
+        // 비밀번호가 바뀌면 이전에 발급한 로그인 쿠키를 모두 무효로 한다 (기기 분실 대비)
+        o.Events.OnValidatePrincipal = async context =>
+        {
+            var passwords = context.HttpContext.RequestServices.GetRequiredService<PasswordService>();
+            string? current = await passwords.GetStampAsync(context.HttpContext.RequestAborted);
+            if (current is null || context.Principal?.FindFirst(AuthOptions.StampClaim)?.Value != current)
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            }
+        };
     });
 builder.Services.AddAuthorization(o =>
 {

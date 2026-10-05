@@ -82,7 +82,9 @@
         }
 
         Throttle.RecordSuccess();
-        var identity = new ClaimsIdentity([new Claim(ClaimTypes.Name, "owner")], CookieAuthenticationDefaults.AuthenticationScheme);
+        var identity = new ClaimsIdentity(
+            [new Claim(ClaimTypes.Name, "owner"), new Claim(AuthOptions.StampClaim, await Passwords.GetStampAsync() ?? "")],
+            CookieAuthenticationDefaults.AuthenticationScheme);
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity),
             new AuthenticationProperties { IsPersistent = true });
         Navigation.NavigateTo(SafeReturnUrl);

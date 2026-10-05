@@ -7,6 +7,7 @@ public sealed class AuthOptions
 {
     public const string SectionName = "Auth";
     public const string CookieName = "portfolio_auth";
+    public const string StampClaim = "pwd_stamp";
     public const int MinPasswordLength = 8;
     public static readonly TimeSpan SessionLifetime = TimeSpan.FromDays(90);
 
@@ -29,6 +30,16 @@ public sealed class PasswordService(SettingsRepository settings)
         if (string.IsNullOrEmpty(password) || password.Length < AuthOptions.MinPasswordLength)
             throw new ArgumentException($"비밀번호는 {AuthOptions.MinPasswordLength}자 이상이어야 합니다.");
         await settings.SetPasswordHashAsync(Hasher.HashPassword(User, password), ct);
+    }
+
+    // 현재 비밀번호를 가리키는 표식. 로그인 쿠키에 넣어 두고, 비밀번호가 바뀌면 달라지므로
+    // 이전에 로그인한 기기는 모두 다시 로그인해야 한다 (기기 분실 대비).
+    public async Task<string?> GetStampAsync(CancellationToken ct = default)
+    {
+        string? hash = await settings.GetPasswordHashAsync(ct);
+        return string.IsNullOrEmpty(hash)
+            ? null
+            : Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(hash)))[..32];
     }
 
     public async Task<bool> VerifyAsync(string? password, CancellationToken ct = default)

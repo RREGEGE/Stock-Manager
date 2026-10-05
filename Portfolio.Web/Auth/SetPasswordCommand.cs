@@ -32,7 +32,7 @@ public static class SetPasswordCommand
             return 1;
         }
 
-        output.WriteLine("비밀번호를 저장했습니다. 이미 로그인된 기기는 로그인 상태가 유지됩니다.");
+        output.WriteLine("비밀번호를 저장했습니다. 이전에 로그인한 기기는 모두 새 비밀번호로 다시 로그인해야 합니다.");
         return 0;
     }
 
