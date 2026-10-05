@@ -2,53 +2,48 @@
 @layout LoginLayout
 @attribute [ExcludeFromInteractiveRouting]
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
-@using System.Security.Claims
-@using Microsoft.AspNetCore.Authentication
-@using Microsoft.AspNetCore.Authentication.Cookies
 @using Microsoft.Extensions.Options
 @using Portfolio.Web.Auth
-@inject PasswordService Passwords
+@inject AccountService Accounts
 @inject LoginThrottle Throttle
 @inject IOptions<AuthOptions> Auth
 @inject NavigationManager Navigation
 
 <PageTitle>로그인</PageTitle>
 
-@* 쿠키를 발급해야 하므로 이 화면만 서버 렌더링(폼 전송)으로 동작한다 *@
-<main class="login-page">
-    <section class="card login-card" aria-labelledby="h-login">
-        <h1 id="h-login" class="login-title">포트폴리오</h1>
+@* 쿠키를 발급해야 하므로 이 화면은 서버 렌더링(폼 전송)으로 동작한다 *@
+<main class="auth-page">
+    <section class="card auth-card" aria-labelledby="h-login">
+        <h1 id="h-login" class="auth-title">포트폴리오</h1>
+        <p class="auth-sub">로그인</p>
 
-        @if (!_configured)
-        {
-            <p class="login-text">아직 비밀번호가 설정되지 않았습니다. 앱을 실행하는 PC에서 아래 명령으로 설정한 뒤 다시 접속하세요.</p>
-            <pre class="login-code">scripts\set-password.cmd</pre>
-        }
-        else
-        {
-            <form method="post" @formname="login" @onsubmit="SubmitAsync" class="login-form">
-                <AntiforgeryToken />
-                <div class="field">
-                    <label for="password">비밀번호</label>
-                    <input id="password" name="Password" type="password" class="input" autocomplete="current-password" autofocus required />
-                </div>
-                @if (_message is not null)
-                {
-                    <p class="field-error" role="alert">@_message</p>
-                }
-                <button type="submit" class="btn btn-primary login-button">로그인</button>
-            </form>
-            <p class="note">한 번 로그인하면 이 기기에서 90일 동안 유지됩니다.</p>
-        }
+        <form method="post" @formname="login" @onsubmit="SubmitAsync" class="auth-form">
+            <AntiforgeryToken />
+            <div class="field">
+                <label for="username">아이디</label>
+                <input id="username" name="UserName" type="text" class="input" value="@UserName"
+                       autocomplete="username" autocapitalize="none" spellcheck="false" autofocus required />
+            </div>
+            <div class="field">
+                <label for="password">비밀번호</label>
+                <input id="password" name="Password" type="password" class="input" autocomplete="current-password" required />
+            </div>
+            @if (_message is not null)
+            {
+                <p class="field-error" role="alert">@_message</p>
+            }
+            <button type="submit" class="btn btn-primary auth-button">로그인</button>
+        </form>
+        <p class="note">한 번 로그인하면 이 기기에서 90일 동안 유지됩니다.</p>
     </section>
 </main>
 
 @code {
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+    [SupplyParameterFromForm(FormName = "login")] private string? UserName { get; set; }
     [SupplyParameterFromForm(FormName = "login")] private string? Password { get; set; }
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
-    private bool _configured;
     private string? _message;
 
     protected override async Task OnInitializedAsync()
@@ -56,46 +51,38 @@
         // 로그인이 꺼져 있거나(개발용 가짜 시세) 이미 로그인했으면 바로 들어간다
         if (!Auth.Value.Enabled || HttpContext.User.Identity?.IsAuthenticated == true)
         {
-            Navigation.NavigateTo(SafeReturnUrl);
+            Navigation.NavigateTo(AccountSignIn.SafeReturnUrl(ReturnUrl));
             return;
         }
-        _configured = await Passwords.IsConfiguredAsync();
+        // 계정이 아직 없으면 가입 화면으로 보낸다
+        if (!await Accounts.IsRegisteredAsync())
+        {
+            Navigation.NavigateTo("/signup");
+            return;
+        }
         if (Throttle.LockRemaining is { } remaining)
-            _message = LockMessage(remaining);
+            _message = LoginThrottle.Message(remaining);
     }
 
     private async Task SubmitAsync()
     {
         if (Throttle.LockRemaining is { } remaining)
         {
-            _message = LockMessage(remaining);
+            _message = LoginThrottle.Message(remaining);
             return;
         }
 
-        if (!await Passwords.VerifyAsync(Password))
+        if (!await Accounts.VerifyAsync(UserName, Password))
         {
             Throttle.RecordFailure();
             _message = Throttle.LockRemaining is { } locked
-                ? LockMessage(locked)
-                : "비밀번호가 맞지 않습니다.";
+                ? LoginThrottle.Message(locked)
+                : "아이디 또는 비밀번호가 맞지 않습니다.";
             return;
         }
 
         Throttle.RecordSuccess();
-        var identity = new ClaimsIdentity(
-            [new Claim(ClaimTypes.Name, "owner"), new Claim(AuthOptions.StampClaim, await Passwords.GetStampAsync() ?? "")],
-            CookieAuthenticationDefaults.AuthenticationScheme);
-        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity),
-            new AuthenticationProperties { IsPersistent = true });
-        Navigation.NavigateTo(SafeReturnUrl);
+        await AccountSignIn.SignInAsync(HttpContext, Accounts);
+        Navigation.NavigateTo(AccountSignIn.SafeReturnUrl(ReturnUrl));
     }
-
-    private static string LockMessage(TimeSpan remaining) =>
-        $"여러 번 틀려서 잠시 막았습니다. {Math.Max(1, (int)Math.Ceiling(remaining.TotalSeconds))}초 뒤에 다시 시도하세요.";
-
-    // 로그인 후 이동할 주소는 이 앱 안의 경로만 허용한다
-    private string SafeReturnUrl =>
-        ReturnUrl is { Length: > 0 } url && url[0] == '/' && !url.StartsWith("//") && !url.StartsWith("/\\")
-            && !url.StartsWith("/login", StringComparison.OrdinalIgnoreCase)
-            ? url : "/";
 }

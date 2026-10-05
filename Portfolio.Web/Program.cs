@@ -125,13 +125,13 @@ builder.Services.AddSingleton<GroupRepository>();
 builder.Services.AddSingleton<SettingsRepository>();
 builder.Services.AddSingleton<PortfolioService>();
 
-// 로그인: 비밀번호 1개, 쿠키로 90일 유지 (설계서 7.3 개인 사용 단계의 간소화)
+// 로그인: 계정 1개(아이디 + 비밀번호), 쿠키로 90일 유지 (설계서 7.3 개인 사용 단계의 간소화)
 var authOptions = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
 if (!authOptions.Enabled && priceSource != PriceSource.Fake)
     throw new InvalidOperationException("Auth:Enabled=false는 가짜 시세(PriceSource=Fake)일 때만 쓸 수 있습니다. 실제 보유 내역은 로그인 없이 열 수 없습니다.");
 
 builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection(AuthOptions.SectionName));
-builder.Services.AddSingleton<PasswordService>();
+builder.Services.AddSingleton<AccountService>();
 builder.Services.AddSingleton<LoginThrottle>();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(o =>
@@ -146,7 +146,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         // 비밀번호가 바뀌면 이전에 발급한 로그인 쿠키를 모두 무효로 한다 (기기 분실 대비)
         o.Events.OnValidatePrincipal = async context =>
         {
-            var passwords = context.HttpContext.RequestServices.GetRequiredService<PasswordService>();
+            var passwords = context.HttpContext.RequestServices.GetRequiredService<AccountService>();
             string? current = await passwords.GetStampAsync(context.HttpContext.RequestAborted);
             if (current is null || context.Principal?.FindFirst(AuthOptions.StampClaim)?.Value != current)
             {
@@ -172,23 +172,12 @@ await using (var db = await app.Services.GetRequiredService<IDbContextFactory<Po
         await SeedData.ApplyAsync(db);   // 개발용 DB에만, 보유종목이 비어 있을 때만 넣는다
 }
 
-// `set-password`: 웹 서버를 띄우지 않고 비밀번호만 설정하고 끝낸다
+// `set-password`: 비밀번호를 잊었을 때의 복구용. 웹 서버를 띄우지 않고 비밀번호만 다시 정하고 끝낸다.
+// (가입과 평소의 비밀번호 변경은 웹 화면에서 한다)
 if (isSetPassword)
 {
     return await SetPasswordCommand.RunAsync(
-        app.Services.GetRequiredService<PasswordService>(), SetPasswordCommand.ReadHidden, Console.Out);
-}
-
-// 처음 실행: 비밀번호가 없으면 이 창에서 바로 설정한다 (이 PC의 창에서만 가능하므로 set-password와 같은 조건)
-if (authOptions.Enabled && openWindow && !Console.IsInputRedirected)
-{
-    var passwords = app.Services.GetRequiredService<PasswordService>();
-    for (int attempt = 0; attempt < 3 && !await passwords.IsConfiguredAsync(); attempt++)
-    {
-        Console.WriteLine();
-        Console.WriteLine("처음 실행입니다. 로그인에 쓸 비밀번호를 정해 주세요. (입력한 글자는 화면에 보이지 않습니다)");
-        await SetPasswordCommand.RunAsync(passwords, SetPasswordCommand.ReadHidden, Console.Out);
-    }
+        app.Services.GetRequiredService<AccountService>(), SetPasswordCommand.ReadHidden, Console.Out);
 }
 
 // Configure the HTTP request pipeline.

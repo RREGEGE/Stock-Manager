@@ -3,3 +3,5 @@
 .inline .input { width: 120px; }
 .settings-card .note { margin: 0; }
 .status { margin: 0; font-size: 13px; font-weight: 600; }
+.account-name { margin: 0; font-size: 14px; }
+.account-actions { display: flex; flex-wrap: wrap; gap: 8px; }

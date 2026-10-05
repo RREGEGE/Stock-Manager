@@ -10,7 +10,7 @@ public class HomeScreenAppTests
     public async Task 앱_정보_파일과_아이콘은_로그인_전에도_받을_수_있다()
     {
         using var app = new TestApp();
-        await app.SetPasswordAsync();
+        await app.RegisterAsync();
         var browser = app.CreateBrowser();
 
         // 브라우저는 이 파일을 로그인 쿠키 없이 요청한다
@@ -38,7 +38,7 @@ public class HomeScreenAppTests
     public async Task 모든_화면의_머리말에_앱_정보_파일과_아이콘_연결이_있다()
     {
         using var app = new TestApp();
-        await app.SetPasswordAsync();
+        await app.RegisterAsync();
         var browser = app.CreateBrowser();
 
         string login = await browser.GetStringAsync("/login");

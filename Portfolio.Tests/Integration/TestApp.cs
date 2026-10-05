@@ -12,7 +12,8 @@ namespace Portfolio.Tests.Integration;
 // 데이터는 테스트마다 임시 폴더를 쓰고, 외부 통신(KIS, 종목 마스터)은 하지 않는다.
 public sealed class TestApp : WebApplicationFactory<Program>
 {
-    // 테스트 전용 비밀번호 (실제 비밀번호 아님)
+    // 테스트 전용 계정 (실제 계정 아님)
+    public const string TestUserName = "tester";
     public const string TestPassword = "test-only-password-1";
 
     public string DataDirectory { get; } =
@@ -37,22 +38,27 @@ public sealed class TestApp : WebApplicationFactory<Program>
             builder.UseSetting(key, value);
     }
 
-    public Task SetPasswordAsync(string password = TestPassword) =>
-        Services.GetRequiredService<PasswordService>().SetAsync(password);
+    // 가입된 상태로 만든다 (웹 가입 화면을 거치지 않고 바로)
+    public Task RegisterAsync(string userName = TestUserName, string password = TestPassword) =>
+        Services.GetRequiredService<AccountService>().RegisterAsync(userName, password);
 
     // 리디렉션을 따라가지 않고 쿠키는 유지하는 클라이언트 (브라우저 한 대에 해당)
     public HttpClient CreateBrowser() =>
         CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false, HandleCookies = true });
 
-    // 로그인 화면을 받아 폼의 숨은 값(위조 방지 토큰 등)과 함께 비밀번호를 전송한다
-    public static async Task<HttpResponseMessage> PostLoginAsync(HttpClient browser, string password, string path = "/login")
+    // 화면을 받아 폼의 숨은 값(위조 방지 토큰 등)과 함께 입력값을 전송한다
+    public static async Task<HttpResponseMessage> PostFormAsync(HttpClient browser, string path, Dictionary<string, string> values)
     {
         string html = await browser.GetStringAsync(path);
         var fields = Regex.Matches(html, """<input type="hidden" name="([^"]+)" value="([^"]*)" */?>""")
             .ToDictionary(m => m.Groups[1].Value, m => WebUtility.HtmlDecode(m.Groups[2].Value));
-        fields["Password"] = password;
+        foreach (var (key, value) in values) fields[key] = value;
         return await browser.PostAsync(path, new FormUrlEncodedContent(fields));
     }
+
+    public static Task<HttpResponseMessage> PostLoginAsync(
+        HttpClient browser, string password, string path = "/login", string userName = TestUserName) =>
+        PostFormAsync(browser, path, new() { ["UserName"] = userName, ["Password"] = password });
 
     // 리디렉션 대상이 이 앱(같은 호스트)일 때만 경로를 돌려준다. 앱 밖이면 전체 주소를 그대로 돌려준다.
     public static string LocalPath(HttpResponseMessage response)

@@ -2,18 +2,21 @@ using System.Text;
 
 namespace Portfolio.Web.Auth;
 
-// `Portfolio.Web set-password`: 이 PC의 터미널에서만 비밀번호를 설정·변경한다.
-// 웹 화면에는 설정 기능을 두지 않는다 (다른 기기에서 먼저 비밀번호를 정해 버리는 일을 막기 위함).
+// `Portfolio.Web set-password`: 비밀번호를 잊었을 때 앱을 실행하는 PC의 터미널에서 다시 정한다.
+// 평소 가입·비밀번호 변경은 웹 화면에서 한다. 이 명령은 현재 비밀번호를 묻지 않으므로 이 PC에서만 쓸 수 있게 둔다.
 public static class SetPasswordCommand
 {
     public const string Name = "set-password";
 
-    public static async Task<int> RunAsync(PasswordService passwords, Func<string, string?> prompt, TextWriter output)
+    public static async Task<int> RunAsync(AccountService accounts, Func<string, string?> prompt, TextWriter output)
     {
-        output.WriteLine(await passwords.IsConfiguredAsync()
-            ? "로그인 비밀번호를 변경합니다."
-            : "로그인 비밀번호를 설정합니다.");
+        if (!await accounts.IsRegisteredAsync())
+        {
+            output.WriteLine("아직 계정이 없습니다. 앱을 켜고 웹 화면에서 가입하세요.");
+            return 1;
+        }
 
+        output.WriteLine($"'{await accounts.GetUserNameAsync()}' 계정의 비밀번호를 다시 정합니다.");
         string? first = prompt($"새 비밀번호 ({AuthOptions.MinPasswordLength}자 이상): ");
         string? second = prompt("한 번 더 입력: ");
         if (first != second)
@@ -24,7 +27,7 @@ public static class SetPasswordCommand
 
         try
         {
-            await passwords.SetAsync(first ?? "");
+            await accounts.ResetPasswordAsync(first);
         }
         catch (ArgumentException ex)
         {
