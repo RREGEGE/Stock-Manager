@@ -20,6 +20,10 @@ public sealed class KisClient(
     public const string MultiPriceTrId = "FHKST11300006";
     public const string PricePath = "/uapi/domestic-stock/v1/quotations/inquire-price";
     public const string PriceTrId = "FHKST01010100";
+    public const string IndexPricePath = "/uapi/domestic-stock/v1/quotations/inquire-index-price";
+    public const string IndexPriceTrId = "FHPUP02100000";
+    public const string OverseasChartPath = "/uapi/overseas-price/v1/quotations/inquire-daily-chartprice";
+    public const string OverseasChartTrId = "FHKST03030100";
     public const int MaxMultiPriceSymbols = 30;
 
     // 앱키가 설정되어 있는지. 없으면 호출해도 실패하므로 호출하는 쪽에서 미리 건너뛴다.
@@ -59,6 +63,33 @@ public sealed class KisClient(
             new("FID_INPUT_ISCD", symbolCode),
         ], ct);
         return KisResponseParser.ParsePrice(doc.RootElement, symbolCode, _clock.GetUtcNow());
+    }
+
+    // 국내 업종 지수 현재가 (코스피 0001, 코스닥 1001)
+    public async Task<MarketIndicator?> GetDomesticIndexAsync(string key, string indexCode, CancellationToken ct = default)
+    {
+        using var doc = await GetAsync(IndexPricePath, IndexPriceTrId,
+        [
+            new("FID_COND_MRKT_DIV_CODE", "U"),
+            new("FID_INPUT_ISCD", indexCode),
+        ], ct);
+        return KisResponseParser.ParseDomesticIndex(doc.RootElement, key, _clock.GetUtcNow());
+    }
+
+    // 해외 지수(시장 구분 N)·환율(X)의 현재 값. 기간별 시세 API의 요약(output1)을 쓴다.
+    public async Task<MarketIndicator?> GetOverseasIndicatorAsync(
+        string key, string marketDivision, string code, CancellationToken ct = default)
+    {
+        var today = _clock.GetUtcNow().ToOffset(MarketSchedule.Kst);
+        using var doc = await GetAsync(OverseasChartPath, OverseasChartTrId,
+        [
+            new("FID_COND_MRKT_DIV_CODE", marketDivision),
+            new("FID_INPUT_ISCD", code),
+            new("FID_INPUT_DATE_1", today.AddDays(-7).ToString("yyyyMMdd", CultureInfo.InvariantCulture)),
+            new("FID_INPUT_DATE_2", today.ToString("yyyyMMdd", CultureInfo.InvariantCulture)),
+            new("FID_PERIOD_DIV_CODE", "D"),
+        ], ct);
+        return KisResponseParser.ParseOverseasIndicator(doc.RootElement, key, _clock.GetUtcNow());
     }
 
     private async Task<JsonDocument> GetAsync(
@@ -146,6 +177,40 @@ public static class KisResponseParser
         // stck_sdpr(기준가)를 전일 종가로 쓴다
         return new PriceQuote(symbolCode, Num(output, "stck_prpr"), Num(output, "stck_sdpr"), fetchedAt);
     }
+
+    // 국내 업종 지수: output 객체의 현재가·전일 대비·대비율
+    public static MarketIndicator? ParseDomesticIndex(JsonElement root, string key, DateTimeOffset fetchedAt)
+    {
+        if (!root.TryGetProperty("output", out var o) || o.ValueKind != JsonValueKind.Object) return null;
+        decimal value = Num(o, "bstp_nmix_prpr");
+        if (value <= 0) return null;
+        string sign = Str(o, "prdy_vrss_sign");
+        return new MarketIndicator(key, value,
+            Signed(Num(o, "bstp_nmix_prdy_vrss"), sign),
+            Signed(Num(o, "bstp_nmix_prdy_ctrt"), sign) / 100m, fetchedAt);
+    }
+
+    // 해외 지수·환율: output1 객체의 현재가·전일 대비·대비율
+    public static MarketIndicator? ParseOverseasIndicator(JsonElement root, string key, DateTimeOffset fetchedAt)
+    {
+        if (!root.TryGetProperty("output1", out var o) || o.ValueKind != JsonValueKind.Object) return null;
+        decimal value = Num(o, "ovrs_nmix_prpr");
+        if (value <= 0) return null;
+        string sign = Str(o, "prdy_vrss_sign");
+        return new MarketIndicator(key, value,
+            Signed(Num(o, "ovrs_nmix_prdy_vrss"), sign),
+            Signed(Num(o, "prdy_ctrt"), sign) / 100m, fetchedAt);
+    }
+
+    // 전일 대비 부호(prdy_vrss_sign): 1 상한, 2 상승, 3 보합, 4 하한, 5 하락.
+    // 값에 부호가 붙어 오는 경우와 안 붙어 오는 경우를 모두 처리한다: 부호 코드가 있으면 그것을 따른다.
+    private static decimal Signed(decimal value, string signCode) => signCode switch
+    {
+        "4" or "5" => -Math.Abs(value),
+        "1" or "2" => Math.Abs(value),
+        "3" => 0m,
+        _ => value,
+    };
 
     private static string Str(JsonElement e, string name) =>
         e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() ?? "" : "";

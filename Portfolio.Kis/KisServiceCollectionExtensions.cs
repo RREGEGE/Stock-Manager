@@ -75,6 +75,7 @@ public static class KisServiceCollectionExtensions
         services.AddSingleton<IPriceProvider>(sp => new KisPriceProvider(
             sp.GetRequiredService<KisClient>(),
             sp.GetService<ILogger<KisPriceProvider>>()));
+        services.AddSingleton<IMarketIndicatorProvider>(sp => new KisMarketIndicatorProvider(sp.GetRequiredService<KisClient>()));
         return services;
     }
 
