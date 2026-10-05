@@ -4,7 +4,31 @@
 <PageTitle>포트폴리오 대시보드</PageTitle>
 
 <main class="page-main">
-    @if (Model is { } m)
+    @if (Model is not { } m)
+    {
+        <p class="loading" role="status">불러오는 중…</p>
+    }
+    else if (m.Rows.Count == 0)
+    {
+        @* 처음 쓰는 상태: 0으로 가득 찬 화면 대신 시작 방법을 안내한다 *@
+        <div class="page-head">
+            <div>
+                <h1>대시보드</h1>
+                <p>삼성증권 계좌</p>
+            </div>
+        </div>
+        <section class="card empty-state" aria-labelledby="h-start">
+            <h2 id="h-start">보유 종목을 추가하면 시작됩니다</h2>
+            <p>삼성증권 잔고 화면의 종목·수량·평균매입단가를 옮겨 적으면, 총 평가금액과 종목·그룹별 비중을 여기서 볼 수 있습니다.</p>
+            <ol>
+                <li><strong>보유 종목</strong>에서 종목을 검색해 수량과 평균매입단가를 입력합니다.</li>
+                <li><strong>그룹 관리</strong>에서 주식·채권·배당의 목표 비중을 정합니다.</li>
+                <li><strong>추가매수 계산</strong>에서 투입 금액을 넣으면 살 종목과 주수가 나옵니다.</li>
+            </ol>
+            <a href="holdings" class="btn btn-primary">보유 종목 추가하기</a>
+        </section>
+    }
+    else
     {
         var s = m.State.Summary;
 
@@ -16,6 +40,8 @@
             <a href="rebalance" class="btn btn-primary cta">추가매수 계산하기</a>
         </div>
 
+        <PriceNotice State="m.State" />
+
         @if (m.State.UnclassifiedCount > 0)
         {
             <div class="notice notice-warn" role="status">
@@ -25,19 +51,27 @@
         }
 
         <section aria-label="요약" class="summary-grid desktop-only">
-            <SummaryCard Title="총 평가금액" Value="@DisplayFormat.Number(s.TotalAmount)"
-                         Sub="@(m.State.IncludeCash ? "예수금 포함" : "예수금 제외")" />
+            <SummaryCard Title="총 평가금액" Value="@DisplayFormat.Number(s.TotalAmount)" Sub="@TotalSub(m)" />
             <SummaryCard Title="매입금액" Value="@DisplayFormat.Number(s.PurchaseAmount)" Sub="수량 × 평균매입단가" />
-            <SummaryCard Title="평가손익" Value="@((s.ProfitLoss >= 0 ? "+" : "") + DisplayFormat.Number(s.ProfitLoss))"
-                         Sub="@DisplayFormat.SignedPercent2(s.ReturnRate)" SubStrong="true"
-                         Tone="@(s.ProfitLoss >= 0 ? "up" : "down")" />
+            @if (s.PricedCount == 0)
+            {
+                @* 현재가가 하나도 없으면 손익을 0이나 손실로 보여 주지 않는다 *@
+                <SummaryCard Title="평가손익" Value="-" Unit="" Sub="현재가를 받으면 계산됩니다" />
+            }
+            else
+            {
+                <SummaryCard Title="평가손익" Value="@((s.ProfitLoss > 0 ? "+" : "") + DisplayFormat.Number(s.ProfitLoss))"
+                             Sub="@(DisplayFormat.SignedPercent2(s.ReturnRate) + (s.UnpricedCount > 0 ? $" · 시세 있는 {s.PricedCount}개 종목 기준" : ""))"
+                             SubStrong="true" Tone="@Tone(s.ProfitLoss)" />
+            }
             <SummaryCard Title="보유 종목" Value="@m.Rows.Count.ToString()" Unit="개"
-                         Sub="@($"미분류 {m.State.UnclassifiedCount}개 · 시세 지연 {m.State.StaleCount}개")" />
+                         Sub="@CountSub(m)" />
         </section>
 
         <section aria-label="비중" class="chart-grid">
             <div class="card">
                 <h2 class="card-title chart-title">그룹별 비중</h2>
+                <p class="hint">항목을 누르면 아래 표에서 그 그룹만 봅니다.</p>
                 <DonutChart Segments="m.GroupSegments"
                             CenterLabel="@($"{m.State.Groups.Count}개 그룹")"
                             CenterValue="@DisplayFormat.ShortWon(s.TotalAmount)"
@@ -47,6 +81,7 @@
 
             <div class="card symbol-chart">
                 <h2 class="card-title chart-title">종목별 비중</h2>
+                <p class="hint">항목을 누르면 아래 표에서 그 종목만 봅니다.</p>
                 <DonutChart Segments="m.SymbolSegments" Dense="true"
                             CenterLabel="@($"{m.Rows.Count}개 종목")"
                             CenterValue="@DisplayFormat.ShortWon(s.TotalAmount)"
@@ -80,8 +115,8 @@
                     <a href="holdings" class="edit-link">편집하기</a>
                 </div>
             </div>
-            <HoldingTable Rows="FilteredRows(m)" EmptyText="@(FilterLabel is null ? "보유 종목이 없습니다. 보유 종목 화면에서 추가하세요." : "해당하는 종목이 없습니다.")" />
-            <p class="note">비중은 소수점 1자리 반올림으로, 합계가 100.0%가 아닐 수 있습니다.</p>
+            <HoldingTable Rows="FilteredRows(m)" EmptyText="해당하는 종목이 없습니다." />
+            <p class="note">비중은 소수점 1자리 반올림으로, 합계가 100.0%가 아닐 수 있습니다. 열 제목을 누르면 정렬됩니다.</p>
         </section>
     }
 </main>
@@ -93,6 +128,19 @@
 
     private string? FilterLabel => _groupFilter
         ?? (_symbolFilter is not null ? Model?.SymbolSegments.FirstOrDefault(s => s.Key == _symbolFilter)?.Name : null);
+
+    private static string Tone(decimal value) => value > 0 ? "up" : value < 0 ? "down" : "";
+
+    // '시세 지연'(마지막 가격으로 표시)과 '시세 없음'(한 번도 못 받음)을 나눠 센다
+    private static string CountSub(PortfolioViewModel m) =>
+        $"미분류 {m.State.UnclassifiedCount}개 · 시세 지연 {m.State.OutdatedCount}개"
+        + (m.State.UnpricedCount > 0 ? $" · 시세 없음 {m.State.UnpricedCount}개" : "");
+
+    private static string TotalSub(PortfolioViewModel m)
+    {
+        string cash = m.State.IncludeCash ? "예수금 포함" : "예수금 제외";
+        return m.State.UnpricedCount > 0 ? $"{cash} · {m.State.UnpricedCount}개 종목은 매입금액 기준" : cash;
+    }
 
     private void ToggleGroupFilter(string key)
     {

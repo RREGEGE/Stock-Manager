@@ -11,7 +11,11 @@
         </div>
     </div>
 
-    @if (Model is { } m)
+    @if (Model is not { } m)
+    {
+        <p class="loading" role="status">불러오는 중…</p>
+    }
+    else
     {
         var unclassified = m.Rows.Where(r => r.GroupId is null).ToList();
 
@@ -30,7 +34,7 @@
                         <ul class="unclassified">
                             @foreach (var r in unclassified)
                             {
-                                <li><span>@r.View.SymbolName</span><span class="muted">@DisplayFormat.Won(r.View.EvalAmount)</span></li>
+                                <li><span>@r.View.SymbolName</span><span class="muted">@DisplayFormat.Won(r.View.EstimatedAmount)</span></li>
                             }
                         </ul>
                         <p class="side-text"><a href="holdings">보유 종목</a>에서 그룹을 지정하세요.</p>

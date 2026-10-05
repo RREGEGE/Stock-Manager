@@ -19,7 +19,8 @@ public sealed record TargetRow(string Name, string Color, decimal Current, decim
 public sealed record HoldingRow(
     HoldingView View, string GroupColor, string SymbolColor, decimal Weight, DateTimeOffset? UpdatedAt, int? GroupId)
 {
-    public decimal ReturnRate => View.AvgPrice > 0 ? (View.CurrentPrice - View.AvgPrice) / View.AvgPrice : 0m;
+    // 현재가를 받지 못한 종목은 손익률을 계산하지 않는다 (null)
+    public decimal? ReturnRate => View.HasPrice && View.AvgPrice > 0 ? (View.CurrentPrice - View.AvgPrice) / View.AvgPrice : null;
 }
 
 // 색상 규칙 (설계서 9.2): 그룹 색은 DB 값, 종목 색은 그룹 색의 음영
@@ -107,7 +108,7 @@ public sealed class PortfolioViewModel
         // 종목 순서: 그룹 순서 → 평가금액 큰 순 → 종목코드. 종목 색은 그룹 안 순번으로 정한다.
         var ordered = state.Snapshot.Holdings
             .OrderBy(h => groupOrder.GetValueOrDefault(h.GroupName, int.MaxValue))
-            .ThenByDescending(h => h.EvalAmount)
+            .ThenByDescending(h => h.EstimatedAmount)
             .ThenBy(h => h.SymbolCode, StringComparer.Ordinal)
             .ToList();
         var rows = new List<HoldingRow>();
@@ -119,7 +120,7 @@ public sealed class PortfolioViewModel
                 var h = members[i];
                 state.HoldingRows.TryGetValue(h.SymbolCode, out var entity);
                 rows.Add(new HoldingRow(h, ColorOf(h.GroupName), ChartColors.Shade(ColorOf(h.GroupName), i, members.Count),
-                    Ratio(h.EvalAmount, total), entity?.UpdatedAt, entity?.GroupId));
+                    Ratio(h.EstimatedAmount, total), entity?.UpdatedAt, entity?.GroupId));
             }
         }
         Rows = rows;
@@ -128,10 +129,10 @@ public sealed class PortfolioViewModel
         var groupSegments = new List<ChartSegment>();
         foreach (var g in state.Groups)
         {
-            decimal amount = rows.Where(r => r.View.GroupName == g.Name).Sum(r => r.View.EvalAmount);
+            decimal amount = rows.Where(r => r.View.GroupName == g.Name).Sum(r => r.View.EstimatedAmount);
             groupSegments.Add(new ChartSegment(g.Name, g.Name, g.Color, Ratio(amount, total)));
         }
-        decimal unclassified = rows.Where(r => !groupOrder.ContainsKey(r.View.GroupName)).Sum(r => r.View.EvalAmount);
+        decimal unclassified = rows.Where(r => !groupOrder.ContainsKey(r.View.GroupName)).Sum(r => r.View.EstimatedAmount);
         if (unclassified > 0 || state.UnclassifiedCount > 0)
             groupSegments.Add(new ChartSegment(PortfolioCalculator.UnclassifiedGroupName,
                 PortfolioCalculator.UnclassifiedGroupName, ChartColors.Unclassified, Ratio(unclassified, total)));
@@ -157,7 +158,7 @@ public sealed class PortfolioViewModel
         // 목표 대비: 추가매수 계산과 같은 기준(보유종목 평가금액 합, 예수금 제외)으로 비교한다 (설계서 5.5)
         TargetRows = state.Groups
             .Select(g => new TargetRow(g.Name, g.Color,
-                Ratio(rows.Where(r => r.View.GroupName == g.Name).Sum(r => r.View.EvalAmount), evalTotal), g.TargetWeight))
+                Ratio(rows.Where(r => r.View.GroupName == g.Name).Sum(r => r.View.EstimatedAmount), evalTotal), g.TargetWeight))
             .ToList();
     }
 

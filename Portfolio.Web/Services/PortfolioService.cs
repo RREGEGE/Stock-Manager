@@ -4,6 +4,9 @@ using Portfolio.Data;
 
 namespace Portfolio.Web.Services;
 
+// 시세를 받아올 수 있는 상태인지 (KIS 키가 있거나 개발용 가짜 시세). 화면에서 '왜 시세가 없는지'를 안내하는 데 쓴다.
+public sealed record PriceSourceInfo(bool Ready, string? SettingsPath);
+
 // 화면 한 번 그리는 데 필요한 데이터 묶음
 public sealed record PortfolioState(
     PortfolioSnapshot Snapshot,
@@ -12,8 +15,14 @@ public sealed record PortfolioState(
     IReadOnlyDictionary<string, Holding> HoldingRows,   // 그룹 Id·최종 수정일 조회용
     bool IncludeCash,
     bool MarketOpen,
-    DateTimeOffset? PricedAt)
+    DateTimeOffset? PricedAt,
+    PriceSourceInfo PriceSource)
 {
+    // 현재가를 한 번도 받지 못해 매입금액으로 계산한 종목 수
+    public int UnpricedCount => Snapshot.Holdings.Count(h => !h.HasPrice);
+    // 최근 갱신에 실패해 마지막으로 받은 가격으로 표시하는 종목 수
+    public int OutdatedCount => Snapshot.Holdings.Count(h => h.HasPrice && h.IsStale);
+
     public int UnclassifiedCount => HoldingRows.Values.Count(h => h.GroupId is null);
     public int StaleCount => Snapshot.Holdings.Count(h => h.IsStale);
     public DateTimeOffset? LastEditedAt => HoldingRows.Count > 0 ? HoldingRows.Values.Max(h => h.UpdatedAt) : null;
@@ -28,7 +37,8 @@ public sealed class PortfolioService(
     SettingsRepository settings,
     SymbolMasterRepository symbols,
     PortfolioNotifier notifier,
-    TimeProvider clock)
+    TimeProvider clock,
+    PriceSourceInfo priceSource)
 {
     public async Task<PortfolioState> LoadAsync(CancellationToken ct = default)
     {
@@ -43,7 +53,8 @@ public sealed class PortfolioService(
             PortfolioCalculator.Calculate(snapshot, includeCash),
             groupList, rows, includeCash,
             MarketSchedule.IsOpen(clock.GetUtcNow()),
-            priceStore.LatestFetchedAt);
+            priceStore.LatestFetchedAt,
+            priceSource);
     }
 
     public Task<IReadOnlyList<SymbolInfo>> SearchSymbolsAsync(string? query, CancellationToken ct = default) =>

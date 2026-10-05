@@ -35,7 +35,9 @@ public class HoldingsPageTests : UiTestBase
         var rows = cut.FindAll(".list-card tbody tr").Select(Cells).ToList();
         Assert.StartsWith("KOSPI200 ETF 주식 600 36,000 40,000 24,000,000 +11.11%", rows[0]);
         Assert.StartsWith("리츠 ETF 배당 1,600 5,500 5,000 8,000,000 -9.09%", rows[6]);
-        Assert.All(rows, r => Assert.EndsWith("수정", r));
+        // 각 줄에 수정·삭제 버튼
+        Assert.All(cut.FindAll(".list-card tbody tr"), r =>
+            Assert.Equal(["수정", "삭제"], r.QuerySelectorAll("td.action button").Select(b => b.TextContent.Trim())));
 
         Assert.Equal("종목 추가", cut.Find("#h-form").TextContent);
         Assert.Contains("이미 보유 중인 종목을 고르면 기존 행을 수정합니다.", cut.Markup);
@@ -103,7 +105,7 @@ public class HoldingsPageTests : UiTestBase
     }
 
     [Fact]
-    public async Task 새_종목은_저장_후_표에_추가되고_시세를_받기_전에는_지연으로_표시된다()
+    public async Task 새_종목은_저장_후_표에_추가되고_시세를_받기_전에는_시세_없음으로_표시된다()
     {
         var cut = RenderHoldings();
         await new SymbolMasterRepository(Db).ReplaceAsync([new SymbolInfo("005930", "삼성전자", "KOSPI")], Clock.Now);
@@ -121,7 +123,8 @@ public class HoldingsPageTests : UiTestBase
             Assert.Equal("8개 종목", cut.Find("#h-list").TextContent);
             var row = cut.FindAll(".list-card tbody tr").Single(r => r.TextContent.Contains("삼성전자"));
             Assert.Contains("stale", row.ClassName);   // FakePriceProvider에 가격이 없는 종목
-            Assert.Contains("시세 지연", row.TextContent);
+            Assert.Contains("시세 없음", row.TextContent);
+            Assert.Contains("매입가", row.TextContent);   // 평가금액은 매입금액으로 대신 표시
         });
     }
 

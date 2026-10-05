@@ -11,31 +11,45 @@
         </div>
     </div>
 
-    @if (Model is { } m)
+    @if (Model is not { } m)
     {
+        <p class="loading" role="status">불러오는 중…</p>
+    }
+    else
+    {
+        <PriceNotice State="m.State" />
+
         <div class="split">
             <section aria-labelledby="h-list" class="card list-card">
                 <div class="card-head">
                     <h2 id="h-list" class="card-title">@(m.Rows.Count)개 종목</h2>
-                    <button type="button" class="btn btn-outline" @onclick="BeginAdd">종목 추가</button>
+                    <div class="head-actions">
+                        @* 저장·삭제 결과를 알려 준다 (화면 낭독기에도 전달) *@
+                        <p class="result-message" role="status" aria-live="polite">@_resultMessage</p>
+                        <button type="button" class="btn btn-outline" @onclick="BeginAdd">종목 추가</button>
+                    </div>
                 </div>
 
-                <HoldingTable Rows="m.Rows" Full="true" SelectedCode="@_selectedCode" OnEdit="Edit"
+                <HoldingTable Rows="m.Rows" Full="true" SelectedCode="@_selectedCode" OnEdit="Edit" OnDelete="DeleteAsync"
                               EmptyText="보유 종목이 없습니다. 오른쪽에서 종목을 검색해 추가하세요." />
+                @if (m.Rows.Count > 1)
+                {
+                    <p class="note">열 제목을 누르면 정렬됩니다.</p>
+                }
 
                 <div class="cash-row">
                     <label for="cash" class="cash-label">예수금</label>
                     <div class="cash-input">
-                        <MoneyInput Id="cash" Value="m.State.Snapshot.Cash" OnCommitted="SaveCash" />
+                        <MoneyInput Id="cash" Value="m.State.Snapshot.Cash" OnCommitted="SaveCashAsync" />
                         <span class="muted">원</span>
                     </div>
                     <label class="check">
-                        <input type="checkbox" checked="@m.State.IncludeCash" @onchange="SaveIncludeCash" />총 보유금액에 포함
+                        <input type="checkbox" checked="@m.State.IncludeCash" @onchange="SaveIncludeCashAsync" />총 보유금액에 포함
                     </label>
                 </div>
             </section>
 
-            <HoldingEditor @ref="_editor" Model="m" OnSelectionChanged="code => _selectedCode = code" />
+            <HoldingEditor @ref="_editor" Model="m" OnSelectionChanged="code => _selectedCode = code" OnCompleted="ShowResult" />
         </div>
     }
 </main>
@@ -43,11 +57,45 @@
 @code {
     private HoldingEditor? _editor;
     private string? _selectedCode;
+    private string? _resultMessage;
 
-    private Task Edit(HoldingRow row) => _editor?.EditAsync(row) ?? Task.CompletedTask;
-    private Task BeginAdd() => _editor?.BeginAddAsync() ?? Task.CompletedTask;
+    private Task Edit(HoldingRow row)
+    {
+        _resultMessage = null;
+        return _editor?.EditAsync(row) ?? Task.CompletedTask;
+    }
 
-    private Task SaveCash(decimal amount) => Portfolio.SetCashAsync(amount);
+    private Task BeginAdd()
+    {
+        _resultMessage = null;
+        return _editor?.BeginAddAsync() ?? Task.CompletedTask;
+    }
 
-    private Task SaveIncludeCash(ChangeEventArgs e) => Portfolio.SetIncludeCashAsync(e.Value is true);
+    // 표의 삭제 버튼 (그 줄에서 확인을 마친 뒤 호출된다)
+    private async Task DeleteAsync(HoldingRow row)
+    {
+        await Portfolio.DeleteHoldingAsync(row.View.SymbolCode);
+        if (_selectedCode == row.View.SymbolCode && _editor is not null)
+            await _editor.BeginAddAsync();
+        ShowResult($"{row.View.SymbolName}을(를) 삭제했습니다.");
+    }
+
+    private async Task SaveCashAsync(decimal amount)
+    {
+        await Portfolio.SetCashAsync(amount);
+        ShowResult($"예수금 {DisplayFormat.Won(amount)}을 저장했습니다.");
+    }
+
+    private async Task SaveIncludeCashAsync(ChangeEventArgs e)
+    {
+        bool include = e.Value is true;
+        await Portfolio.SetIncludeCashAsync(include);
+        ShowResult(include ? "예수금을 총 보유금액에 포함합니다." : "예수금을 총 보유금액에서 뺍니다.");
+    }
+
+    private void ShowResult(string message)
+    {
+        _resultMessage = message;
+        StateHasChanged();
+    }
 }

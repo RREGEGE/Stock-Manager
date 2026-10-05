@@ -4,8 +4,26 @@
 <section aria-labelledby="h-groups" class="card group-card">
     <div class="card-head">
         <h2 id="h-groups" class="card-title">그룹과 목표 비중</h2>
-        <button type="button" class="btn btn-outline" @onclick="AddGroupAsync">그룹 추가</button>
+        <button type="button" class="btn btn-outline" @onclick="BeginAdd">그룹 추가</button>
     </div>
+
+    @if (_adding)
+    {
+        @* 이름을 정한 뒤에 만든다 (누르자마자 '새 그룹'이 생기지 않게) *@
+        <div class="add-panel">
+            <div class="field">
+                <label for="new-group-name">새 그룹 이름</label>
+                <input id="new-group-name" class="input" maxlength="50" @bind="_newName" @bind:event="onchange" placeholder="예: 금, 현금성 자산" />
+            </div>
+            <button type="button" class="btn btn-primary" @onclick="AddGroupAsync">추가</button>
+            <button type="button" class="btn" @onclick="() => _adding = false">취소</button>
+            @if (_addError is not null)
+            {
+                <p class="field-error" role="alert">@_addError</p>
+            }
+            <p class="note">새 그룹은 목표 비중 0%로 추가됩니다. 추가한 뒤 목표 비중을 다시 나눠 저장하세요.</p>
+        </div>
+    }
     <div class="table-scroll">
         <table class="table group-table">
             <thead>
@@ -185,16 +203,31 @@
         }
     }
 
+    private bool _adding;
+    private string _newName = "";
+    private string? _addError;
+
+    private void BeginAdd()
+    {
+        _adding = true;
+        _newName = "";
+        _addError = null;
+    }
+
     private async Task AddGroupAsync()
     {
-        // 겹치지 않는 기본 이름으로 추가한 뒤 바로 편집 줄을 연다
-        var names = Model.State.Groups.Select(g => g.Name).ToHashSet();
-        string name = "새 그룹";
-        for (int i = 2; names.Contains(name); i++) name = $"새 그룹 {i}";
-
-        var added = await Portfolio.AddGroupAsync(name);
-        _targets[added.Id] = "0";
-        OpenEdit(added);
+        try
+        {
+            var added = await Portfolio.AddGroupAsync(_newName);
+            _targets[added.Id] = "0";
+            _shownTargets[added.Id] = "0";
+            _adding = false;
+            _justSaved = false;
+        }
+        catch (ArgumentException ex)
+        {
+            _addError = ex.Message;
+        }
     }
 
     private void ToggleEdit(AssetGroup group)

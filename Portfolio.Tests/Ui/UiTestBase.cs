@@ -14,13 +14,19 @@ public abstract class UiTestBase : BunitContext
     protected TestDb Db { get; } = new();
     protected PriceStore Prices { get; } = new();
     protected PortfolioNotifier Notifier { get; } = new();
+    // 시세를 받아올 수 있는 상태 (테스트에서 바꾸려면 서비스를 쓰기 전에 PriceSource를 바꾼다)
+    protected PriceSourceInfo PriceSource { get; set; } = new(Ready: true, SettingsPath: null);
     // 2026-10-02(금) 09:41 KST — 목업의 '장중 · 09:41 시세 갱신'
     protected ManualClock Clock { get; } = new(new DateTimeOffset(2026, 10, 2, 9, 41, 0, TimeSpan.FromHours(9)));
+
+    // false면 현재가를 한 번도 받지 못한 상태(KIS 키 발급 전)로 시작한다
+    protected virtual bool StartWithPrices => true;
 
     protected UiTestBase()
     {
         SeedData.ApplyAsync(Db.Context).GetAwaiter().GetResult();
-        RefreshPricesAsync(SeedData.Prices).GetAwaiter().GetResult();
+        if (StartWithPrices)
+            RefreshPricesAsync(SeedData.Prices).GetAwaiter().GetResult();
 
         Services.AddSingleton<IDbContextFactory<PortfolioDbContext>>(Db);
         Services.AddSingleton<TimeProvider>(Clock);
@@ -30,6 +36,7 @@ public abstract class UiTestBase : BunitContext
         Services.AddSingleton<GroupRepository>();
         Services.AddSingleton<SettingsRepository>();
         Services.AddSingleton<SymbolMasterRepository>();
+        Services.AddSingleton(_ => PriceSource);
         Services.AddSingleton<PortfolioService>();
         Services.Configure<PricePollingOptions>(_ => { });
     }
