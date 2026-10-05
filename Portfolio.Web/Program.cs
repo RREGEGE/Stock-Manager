@@ -100,6 +100,11 @@ else
     builder.Services.AddKisPriceProvider(builder.Configuration);
 }
 builder.Services.AddSingleton(new PriceSourceSetting(priceSource));
+// 화면에서 '왜 시세가 없는지'를 안내하기 위한 정보 (KIS 키 유무, 키를 넣을 파일 위치)
+var kisOptions = builder.Configuration.GetSection(KisOptions.SectionName).Get<KisOptions>() ?? new KisOptions();
+builder.Services.AddSingleton(new PriceSourceInfo(
+    Ready: priceSource == PriceSource.Fake || kisOptions.IsConfigured,
+    SettingsPath: useDataDirectory ? paths.SettingsPath : null));
 
 builder.Services.AddSingleton<PriceStore>();
 builder.Services.AddSingleton<PortfolioNotifier>();

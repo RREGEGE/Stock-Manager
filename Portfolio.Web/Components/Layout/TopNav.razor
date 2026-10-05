@@ -23,9 +23,17 @@
         <div class="mobile-total">
             <div class="mobile-total-label">총 평가금액</div>
             <div class="mobile-total-amount">@DisplayFormat.Number(s.TotalAmount)<span>원</span></div>
-            <div class="mobile-total-pl @(s.ProfitLoss >= 0 ? "up" : "down")">
-                @DisplayFormat.SignedWon(s.ProfitLoss) (@DisplayFormat.SignedPercent2(s.ReturnRate))
-            </div>
+            @if (s.PricedCount == 0)
+            {
+                @* 현재가가 없으면 손익을 0이나 손실로 보여 주지 않는다 *@
+                <div class="mobile-total-pl">@(m.Rows.Count == 0 ? "보유 종목을 추가하세요" : "현재가를 받으면 손익이 계산됩니다")</div>
+            }
+            else
+            {
+                <div class="mobile-total-pl @(s.ProfitLoss > 0 ? "up" : s.ProfitLoss < 0 ? "down" : "")">
+                    @DisplayFormat.SignedWon(s.ProfitLoss) (@DisplayFormat.SignedPercent2(s.ReturnRate))
+                </div>
+            }
         </div>
     }
 </header>

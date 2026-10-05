@@ -20,7 +20,7 @@
     <div class="pair">
         <div class="field">
             <label for="qty">수량 (주)</label>
-            <MoneyInput Id="qty" @bind-Value="_quantity" Max="1_000_000_000m" />
+            <MoneyInput @ref="_quantityInput" Id="qty" @bind-Value="_quantity" Max="1_000_000_000m" />
         </div>
         <div class="field">
             <label for="avg">평균매입단가 (원)</label>
@@ -82,6 +82,10 @@
 @code {
     [Parameter, EditorRequired] public PortfolioViewModel Model { get; set; } = default!;
     [Parameter] public EventCallback<string?> OnSelectionChanged { get; set; }   // 표의 선택 행 표시용
+    [Parameter] public EventCallback<string> OnCompleted { get; set; }           // 저장·삭제가 끝났을 때 결과 문구를 알린다
+
+    private MoneyInput? _quantityInput;
+    private bool _focusQuantity;   // 다음에 그린 뒤 수량 칸으로 초점을 옮긴다
 
     private SymbolSearch? _search;
     private SymbolInfo? _symbol;
@@ -132,6 +136,16 @@
             _groupValue = (Model.State.Groups.FirstOrDefault()?.Id ?? 0).ToString();
         }
         await OnSelectionChanged.InvokeAsync(_existing ? symbol.SymbolCode : null);
+        // 종목을 고르면 바로 수량을 입력할 수 있게 한다 (표의 수정 버튼, 검색 결과 선택 모두)
+        _focusQuantity = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_focusQuantity || _quantityInput is null) return;
+        _focusQuantity = false;
+        try { await _quantityInput.FocusAsync(); }
+        catch (Exception ex) when (ex is JSException or InvalidOperationException or TaskCanceledException) { /* 초점 이동은 편의 기능이라 실패해도 무시 */ }
     }
 
     private async Task SaveAsync()
@@ -144,9 +158,12 @@
         try
         {
             int groupId = int.Parse(_groupValue);
-            await Portfolio.SaveHoldingAsync(_symbol.SymbolCode, _symbol.SymbolName, (long)_quantity, _avgPrice,
+            string name = _symbol.SymbolName;
+            bool wasExisting = _existing;
+            await Portfolio.SaveHoldingAsync(_symbol.SymbolCode, name, (long)_quantity, _avgPrice,
                 groupId == 0 ? null : groupId);
             await Reset();
+            await OnCompleted.InvokeAsync(wasExisting ? $"{name}을(를) 수정했습니다." : $"{name}을(를) 추가했습니다.");
         }
         catch (ArgumentException ex)
         {
@@ -161,8 +178,10 @@
     private async Task DeleteAsync()
     {
         if (_symbol is null) return;
+        string name = _symbol.SymbolName;
         await Portfolio.DeleteHoldingAsync(_symbol.SymbolCode);
         await Reset();
+        await OnCompleted.InvokeAsync($"{name}을(를) 삭제했습니다.");
     }
 
     private async Task Reset()

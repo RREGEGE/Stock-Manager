@@ -1,4 +1,20 @@
 .updated { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
-td.action { padding: 4px 8px; text-align: right; }
+td.action { padding: 4px 8px; text-align: right; white-space: nowrap; }
 td.empty { padding: 24px 8px; color: var(--text-muted); text-align: left; }
 .badge { margin-left: 6px; }
+
+/* 현재가가 없어 매입금액으로 계산한 금액 표시 */
+.basis { margin-left: 4px; font-size: 11px; color: var(--text-muted); border: 1px solid var(--line-input); border-radius: 4px; padding: 0 4px; white-space: nowrap; }
+
+/* 열 제목 = 정렬 버튼. 표 제목의 모양(13px, 보조 색)은 그대로 둔다 */
+.sort {
+    display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0; border: 0; background: transparent;
+    font: inherit; color: inherit; cursor: pointer; white-space: nowrap;
+}
+.sort:hover, .sort.active { color: var(--text); }
+.sort.active { font-weight: 600; }
+.sort-mark { font-size: 10px; min-width: 10px; }
+
+.danger { color: var(--error); }
+.confirm { display: inline-flex; align-items: center; gap: 2px; }
+.confirm-text { font-size: 13px; font-weight: 600; color: var(--error); margin-right: 4px; }

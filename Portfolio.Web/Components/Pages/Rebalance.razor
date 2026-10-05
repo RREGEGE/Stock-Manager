@@ -11,8 +11,22 @@
         </div>
     </div>
 
-    @if (Model is { } m && _plan is { } plan)
+    @if (Model is not { } m || _plan is not { } plan)
     {
+        <p class="loading" role="status">불러오는 중…</p>
+    }
+    else if (m.Rows.Count == 0)
+    {
+        <section class="card empty-state" aria-labelledby="h-start">
+            <h2 id="h-start">보유 종목이 있어야 계산할 수 있습니다</h2>
+            <p>추가매수 배분은 지금 보유한 종목과 그룹별 목표 비중을 기준으로 계산합니다.</p>
+            <a href="holdings" class="btn btn-primary">보유 종목 추가하기</a>
+        </section>
+    }
+    else
+    {
+        <PriceNotice State="m.State" />
+
         @if (!plan.TargetsValid)
         {
             <div class="notice notice-warn" role="alert">
@@ -91,9 +105,13 @@
                                 <tr>
                                     <td>
                                         <span class="group-name"><span class="swatch" style="background: @ColorOf(m, g)"></span>@g.Name</span>
-                                        @if (g.HasNoBuyableHoldings)
+                                        @if (g.HasNoBuyableHoldings && !g.HasHoldings)
                                         {
-                                            <span class="badge badge-over">종목 없음</span>
+                                            <span class="badge badge-over" title="이 그룹에 보유 종목이 없어 배정 금액이 남습니다">종목 없음</span>
+                                        }
+                                        else if (g.HasNoBuyableHoldings)
+                                        {
+                                            <span class="badge badge-stale" title="이 그룹 종목의 현재가가 없어 주수를 계산할 수 없습니다">시세 없음</span>
                                         }
                                     </td>
                                     <td class="num">@DisplayFormat.Percent1(g.CurrentWeight)</td>
@@ -182,5 +200,7 @@
     private static string NoOrdersText(RebalancePlan plan) =>
         plan.NewMoney <= 0 ? "투입 금액을 입력하면 종목별 매수 수량이 표시됩니다."
         : !plan.TargetsValid ? "그룹 목표 비중 합계를 100%로 맞추면 계산됩니다."
-        : "투입 금액으로 살 수 있는 종목이 없습니다. 금액이 1주 가격보다 작거나, 배정된 그룹에 시세가 확인된 종목이 없습니다.";
+        : plan.Groups.Any(g => g.HasNoBuyableHoldings && g.HasHoldings)
+            ? "배정된 그룹 종목의 현재가가 없어 매수 주수를 계산할 수 없습니다. 그룹별 배정 금액까지만 계산했습니다."
+        : "투입 금액으로 살 수 있는 종목이 없습니다. 금액이 1주 가격보다 작거나, 배정된 그룹에 보유 종목이 없습니다.";
 }

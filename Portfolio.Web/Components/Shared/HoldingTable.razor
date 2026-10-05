@@ -1,40 +1,44 @@
-@* 보유 종목 표. 열 구성은 Full 매개변수로 고른다 (설계서 9.3, 9.5) *@
+@* 보유 종목 표. 열 구성은 Full 매개변수로 고른다 (설계서 9.3, 9.5). 열 제목을 누르면 정렬한다 (F-03). *@
 <div class="table-scroll">
-    <table class="table @(Full ? "table-compact" : "")" style="min-width: @(Full ? "760px" : "640px")">
+    <table class="table @(Full ? "table-compact" : "")" style="min-width: @(Full ? "820px" : "640px")">
         <thead>
             <tr>
-                <th scope="col">종목명</th>
-                <th scope="col">그룹</th>
+                @SortHeader("name", "종목명", false)
+                @SortHeader("group", "그룹", false)
                 @if (Full)
                 {
-                    <th scope="col" class="num">수량</th>
-                    <th scope="col" class="num">평균매입단가</th>
-                    <th scope="col" class="num">현재가</th>
+                    @SortHeader("quantity", "수량", true)
+                    @SortHeader("avg", "평균매입단가", true)
+                    @SortHeader("price", "현재가", true)
                 }
-                <th scope="col" class="num">평가금액</th>
+                @SortHeader("amount", "평가금액", true)
                 @if (!Full)
                 {
-                    <th scope="col" class="num">비중</th>
+                    @SortHeader("weight", "비중", true)
                 }
-                <th scope="col" class="num">손익률</th>
+                @SortHeader("return", "손익률", true)
                 @if (Full)
                 {
-                    <th scope="col">수정일</th>
+                    @SortHeader("updated", "수정일", false)
                     <th scope="col"><span class="sr-only">작업</span></th>
                 }
             </tr>
         </thead>
         <tbody>
-            @foreach (var r in Rows)
+            @foreach (var r in SortedRows)
             {
                 var row = r;
                 var h = row.View;
                 <tr class="@(SelectedCode == h.SymbolCode ? "selected" : "") @(h.IsStale ? "stale" : "")">
                     <td class="name">
                         @h.SymbolName
-                        @if (h.IsStale)
+                        @if (!h.HasPrice)
                         {
-                            <span class="badge badge-stale">시세 지연</span>
+                            <span class="badge badge-stale" title="현재가를 아직 받지 못했습니다">시세 없음</span>
+                        }
+                        else if (h.IsStale)
+                        {
+                            <span class="badge badge-stale" title="최근 시세 갱신에 실패해 마지막으로 받은 가격입니다">시세 지연</span>
                         }
                     </td>
                     <td><span class="group-tag"><span class="dot" style="background: @row.GroupColor"></span>@h.GroupName</span></td>
@@ -42,23 +46,44 @@
                     {
                         <td class="num">@DisplayFormat.Number(h.Quantity)</td>
                         <td class="num">@DisplayFormat.Number(h.AvgPrice)</td>
-                        <td class="num">@(h.CurrentPrice > 0 ? DisplayFormat.Number(h.CurrentPrice) : "-")</td>
-                        <td class="num">@DisplayFormat.Number(h.EvalAmount)</td>
+                        <td class="num">@(h.HasPrice ? DisplayFormat.Number(h.CurrentPrice) : "-")</td>
                     }
-                    else
+                    <td class="num">
+                        @(Full ? DisplayFormat.Number(h.EstimatedAmount) : DisplayFormat.Won(h.EstimatedAmount))
+                        @if (!h.HasPrice)
+                        {
+                            <span class="basis" title="현재가가 없어 매입금액으로 계산했습니다">매입가</span>
+                        }
+                    </td>
+                    @if (!Full)
                     {
-                        <td class="num">@DisplayFormat.Won(h.EvalAmount)</td>
                         <td class="num">@DisplayFormat.Percent1(row.Weight)</td>
                     }
-                    <td class="num strong @(h.CurrentPrice <= 0 ? "" : row.ReturnRate >= 0 ? "up" : "down")">
-                        @(h.CurrentPrice > 0 ? DisplayFormat.SignedPercent2(row.ReturnRate) : "-")
+                    <td class="num strong @(row.ReturnRate is not { } rate ? "" : rate > 0 ? "up" : rate < 0 ? "down" : "")">
+                        @(row.ReturnRate is { } value ? DisplayFormat.SignedPercent2(value) : "-")
                     </td>
                     @if (Full)
                     {
                         <td class="updated">@(row.UpdatedAt is { } at ? DisplayFormat.MonthDay(at) : "")</td>
                         <td class="action">
-                            <button type="button" class="btn btn-text" aria-label="@(h.SymbolName + " 수정")"
-                                    @onclick="() => OnEdit.InvokeAsync(row)">수정</button>
+                            @if (_confirmDeleteCode == h.SymbolCode)
+                            {
+                                <span class="confirm" role="alertdialog" aria-label="@(h.SymbolName + " 삭제 확인")">
+                                    <span class="confirm-text">삭제할까요?</span>
+                                    <button type="button" class="btn btn-text danger" @onclick="() => ConfirmDeleteAsync(row)">삭제</button>
+                                    <button type="button" class="btn btn-text" @onclick="() => _confirmDeleteCode = null">취소</button>
+                                </span>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-text" aria-label="@(h.SymbolName + " 수정")"
+                                        @onclick="() => OnEdit.InvokeAsync(row)">수정</button>
+                                @if (OnDelete.HasDelegate)
+                                {
+                                    <button type="button" class="btn btn-text danger" aria-label="@(h.SymbolName + " 삭제")"
+                                            @onclick="() => _confirmDeleteCode = h.SymbolCode">삭제</button>
+                                }
+                            }
                         </td>
                     }
                 </tr>
@@ -76,5 +101,74 @@
     [Parameter] public bool Full { get; set; }                 // true: 보유 종목 화면, false: 대시보드
     [Parameter] public string? SelectedCode { get; set; }
     [Parameter] public EventCallback<HoldingRow> OnEdit { get; set; }
+    [Parameter] public EventCallback<HoldingRow> OnDelete { get; set; }   // 지정하면 각 줄에 삭제 버튼을 둔다 (누르면 그 줄에서 한 번 더 확인)
     [Parameter] public string EmptyText { get; set; } = "보유 종목이 없습니다.";
+
+    private string? _sortKey;          // null이면 받은 순서(그룹 순서 → 금액 큰 순)
+    private bool _sortDescending;
+    private string? _confirmDeleteCode;
+
+    private IEnumerable<HoldingRow> SortedRows
+    {
+        get
+        {
+            if (_sortKey is null) return Rows;
+            Func<HoldingRow, IComparable?> key = _sortKey switch
+            {
+                "name" => r => r.View.SymbolName,
+                "group" => r => r.View.GroupName,
+                "quantity" => r => r.View.Quantity,
+                "avg" => r => r.View.AvgPrice,
+                "price" => r => r.View.HasPrice ? r.View.CurrentPrice : null,
+                "amount" => r => r.View.EstimatedAmount,
+                "weight" => r => r.Weight,
+                "return" => r => r.ReturnRate,
+                "updated" => r => r.UpdatedAt,
+                _ => r => r.View.SymbolName,
+            };
+            // 값이 없는 줄(현재가·손익률 없음)은 어느 방향으로 정렬하든 맨 아래에 둔다
+            var withValue = Rows.Where(r => key(r) is not null);
+            var withoutValue = Rows.Where(r => key(r) is null);
+            var sorted = _sortDescending
+                ? withValue.OrderByDescending(key, Comparer<IComparable?>.Create(Compare))
+                : withValue.OrderBy(key, Comparer<IComparable?>.Create(Compare));
+            return sorted.Concat(withoutValue);
+        }
+    }
+
+    private static int Compare(IComparable? a, IComparable? b) =>
+        a is string x && b is string y ? string.Compare(x, y, StringComparison.CurrentCulture) : a!.CompareTo(b);
+
+    // 처음 누르면 숫자는 큰 순·글자는 가나다순, 다시 누르면 반대, 한 번 더 누르면 원래 순서
+    private void ToggleSort(string key, bool numeric)
+    {
+        if (_sortKey != key)
+        {
+            _sortKey = key;
+            _sortDescending = numeric;
+        }
+        else if (_sortDescending == numeric)
+        {
+            _sortDescending = !numeric;
+        }
+        else
+        {
+            _sortKey = null;
+        }
+    }
+
+    private RenderFragment SortHeader(string key, string label, bool numeric) => __builder =>
+    {
+        bool active = _sortKey == key;
+        <th scope="col" class="@(numeric ? "num" : "")" aria-sort="@(active ? (_sortDescending ? "descending" : "ascending") : "none")">
+            <button type="button" class="sort @(active ? "active" : "")" title="@(label + " 순으로 정렬")"
+                    @onclick="() => ToggleSort(key, numeric)">@label<span class="sort-mark" aria-hidden="true">@(active ? (_sortDescending ? "▼" : "▲") : "")</span></button>
+        </th>
+    };
+
+    private async Task ConfirmDeleteAsync(HoldingRow row)
+    {
+        _confirmDeleteCode = null;
+        await OnDelete.InvokeAsync(row);
+    }
 }

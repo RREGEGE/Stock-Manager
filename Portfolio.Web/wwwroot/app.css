@@ -117,7 +117,8 @@ h1:focus { outline: none; }
 .table .strong { font-weight: 600; }
 .table .name { font-weight: 500; }
 .table tr.selected { background: var(--primary-soft); }
-.table tr.stale td { color: var(--disabled); }
+/* 시세 지연 줄: 흰 바탕에서 읽을 수 있는 보조 색 (대비 5.96:1). 이전 색은 2.64:1이라 읽기 어려웠다 */
+.table tr.stale td { color: var(--text-muted); }
 .table-compact td { padding: 10px 8px; }
 
 .group-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
@@ -180,3 +181,21 @@ h1:focus { outline: none; }
 .auth-form .input { width: 100%; }
 .auth-button { width: 100%; }
 .auth-card .note { margin: 0; }
+
+/* 안내 띠: 원인과 해결 방법을 알려 준다 (경고 색보다 차분하게) */
+.notice-info { background: var(--under-bg); color: var(--under-fg); line-height: 1.6; }
+.notice-info a { color: var(--under-fg); font-weight: 600; }
+
+/* 저장·삭제 결과 알림 */
+.result-message { margin: 0; font-size: 13px; font-weight: 600; color: var(--ok-fg); }
+
+/* 불러오는 중 */
+.loading { padding: 40px 0; font-size: 14px; color: var(--text-muted); }
+
+/* 처음 쓰는 상태 안내 */
+.empty-state { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 32px 28px; }
+.empty-state h2 { margin: 0; font-size: 18px; font-weight: 700; }
+.empty-state p { margin: 0; font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+.empty-state ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.9; }
+
+.hint { margin: -12px 0 14px; font-size: 12px; color: var(--text-muted); }
