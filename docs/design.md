@@ -87,7 +87,7 @@ KIS는 시세 조회에만 쓰며, 관심종목 멀티시세 API로 1회 최대 
 | --- | --- | --- | --- |
 | 접근토큰 발급 | POST /oauth2/tokenP | - | 유효 24시간, 발급 1분 1회 제한 |
 | 멀티종목 시세 | GET /uapi/domestic-stock/v1/quotations/intstock-multprice | FHKST11300006 | 1회 최대 30종목, 기본 사용 |
-| 단일종목 현재가 | GET /uapi/domestic-stock/v1/quotations/inquire-price | FHKST01010100 | 종목 추가 시 코드 검증·종목명 조회, 멀티시세 실패 시 대체 |
+| 단일종목 현재가 | GET /uapi/domestic-stock/v1/quotations/inquire-price | FHKST01010100 | 종목 추가 시 코드 검증, 멀티시세 실패 시 대체. 응답에 종목명이 없으므로 종목명은 SymbolMaster에서 가져온다 (5.4) |
 | 해외주식 현재가 (선택) | GET /uapi/overseas-price/v1/quotations/price | HHDFS00000300 | 해외 보유 시에만 |
 
 출처: [멀티종목 시세](https://algolab.co.kr/blog/kis-api-intstock-multprice-30-2026), [현재가 조회](https://algolab.co.kr/blog/kis-api-inquire-price-fhkst01010100-2026), [토큰 재발급 규칙](https://algolab.co.kr/blog/kis-api-access-token-expiry-refresh-2026), [해외주식 현재가](https://algolab.co.kr/blog/kis-api-overseas-price-hhdfs00000300-2026)
@@ -170,11 +170,11 @@ q = 보유수량, p = 현재가, E = 종목 평가금액, C = 예수금, δ = �
 
 ### 5.4 종목 입력 규칙
 
-1. 사용자는 종목명 또는 6자리 코드로 검색해 종목을 고른다. 검색은 SymbolMaster를 대상으로 하며, 사용자가 코드를 외울 필요가 없다.
+1. 사용자는 종목명 또는 종목코드로 검색해 종목을 고른다. 검색은 SymbolMaster를 대상으로 하며, 사용자가 코드를 외울 필요가 없다. 종목코드는 6자리 숫자만이 아니라 영문이 섞인 6자리(예: `0001A0`)와 ETN의 `Q`로 시작하는 7자리(예: `Q500067`)도 있으므로 숫자만 받도록 제한하지 않는다.
 2. 선택 후 수량(정수, 1 이상)과 평균매입단가(원, 0 초과)만 입력한다. 소수점 주식은 지원하지 않는다.
 3. 이미 등록된 종목을 다시 고르면 신규 추가가 아니라 해당 행 수정으로 처리한다.
 4. 저장 즉시 해당 종목 현재가를 1회 조회해 화면에 반영한다.
-5. SymbolMaster는 KIS가 공식 저장소에 제공하는 종목 마스터 파일로 주 1회 갱신하는 방식을 검토한다. 파일 형식과 제공 위치는 구현 시 확인 필요.
+5. SymbolMaster는 KIS가 공개 주소로 제공하는 종목 마스터 파일(`kospi_code.mst.zip`, `kosdaq_code.mst.zip`, 인증 불필요)로 주 1회 갱신한다. 파일은 cp949 인코딩의 고정 바이트 폭 레코드이며(단축코드 0\~9, 표준코드 9\~21, 종목명 21\~61, 그룹코드 61\~63바이트), 2026-10-02 실제 파일로 확인했다. 주식(ST)·ETF(EF)·ETN(EN)·리츠(RT)·투자회사(IF/MF/PF)·해외 원주와 DR(FS/DR)만 넣고, 수익증권 펀드(BC)와 신주인수권(SW/SR)은 제외한다. 갱신에 실패하면 기존 마스터를 유지한다.
 
 ### 5.5 추가매수 배분 계산
 

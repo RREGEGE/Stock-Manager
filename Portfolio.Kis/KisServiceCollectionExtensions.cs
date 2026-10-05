@@ -75,4 +75,12 @@ public static class KisServiceCollectionExtensions
             sp.GetService<ILogger<KisPriceProvider>>()));
         return services;
     }
+
+    // 종목 마스터 다운로드 (공개 주소, 인증 불필요)
+    public static IServiceCollection AddKisSymbolMaster(this IServiceCollection services)
+    {
+        services.AddHttpClient<KisSymbolMasterClient>(http => http.Timeout = TimeSpan.FromMinutes(2))
+            .AddStandardResilienceHandler();
+        return services;
+    }
 }

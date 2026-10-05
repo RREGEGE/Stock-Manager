@@ -23,6 +23,9 @@ builder.Services.AddSingleton<PriceStore>();
 builder.Services.AddSingleton<PriceUpdater>();
 builder.Services.Configure<PricePollingOptions>(builder.Configuration.GetSection(PricePollingOptions.SectionName));
 builder.Services.AddHostedService<PricePollingService>();
+builder.Services.AddKisSymbolMaster();
+builder.Services.AddSingleton<SymbolMasterRepository>();
+builder.Services.AddHostedService<SymbolMasterRefreshService>();
 
 var app = builder.Build();
 
