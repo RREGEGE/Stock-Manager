@@ -1,7 +1,128 @@
-﻿@page "/"
+@page "/"
+@inherits LiveComponentBase
 
-<PageTitle>Home</PageTitle>
+<PageTitle>포트폴리오 대시보드</PageTitle>
 
-<h1>Hello, world!</h1>
+<main class="page-main">
+    @if (Model is { } m)
+    {
+        var s = m.State.Summary;
 
-Welcome to your new app.
+        <div class="page-head desktop-only">
+            <div>
+                <h1>대시보드</h1>
+                <p>삼성증권 계좌@(m.State.LastEditedAt is { } edited ? $" · 보유수량 최종 수정 {DisplayFormat.MonthDay(edited)}" : "")</p>
+            </div>
+            <a href="rebalance" class="btn btn-primary cta">추가매수 계산하기</a>
+        </div>
+
+        @if (m.State.UnclassifiedCount > 0)
+        {
+            <div class="notice notice-warn" role="status">
+                <span>그룹이 지정되지 않은 종목이 @(m.State.UnclassifiedCount)개 있습니다. 미분류 종목은 목표 비중 계산에서 0%로 취급됩니다.</span>
+                <a href="holdings">그룹 지정하기</a>
+            </div>
+        }
+
+        <section aria-label="요약" class="summary-grid desktop-only">
+            <SummaryCard Title="총 평가금액" Value="@DisplayFormat.Number(s.TotalAmount)"
+                         Sub="@(m.State.IncludeCash ? "예수금 포함" : "예수금 제외")" />
+            <SummaryCard Title="매입금액" Value="@DisplayFormat.Number(s.PurchaseAmount)" Sub="수량 × 평균매입단가" />
+            <SummaryCard Title="평가손익" Value="@((s.ProfitLoss >= 0 ? "+" : "") + DisplayFormat.Number(s.ProfitLoss))"
+                         Sub="@DisplayFormat.SignedPercent2(s.ReturnRate)" SubStrong="true"
+                         Tone="@(s.ProfitLoss >= 0 ? "up" : "down")" />
+            <SummaryCard Title="보유 종목" Value="@m.Rows.Count.ToString()" Unit="개"
+                         Sub="@($"미분류 {m.State.UnclassifiedCount}개 · 시세 지연 {m.State.StaleCount}개")" />
+        </section>
+
+        <section aria-label="비중" class="chart-grid">
+            <div class="card">
+                <h2 class="card-title chart-title">그룹별 비중</h2>
+                <DonutChart Segments="m.GroupSegments"
+                            CenterLabel="@($"{m.State.Groups.Count}개 그룹")"
+                            CenterValue="@DisplayFormat.ShortWon(s.TotalAmount)"
+                            AriaLabel="@("그룹별 비중 도넛 차트: " + string.Join(", ", m.GroupSegments.Select(g => $"{g.Name} {DisplayFormat.Percent1(g.Ratio)}")))"
+                            SelectedKey="@_groupFilter" OnSelect="ToggleGroupFilter" />
+            </div>
+
+            <div class="card symbol-chart">
+                <h2 class="card-title chart-title">종목별 비중</h2>
+                <DonutChart Segments="m.SymbolSegments" Dense="true"
+                            CenterLabel="@($"{m.Rows.Count}개 종목")"
+                            CenterValue="@DisplayFormat.ShortWon(s.TotalAmount)"
+                            AriaLabel="종목별 비중 도넛 차트"
+                            SelectedKey="@_symbolFilter" OnSelect="ToggleSymbolFilter" />
+            </div>
+
+            <div class="card target-card">
+                <div class="target-card-head">
+                    <h2 class="card-title">목표 대비</h2>
+                    <p class="target-hint"><span class="desktop-only">막대 = 현재 비중, </span>세로선 = 목표<span class="desktop-only"> 비중</span></p>
+                </div>
+                <div class="target-list">
+                    @foreach (var row in m.TargetRows)
+                    {
+                        <TargetBar Row="row" />
+                    }
+                </div>
+                <a href="rebalance" class="btn btn-primary mobile-cta mobile-only">추가매수 계산하기</a>
+            </div>
+        </section>
+
+        <section aria-labelledby="h-holdings" class="card">
+            <div class="card-head">
+                <h2 id="h-holdings" class="card-title">보유 종목</h2>
+                <div class="head-actions">
+                    @if (FilterLabel is { } label)
+                    {
+                        <button type="button" class="btn btn-sm filter-chip" @onclick="ClearFilter">@label 만 보기 · 해제</button>
+                    }
+                    <a href="holdings" class="edit-link">편집하기</a>
+                </div>
+            </div>
+            <HoldingTable Rows="FilteredRows(m)" EmptyText="@(FilterLabel is null ? "보유 종목이 없습니다. 보유 종목 화면에서 추가하세요." : "해당하는 종목이 없습니다.")" />
+            <p class="note">비중은 소수점 1자리 반올림으로, 합계가 100.0%가 아닐 수 있습니다.</p>
+        </section>
+    }
+</main>
+
+@code {
+    // 차트 범례를 누르면 해당 그룹·종목으로 표를 거른다 (설계서 6장)
+    private string? _groupFilter;
+    private string? _symbolFilter;
+
+    private string? FilterLabel => _groupFilter
+        ?? (_symbolFilter is not null ? Model?.SymbolSegments.FirstOrDefault(s => s.Key == _symbolFilter)?.Name : null);
+
+    private void ToggleGroupFilter(string key)
+    {
+        _groupFilter = _groupFilter == key ? null : key;
+        _symbolFilter = null;
+    }
+
+    private void ToggleSymbolFilter(string key)
+    {
+        _symbolFilter = _symbolFilter == key ? null : key;
+        _groupFilter = null;
+    }
+
+    private void ClearFilter()
+    {
+        _groupFilter = null;
+        _symbolFilter = null;
+    }
+
+    private IReadOnlyList<HoldingRow> FilteredRows(PortfolioViewModel m)
+    {
+        if (_groupFilter is not null)
+            return m.Rows.Where(r => r.View.GroupName == _groupFilter).ToList();
+        if (_symbolFilter == PortfolioViewModel.OthersName)
+        {
+            var shown = m.SymbolSegments.Select(s => s.Key).ToHashSet();
+            return m.Rows.Where(r => !shown.Contains(r.View.SymbolCode)).ToList();
+        }
+        if (_symbolFilter is not null)
+            return m.Rows.Where(r => r.View.SymbolCode == _symbolFilter).ToList();
+        return m.Rows;
+    }
+}

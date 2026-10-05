@@ -1,0 +1,28 @@
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+
+.chart-title { margin-bottom: 18px; }
+
+.target-card { display: flex; flex-direction: column; }
+.target-card-head .card-title { margin-bottom: 6px; }
+.target-hint { margin: 0 0 18px; font-size: 13px; color: var(--text-muted); }
+.target-list { display: flex; flex-direction: column; gap: 18px; flex-grow: 1; }
+
+.cta { padding: 0 18px; }
+.head-actions { display: flex; align-items: center; gap: 8px; }
+.edit-link { font-size: 14px; font-weight: 600; padding: 12px 4px; }
+.filter-chip { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+
+/* 모바일 목업: 요약 카드는 헤더로 올라가고, 그룹 비중·목표 대비가 먼저 나온다 */
+@media (max-width: 639.98px) {
+    .summary-grid.desktop-only, .page-head.desktop-only { display: none; }
+    .chart-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .chart-title { margin-bottom: 14px; }
+    .target-card { order: 2; }
+    .symbol-chart { order: 3; }
+    .target-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .target-card-head .card-title { margin-bottom: 0; }
+    .target-hint { margin: 0; font-size: 12px; }
+    .target-list { gap: 14px; }
+    .mobile-cta { margin-top: 16px; display: flex !important; }
+}
