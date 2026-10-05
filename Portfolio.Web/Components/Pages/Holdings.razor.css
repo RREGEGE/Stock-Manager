@@ -1,0 +1,9 @@
+.list-card { flex: 2 1 640px; min-width: 0; }
+
+.cash-row {
+    margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line-card);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px;
+}
+.cash-label { font-size: 14px; font-weight: 600; }
+.cash-input { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.cash-input ::deep .input { width: 160px; }

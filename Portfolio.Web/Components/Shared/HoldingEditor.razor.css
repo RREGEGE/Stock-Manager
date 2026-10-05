@@ -1,0 +1,20 @@
+.editor { flex: 1 1 320px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.pair ::deep .input { width: 100%; }
+
+.chosen { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.chosen-name { font-size: 15px; font-weight: 600; }
+.chosen-code { font-size: 12px; color: var(--text-muted); }
+
+.preview {
+    padding: 12px 14px; border-radius: 8px; background: var(--bg-page); font-size: 13px;
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px;
+}
+.preview-value { font-weight: 600; }
+
+.buttons { display: flex; gap: 8px; justify-content: flex-end; }
+.buttons .delete { margin-right: auto; }
+
+.confirm { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; font-size: 14px; font-weight: 600; }
+.confirm .actions { display: flex; gap: 8px; }

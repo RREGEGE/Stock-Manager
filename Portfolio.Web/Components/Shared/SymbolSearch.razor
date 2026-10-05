@@ -1,0 +1,72 @@
+@inject PortfolioService Portfolio
+
+@* SymbolMaster 검색 + 결과 목록, 보유 중 표시 (설계서 5.4, 9.5) *@
+<div class="field">
+    <label for="search">종목 검색</label>
+    <input id="search" type="search" class="input search-input" autocomplete="off"
+           placeholder="종목명 또는 종목코드" value="@_query" @oninput="OnInput" />
+    @if (_results.Count > 0)
+    {
+        <ul aria-label="검색 결과" class="results">
+            @foreach (var s in _results)
+            {
+                var symbol = s;
+                bool held = HeldCodes.Contains(symbol.SymbolCode);
+                <li>
+                    <button type="button" class="result @(SelectedCode == symbol.SymbolCode ? "selected" : "")"
+                            @onclick="() => Select(symbol)">
+                        <span class="result-name">@symbol.SymbolName <span class="result-code">@symbol.SymbolCode</span></span>
+                        <span class="result-state">@(held ? "보유 중 · 수정" : "신규")</span>
+                    </button>
+                </li>
+            }
+        </ul>
+    }
+    else if (_searched)
+    {
+        <p class="no-result">검색 결과가 없습니다.</p>
+    }
+</div>
+
+@code {
+    [Parameter] public IReadOnlySet<string> HeldCodes { get; set; } = new HashSet<string>();
+    [Parameter] public string? SelectedCode { get; set; }
+    [Parameter] public EventCallback<SymbolInfo> OnSelected { get; set; }
+
+    private string _query = "";
+    private bool _searched;
+    private IReadOnlyList<SymbolInfo> _results = [];
+
+    // 표에서 '수정'을 눌렀을 때 검색창에 종목명을 채운다
+    public async Task SetQueryAsync(string query)
+    {
+        _query = query;
+        await SearchAsync();
+        StateHasChanged();
+    }
+
+    public void Clear()
+    {
+        _query = "";
+        _results = [];
+        _searched = false;
+        StateHasChanged();
+    }
+
+    private async Task OnInput(ChangeEventArgs e)
+    {
+        _query = e.Value?.ToString() ?? "";
+        await SearchAsync();
+    }
+
+    private async Task SearchAsync()
+    {
+        string query = _query;
+        var results = await Portfolio.SearchSymbolsAsync(query);
+        if (query != _query) return;   // 더 늦게 입력한 검색어가 있으면 버린다
+        _results = results;
+        _searched = query.Trim().Length > 0;
+    }
+
+    private Task Select(SymbolInfo symbol) => OnSelected.InvokeAsync(symbol);
+}
