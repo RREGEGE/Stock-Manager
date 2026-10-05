@@ -29,6 +29,13 @@ public static class DisplayFormat
     public static string SignedPoint1(decimal ratioDiff) =>
         (ratioDiff > 0 ? "+" : "") + Math.Round(ratioDiff * 100m, 1, MidpointRounding.AwayFromZero).ToString("0.0", Inv) + "%p";
 
+    // 지수·환율: 2650.123 → "2,650.12"
+    public static string Decimal2(decimal value) =>
+        Math.Round(value, 2, MidpointRounding.AwayFromZero).ToString("#,0.00", Inv);
+
+    // 12.34 → "+12.34", -3.2 → "-3.20", 0 → "0.00"
+    public static string SignedDecimal2(decimal value) => (value > 0 ? "+" : "") + Decimal2(value);
+
     // 도넛 가운데 등 좁은 자리용: 100000000 → "1억 원", 123400000 → "1.2억 원", 5500000 → "550만 원"
     public static string ShortWon(decimal value)
     {

@@ -1,0 +1,47 @@
+@implements IDisposable
+@inject MarketIndicatorStore Store
+@inject PortfolioNotifier Notifier
+@inject PriceSourceInfo PriceSource
+
+@* 코스피·코스닥·S&P 500·나스닥·원/달러 환율 (설계서 F-09). 대시보드 맨 위에 한 줄로 보여 준다. *@
+<section aria-label="시장 지표" class="market-strip">
+    @if (!PriceSource.Ready)
+    {
+        <p class="market-empty">KIS 앱키를 넣으면 코스피·코스닥·S&amp;P 500·나스닥·원/달러 환율이 여기에 표시됩니다.</p>
+    }
+    else
+    {
+        @foreach (var spec in MarketIndicators.All)
+        {
+            var value = Store.Get(spec.Key);
+            <div class="market-item">
+                <div class="market-name">@spec.Name</div>
+                @if (value is null)
+                {
+                    <div class="market-value muted">-</div>
+                    <div class="market-change muted">받아오는 중</div>
+                }
+                else
+                {
+                    <div class="market-value">@DisplayFormat.Decimal2(value.Value)</div>
+                    <div class="market-change @Tone(value.Change)">
+                        <span aria-hidden="true">@Arrow(value.Change)</span>
+                        <span class="sr-only">@(value.Change > 0 ? "상승" : value.Change < 0 ? "하락" : "보합")</span>
+                        @DisplayFormat.Decimal2(Math.Abs(value.Change)) (@DisplayFormat.SignedPercent2(value.ChangeRate))
+                    </div>
+                }
+            </div>
+        }
+    }
+</section>
+
+@code {
+    protected override void OnInitialized() => Notifier.Changed += OnChanged;
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private static string Tone(decimal change) => change > 0 ? "up" : change < 0 ? "down" : "";
+    private static string Arrow(decimal change) => change > 0 ? "▲" : change < 0 ? "▼" : "-";
+
+    public void Dispose() => Notifier.Changed -= OnChanged;
+}

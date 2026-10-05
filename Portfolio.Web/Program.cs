@@ -93,6 +93,7 @@ if (priceSource == PriceSource.Fake)
         IPriceProvider fake = new FakePriceProvider(SeedData.Prices, sp.GetRequiredService<TimeProvider>());
         return fluctuation > 0 ? new FluctuatingPriceProvider(fake, fluctuation) : fake;
     });
+    builder.Services.AddSingleton<IMarketIndicatorProvider>(sp => new FakeMarketIndicatorProvider(sp.GetRequiredService<TimeProvider>()));
     builder.Services.Configure<KisOptions>(builder.Configuration.GetSection(KisOptions.SectionName));
 }
 else
@@ -111,6 +112,18 @@ builder.Services.AddSingleton<PortfolioNotifier>();
 builder.Services.AddSingleton<PriceUpdater>();
 builder.Services.Configure<PricePollingOptions>(builder.Configuration.GetSection(PricePollingOptions.SectionName));
 builder.Services.AddHostedService<PricePollingService>();
+
+// 지수·환율 (설계서 F-09): 대시보드 맨 위에 표시
+builder.Services.AddSingleton<MarketIndicatorStore>();
+builder.Services.AddSingleton(sp =>
+{
+    var log = sp.GetRequiredService<ILoggerFactory>().CreateLogger("Portfolio.MarketIndicators");
+    return new MarketIndicatorUpdater(
+        sp.GetRequiredService<IMarketIndicatorProvider>(), sp.GetRequiredService<MarketIndicatorStore>(),
+        sp.GetRequiredService<PortfolioNotifier>(),
+        (spec, ex) => log.LogWarning("지표 조회 실패: {Name} ({Message})", spec.Name, ex.Message));
+});
+builder.Services.AddHostedService<MarketIndicatorPollingService>();
 builder.Services.AddKisSymbolMaster();
 builder.Services.AddSingleton<SymbolMasterRepository>();
 if (builder.Configuration.GetValue("SymbolMaster:AutoRefresh", true))
