@@ -22,6 +22,7 @@ public sealed class PricePollingService(
     IOptions<KisOptions> kisOptions,
     IOptions<PricePollingOptions> pollingOptions,
     PriceSourceSetting priceSourceSetting,
+    Hosting.AppPaths paths,
     TimeProvider clock,
     ILogger<PricePollingService> logger) : BackgroundService
 {
@@ -37,7 +38,9 @@ public sealed class PricePollingService(
         }
         else if (!kisOptions.Value.IsConfigured)
         {
-            logger.LogWarning("KIS AppKey/AppSecret이 설정되지 않아 시세 폴링을 하지 않습니다. (dotnet user-secrets로 설정)");
+            logger.LogWarning(
+                "KIS 앱키가 없어 시세를 받아오지 않습니다. 보유 종목은 저장되지만 현재가는 '시세 지연'으로 표시됩니다. 키를 발급받으면 {SettingsPath}의 AppKey·AppSecret에 넣고 앱을 다시 켜세요.",
+                paths.SettingsPath);
             return;
         }
 

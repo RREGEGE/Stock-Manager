@@ -136,6 +136,35 @@ public class KisPriceTests
         Assert.Empty(handler.ApiRequests);
     }
 
+    [Fact]
+    public async Task 앱키가_없으면_KIS를_호출하지_않고_조용히_빈_결과를_돌려준다()
+    {
+        // 키 발급 전: 종목을 저장할 때마다 실패 로그가 쌓이지 않아야 한다
+        var noKey = Microsoft.Extensions.Options.Options.Create(new KisOptions { AppKey = "", AppSecret = "" });
+        var handler = new FakeKisHandler { OnApi = MultiPriceEcho };
+        var clock = new ManualClock(Now);
+        var tokens = new KisTokenManager(KisTestFactory.Http(handler), noKey, new InMemoryTokenStore(), clock);
+        var client = new KisClient(KisTestFactory.Http(handler), tokens, noKey, clock);
+        var logger = new RecordingLogger<KisPriceProvider>();
+
+        var prices = await new KisPriceProvider(client, logger).GetPricesAsync(["426030", "0046A0"]);
+
+        Assert.False(client.IsConfigured);
+        Assert.Empty(prices);
+        Assert.Empty(handler.Requests);   // 토큰 발급도, 시세 조회도 시도하지 않는다
+        Assert.Empty(logger.Entries);     // 경고·스택 추적 없음
+    }
+
+    private sealed class RecordingLogger<T> : Microsoft.Extensions.Logging.ILogger<T>
+    {
+        public List<(Microsoft.Extensions.Logging.LogLevel Level, string Message)> Entries { get; } = [];
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId,
+            TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+            Entries.Add((logLevel, formatter(state, exception)));
+    }
+
     private static int CountSymbols(string query) =>
         HttpUtility.ParseQueryString(query).AllKeys.Count(k => k!.StartsWith("FID_INPUT_ISCD_"));
 }

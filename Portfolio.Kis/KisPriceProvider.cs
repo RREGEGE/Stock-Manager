@@ -16,6 +16,9 @@ public sealed class KisPriceProvider(KisClient client, ILogger<KisPriceProvider>
         IReadOnlyCollection<string> symbolCodes, CancellationToken ct = default)
     {
         var result = new Dictionary<string, PriceQuote>();
+        // 키가 없으면 조회를 시도하지 않는다 (시작할 때 한 번 안내하며, 종목마다 실패 로그를 남기지 않는다)
+        if (!client.IsConfigured) return result;
+
         foreach (var chunk in symbolCodes.Distinct().Chunk(KisClient.MaxMultiPriceSymbols))
         {
             try
