@@ -3,8 +3,10 @@
 @* SymbolMaster 검색 + 결과 목록, 보유 중 표시 (설계서 5.4, 9.5) *@
 <div class="field">
     <label for="search">종목 검색</label>
-    <input id="search" type="search" class="input search-input" autocomplete="off"
-           placeholder="종목명 또는 종목코드" value="@_query" @oninput="OnInput" />
+    @* 입력하는 동안에는 서버가 입력창 내용을 다시 써 넣지 않는다.
+       한글은 조합 중인 글자가 있어서, 칠 때마다 값을 되돌려 쓰면 글자가 두 번 입력된다. *@
+    <input @key="_inputVersion" id="search" type="search" class="input search-input" autocomplete="off"
+           placeholder="종목명 또는 종목코드" value="@_inputValue" @oninput="OnInput" />
     @if (_results.Count > 0)
     {
         <ul aria-label="검색 결과" class="results">
@@ -33,7 +35,9 @@
     [Parameter] public string? SelectedCode { get; set; }
     [Parameter] public EventCallback<SymbolInfo> OnSelected { get; set; }
 
-    private string _query = "";
+    private string _query = "";          // 검색에 쓰는 현재 입력값
+    private string _inputValue = "";     // 서버가 입력창에 써 넣은 값 (수정 버튼·초기화 때만 바뀜)
+    private int _inputVersion;           // 바꾸면 입력창을 새로 그려 _inputValue를 반영한다
     private bool _searched;
     private IReadOnlyList<SymbolInfo> _results = [];
 
@@ -41,6 +45,8 @@
     public async Task SetQueryAsync(string query)
     {
         _query = query;
+        _inputValue = query;
+        _inputVersion++;
         await SearchAsync();
         StateHasChanged();
     }
@@ -48,6 +54,8 @@
     public void Clear()
     {
         _query = "";
+        _inputValue = "";
+        _inputVersion++;
         _results = [];
         _searched = false;
         StateHasChanged();

@@ -30,8 +30,8 @@
                         <td class="num">@DisplayFormat.Percent1(current)</td>
                         <td class="num">
                             <span class="target-input">
-                                <input type="text" inputmode="decimal" class="input input-num" aria-label="@(group.Name + " 목표 비중")"
-                                       value="@_targets.GetValueOrDefault(group.Id, "0")"
+                                <input @key="@($"{group.Id}-{_inputVersion}")" type="text" inputmode="decimal" class="input input-num" aria-label="@(group.Name + " 목표 비중")"
+                                       value="@_shownTargets.GetValueOrDefault(group.Id, "0")" onfocus="this.select()"
                                        @oninput="e => OnTargetInput(group.Id, e)" />
                                 <span class="muted">%</span>
                             </span>
@@ -112,6 +112,9 @@
 
     // 입력 중인 목표 비중(%) 문자열. 시세 갱신으로 화면이 다시 그려져도 유지한다.
     private readonly Dictionary<int, string> _targets = [];
+    // 서버가 입력창에 써 넣은 값. 입력하는 동안에는 바꾸지 않는다 (글자가 겹치거나 커서가 튀는 문제 방지).
+    private readonly Dictionary<int, string> _shownTargets = [];
+    private int _inputVersion;   // 바꾸면 입력창을 새로 그려 _shownTargets를 반영한다
     private bool _saving;
     private bool _justSaved;
 
@@ -125,9 +128,15 @@
     {
         var ids = Model.State.Groups.Select(g => g.Id).ToHashSet();
         foreach (var stale in _targets.Keys.Where(id => !ids.Contains(id)).ToList())
+        {
             _targets.Remove(stale);
+            _shownTargets.Remove(stale);
+        }
         foreach (var g in Model.State.Groups)
-            _targets.TryAdd(g.Id, FormatTarget(g.TargetWeight));
+        {
+            if (_targets.TryAdd(g.Id, FormatTarget(g.TargetWeight)))
+                _shownTargets[g.Id] = _targets[g.Id];
+        }
     }
 
     private static string FormatTarget(decimal weight) =>
@@ -153,7 +162,11 @@
     private void ResetTargets()
     {
         foreach (var g in Model.State.Groups)
+        {
             _targets[g.Id] = FormatTarget(g.TargetWeight);
+            _shownTargets[g.Id] = _targets[g.Id];
+        }
+        _inputVersion++;
         _justSaved = false;
     }
 

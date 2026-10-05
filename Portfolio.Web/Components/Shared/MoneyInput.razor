@@ -1,6 +1,9 @@
-@* 숫자만 입력, 쉼표 자동 표시 (설계서 9.5) *@
-<input id="@Id" type="text" inputmode="numeric" autocomplete="off" class="input input-num @Class"
-       aria-label="@AriaLabel" value="@_text" @oninput="OnInput" @onchange="OnCommit" @attributes="Attributes" />
+@* 숫자만 입력, 쉼표 자동 표시 (설계서 9.5)
+   입력하는 동안에는 서버가 입력창 내용을 다시 써 넣지 않는다 (글자가 겹치거나 커서가 튀는 문제 방지).
+   쉼표는 입력을 마쳤을 때(포커스 이동·Enter)와 값이 밖에서 바뀌었을 때만 다시 넣는다. *@
+<input @key="_version" @ref="_element" id="@Id" type="text" inputmode="numeric" autocomplete="off"
+       class="input input-num @Class" aria-label="@AriaLabel" value="@_shown" onfocus="this.select()"
+       @oninput="OnInput" @onchange="OnCommit" @attributes="Attributes" />
 
 @code {
     [Parameter] public decimal Value { get; set; }
@@ -12,18 +15,51 @@
     [Parameter] public string? AriaLabel { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? Attributes { get; set; }
 
-    private string _text = "0";
+    private ElementReference _element;
+    private string _shown = "0";      // 서버가 입력창에 써 넣은 마지막 글자
+    private int _version;             // 바꾸면 입력창을 새로 그린다 (써 넣은 글자는 같지만 화면 내용이 다를 때)
+    private decimal? _typed;          // 사용자가 입력 중인 값 (아직 쉼표를 다시 넣지 않음)
+    private bool _edited;             // 사용자가 입력해 화면 내용이 _shown과 다를 수 있음
+    private decimal _lastParameter;   // 바로 전에 받은 Value (밖에서 바뀌었는지 판단)
 
-    protected override void OnParametersSet() => _text = DisplayFormat.Number(Value);
+    public ValueTask FocusAsync() => _element.FocusAsync();
+
+    protected override void OnParametersSet()
+    {
+        bool changedOutside = Value != _lastParameter;
+        _lastParameter = Value;
+
+        // 입력 중에는 입력창을 건드리지 않는다: 방금 입력한 값이 그대로 돌아왔거나,
+        // 밖에서 값이 바뀌지 않은 채 화면만 다시 그려진 경우(시세 갱신 등)
+        if (_typed is { } typed && (typed == Value || !changedOutside)) return;
+
+        _typed = null;
+        Show(DisplayFormat.Number(Value));
+    }
 
     private async Task OnInput(ChangeEventArgs e)
     {
-        Value = Parse(e.Value?.ToString());
-        _text = DisplayFormat.Number(Value);
-        await ValueChanged.InvokeAsync(Value);
+        decimal value = Parse(e.Value?.ToString());
+        _typed = value;
+        _edited = true;
+        await ValueChanged.InvokeAsync(value);
     }
 
-    private Task OnCommit(ChangeEventArgs e) => OnCommitted.InvokeAsync(Parse(e.Value?.ToString()));
+    private async Task OnCommit(ChangeEventArgs e)
+    {
+        decimal value = Parse(e.Value?.ToString());
+        _typed = null;
+        Show(DisplayFormat.Number(value));
+        await OnCommitted.InvokeAsync(value);
+    }
+
+    private void Show(string text)
+    {
+        // 사용자가 입력해 화면 내용이 달라졌는데 써 넣을 글자가 이전과 같으면, 입력창을 새로 그려야 반영된다
+        if (_edited && _shown == text) _version++;
+        _shown = text;
+        _edited = false;
+    }
 
     // 정수만 받는다 (소수점 주식 미지원, 금액은 원 단위)
     private decimal Parse(string? text)
