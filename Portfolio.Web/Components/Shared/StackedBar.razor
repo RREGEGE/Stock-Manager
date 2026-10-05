@@ -1,0 +1,18 @@
+@* 그룹별 누적 막대 1줄. 구간 폭이 8% 미만이면 구간 안 숫자를 숨긴다 (설계서 9.3, 9.5) *@
+<div class="stacked-row">
+    <div class="stacked-label @(Bold ? "bold" : "")">@Label</div>
+    <div class="stacked-track" role="img" aria-label="@AriaLabel">
+        @foreach (var s in Segments.Where(s => s.Ratio > 0))
+        {
+            <div class="stacked-seg" style="width: @PortfolioViewModel.CssPercent(s.Ratio); background: @s.Color; color: @ChartColors.TextOn(s.Color)">@(s.Ratio >= 0.08m ? DisplayFormat.Percent1(s.Ratio) : "")</div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    [Parameter, EditorRequired] public IReadOnlyList<ChartSegment> Segments { get; set; } = [];
+    [Parameter] public bool Bold { get; set; }
+
+    private string AriaLabel => $"{Label}: " + string.Join(", ", Segments.Select(s => $"{s.Name} {DisplayFormat.Percent1(s.Ratio)}"));
+}
