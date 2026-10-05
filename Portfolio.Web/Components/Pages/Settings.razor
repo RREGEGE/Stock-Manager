@@ -2,6 +2,7 @@
 @inject SettingsRepository SettingsRepo
 @inject PortfolioNotifier Notifier
 @inject Microsoft.Extensions.Options.IOptions<PricePollingOptions> PollingOptions
+@inject Microsoft.Extensions.Options.IOptions<Portfolio.Web.Auth.AuthOptions> AuthSettings
 
 <PageTitle>설정</PageTitle>
 
@@ -41,6 +42,17 @@
             </label>
             <p class="note">포함하면 대시보드에 '현금' 항목이 따로 표시됩니다. 예수금 금액은 보유 종목 화면에서 입력합니다.</p>
         </section>
+
+        @if (AuthSettings.Value.Enabled)
+        {
+            <section aria-labelledby="h-login" class="card settings-card">
+                <h2 id="h-login" class="card-title">로그인</h2>
+                <p class="note">이 기기의 로그인을 끝냅니다. 비밀번호 변경은 앱을 실행하는 PC에서 <code>scripts\set-password.cmd</code>로 합니다.</p>
+                <div>
+                    <a href="logout" class="btn" data-enhance-nav="false">로그아웃</a>
+                </div>
+            </section>
+        }
     }
 </main>
 
