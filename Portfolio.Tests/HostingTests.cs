@@ -53,12 +53,23 @@ public class HostingTests
     }
 
     [Fact]
-    public void 데이터_폴더를_지정하지_않으면_사용자_폴더_아래_Portfolio를_쓴다()
+    public void 데이터_폴더를_지정하지_않으면_실행_파일_폴더_옆의_data를_쓴다()
     {
-        var paths = AppPaths.FromConfiguration(new ConfigurationBuilder().Build());
+        // 설치본: D:\Program\Portfolio\app\Portfolio.Web.exe → D:\Program\Portfolio\data
+        Assert.Equal(@"D:\Program\Portfolio\data", AppPaths.DefaultDataDirectory(@"D:\Program\Portfolio\app\"));
+        Assert.Equal(@"D:\Program\Portfolio\data", AppPaths.DefaultDataDirectory(@"D:\Program\Portfolio\app"));
 
-        Assert.Equal(
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Portfolio"),
-            paths.DataDirectory);
+        var paths = AppPaths.FromConfiguration(new ConfigurationBuilder().Build());
+        Assert.Equal(AppPaths.DefaultDataDirectory(AppContext.BaseDirectory), paths.DataDirectory);
+    }
+
+    [Fact]
+    public void 기본_데이터_위치는_사용자_프로필_C_드라이브_폴더가_아니다()
+    {
+        string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        string dir = AppPaths.DefaultDataDirectory(@"D:\Program\Portfolio\app");
+
+        Assert.False(dir.StartsWith(profile, StringComparison.OrdinalIgnoreCase));
     }
 }

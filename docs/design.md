@@ -362,7 +362,7 @@ public static class Rebalancer
 - 실행 형태: ASP.NET Core 앱을 `UseWindowsService()`로 Windows 서비스 등록, 부팅 시 자동 시작.
 - 호스트 PC가 꺼지면 외부 접속도 불가하다. 상시 가동 PC가 없으면 미니PC 또는 NAS(Docker) 배치를 검토한다.
 - 백업: SQLite 파일 일 1회 복사. 보유종목 원본이 DB에만 있으므로 백업이 필수다.
-- 개인 사용 단계(7.3)에서는 서비스로 등록하지 않고 `scripts/run.cmd`로 실행한다. 실제 DB·백업(최근 14일분)·KIS 키 설정 파일은 저장소 밖 데이터 폴더(`%LOCALAPPDATA%\Portfolio`)에 둔다. 실행·접속 절차는 `docs/operations.md`에 있다.
+- 개인 사용 단계(7.3)에서는 서비스로 등록하지 않고, `scripts/install.cmd`로 만든 실행 파일(바탕화면 바로가기)로 실행한다. 설치 폴더는 저장소 폴더 옆의 `Portfolio`이며(`app\` 실행 파일, `data\` 실제 DB·백업(최근 14일분)·KIS 키 설정 파일), 사용자 프로필(C 드라이브)에는 아무것도 두지 않는다. 실행·접속 절차는 `docs/operations.md`에 있다.
 
 ### 8.2 솔루션 구조
 
