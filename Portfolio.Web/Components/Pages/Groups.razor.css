@@ -1,0 +1,8 @@
+.side { flex: 1 1 300px; min-width: 0; }
+.side-title { margin-bottom: 6px; }
+.help-title { margin-bottom: 10px; }
+.side-text { margin: 0; font-size: 14px; color: var(--text-muted); }
+.help-text { line-height: 1.6; }
+
+.unclassified { list-style: none; margin: 6px 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.unclassified li { display: flex; justify-content: space-between; gap: 12px; }
