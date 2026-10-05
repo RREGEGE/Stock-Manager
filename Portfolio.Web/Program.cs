@@ -93,6 +93,15 @@ builder.Services.AddSingleton<SymbolMasterRepository>();
 if (builder.Configuration.GetValue("SymbolMaster:AutoRefresh", true))
     builder.Services.AddHostedService<SymbolMasterRefreshService>();
 
+// 일일 백업: 실제 데이터 폴더를 쓸 때만 (개발용 가짜 데이터는 백업하지 않는다)
+var backupOptions = builder.Configuration.GetSection(BackupOptions.SectionName).Get<BackupOptions>() ?? new BackupOptions();
+if (useDataDirectory && backupOptions.Enabled)
+{
+    builder.Services.AddHostedService(sp => new DatabaseBackupService(
+        connectionString, paths, backupOptions,
+        sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<DatabaseBackupService>>()));
+}
+
 // 화면용 서비스
 builder.Services.AddSingleton<GroupRepository>();
 builder.Services.AddSingleton<SettingsRepository>();
