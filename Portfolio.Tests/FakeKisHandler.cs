@@ -52,7 +52,7 @@ public sealed class InMemoryTokenStore : IAccessTokenStore
 public static class KisTestFactory
 {
     public static readonly IOptions<KisOptions> Options = Microsoft.Extensions.Options.Options.Create(
-        new KisOptions { Environment = KisEnvironment.Mock, AppKey = "test-app-key", AppSecret = "test-app-secret" });
+        new KisOptions { Environment = KisEnvironment.Mock, AppKey = "test-app-key", AppSecret = "test-app-secret", MinRequestIntervalMs = 0 });
 
     public static HttpClient Http(FakeKisHandler handler) =>
         new(handler, disposeHandler: false) { BaseAddress = Options.Value.BaseAddress };

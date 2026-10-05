@@ -122,6 +122,59 @@ public class MarketIndicatorTests
         Assert.Empty(handler.Requests);
     }
 
+    // 실제 계정에서 지표 3개를 연달아 조회하면 세 번째(환율)가 EGW00201로 거절됐다 (2026-10-05)
+    [Fact]
+    public async Task 연달아_조회해도_호출_사이에_최소_간격을_둔다()
+    {
+        var options = Microsoft.Extensions.Options.Options.Create(
+            new KisOptions { AppKey = "k", AppSecret = "s", MinRequestIntervalMs = 200 });
+        var handler = new FakeKisHandler();
+        var sentAt = new List<long>();
+        handler.OnApi = _ =>
+        {
+            sentAt.Add(System.Diagnostics.Stopwatch.GetTimestamp());
+            return FakeKisHandler.Json(HttpStatusCode.OK, OverseasJson("5750.80", "28.15", "2", "0.49"));
+        };
+        var tokens = new KisTokenManager(KisTestFactory.Http(handler), options, new InMemoryTokenStore(), TimeProvider.System);
+        var provider = new KisMarketIndicatorProvider(new KisClient(KisTestFactory.Http(handler), tokens, options, TimeProvider.System));
+
+        // 동시에 요청해도 차례로 나간다
+        var results = await Task.WhenAll(MarketIndicators.Overseas.Select(spec => provider.GetAsync(spec)));
+
+        Assert.All(results, Assert.NotNull);
+        Assert.Equal(3, sentAt.Count);
+        Assert.All(sentAt.Zip(sentAt.Skip(1)), pair =>
+            Assert.True(System.Diagnostics.Stopwatch.GetElapsedTime(pair.First, pair.Second) >= TimeSpan.FromMilliseconds(180)));
+    }
+
+    [Fact]
+    public async Task 호출_제한에_걸리면_잠시_뒤_한_번_다시_조회한다()
+    {
+        var handler = new FakeKisHandler();
+        handler.OnApi = _ => handler.ApiRequests.Count() == 1
+            ? FakeKisHandler.Json(HttpStatusCode.InternalServerError, """{"rt_cd":"1","msg1":"초당 거래건수를 초과하였습니다.","msg_cd":"EGW00201"}""")
+            : FakeKisHandler.Json(HttpStatusCode.OK, OverseasJson("1347.00", "2.80", "2", "0.21"));
+        var (_, client) = KisTestFactory.Create(handler, new InMemoryTokenStore(), new ManualClock(Now));
+
+        var fx = await client.GetOverseasIndicatorAsync("USDKRW", "X", "FX@KRW");
+
+        Assert.Equal(1347.00m, fx!.Value);
+        Assert.Equal(2, handler.ApiRequests.Count());
+    }
+
+    [Fact]
+    public async Task 다시_조회해도_호출_제한이면_실패로_처리한다()
+    {
+        var handler = new FakeKisHandler();
+        handler.OnApi = _ => FakeKisHandler.Json(HttpStatusCode.InternalServerError, """{"rt_cd":"1","msg1":"초당 거래건수를 초과하였습니다.","msg_cd":"EGW00201"}""");
+        var (_, client) = KisTestFactory.Create(handler, new InMemoryTokenStore(), new ManualClock(Now));
+
+        var ex = await Assert.ThrowsAsync<KisApiException>(() => client.GetOverseasIndicatorAsync("USDKRW", "X", "FX@KRW"));
+
+        Assert.Contains("EGW00201", ex.Message);
+        Assert.Equal(2, handler.ApiRequests.Count());   // 무한 재시도하지 않는다
+    }
+
     [Theory]
     [InlineData("GET", "/uapi/overseas-price/v1/quotations/inquire-daily-chartprice", true)]   // 해외 지수·환율 조회
     [InlineData("GET", "/uapi/domestic-stock/v1/quotations/inquire-index-price", true)]        // 국내 지수 조회

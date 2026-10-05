@@ -31,9 +31,15 @@ public sealed class KisClient(
 
     private const string MarketKrx = "J";
     private const string TokenExpiredMsgCode = "EGW00123";   // KIS 공식 예제의 토큰 만료 코드
+    public const string RateLimitMsgCode = "EGW00201";       // 초당 거래건수 초과 (실제 응답으로 확인)
+    public static readonly TimeSpan RateLimitRetryDelay = TimeSpan.FromSeconds(1);
 
     private readonly TimeProvider _clock = clock ?? TimeProvider.System;
     private readonly ILogger _logger = logger ?? NullLogger<KisClient>.Instance;
+
+    // 호출 간격 유지: 시세·지수·환율 조회가 모두 이 문을 차례로 지난다
+    private readonly SemaphoreSlim _gate = new(1, 1);
+    private long? _lastSent;
 
     // 멀티종목 시세: 1회 최대 30종목
     public async Task<IReadOnlyList<PriceQuote>> GetMultiPriceAsync(
@@ -107,6 +113,14 @@ public sealed class KisClient(
             (status, doc) = await SendAsync(path, trId, query, token, ct);
         }
 
+        if (doc is not null && GetString(doc.RootElement, "msg_cd") == RateLimitMsgCode)
+        {
+            // 호출 제한에 걸리면 잠시 뒤 1회만 다시 시도한다
+            doc.Dispose();
+            await Task.Delay(RateLimitRetryDelay, _clock, ct);
+            (status, doc) = await SendAsync(path, trId, query, token, ct);
+        }
+
         if (doc is null)
             throw new KisApiException($"KIS 응답을 해석할 수 없습니다. (HTTP {(int)status}, {trId})", httpStatus: (int)status);
 
@@ -138,8 +152,21 @@ public sealed class KisClient(
         request.Headers.TryAddWithoutValidation("tr_id", trId);
         request.Headers.TryAddWithoutValidation("custtype", "P");
 
-        using var response = await http.SendAsync(request, ct);
-        return (response.StatusCode, await KisTokenManager.ReadJsonAsync(response, ct));
+        await _gate.WaitAsync(ct);
+        try
+        {
+            var minInterval = TimeSpan.FromMilliseconds(opt.MinRequestIntervalMs);
+            if (_lastSent is { } last && _clock.GetElapsedTime(last) is var elapsed && elapsed < minInterval)
+                await Task.Delay(minInterval - elapsed, _clock, ct);
+
+            using var response = await http.SendAsync(request, ct);
+            _lastSent = _clock.GetTimestamp();
+            return (response.StatusCode, await KisTokenManager.ReadJsonAsync(response, ct));
+        }
+        finally
+        {
+            _gate.Release();
+        }
     }
 
     private static bool IsAuthError(HttpStatusCode status, JsonDocument? doc) =>
