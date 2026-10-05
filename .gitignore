@@ -488,3 +488,6 @@ $RECYCLE.BIN/
 
 # docs 폴더 압축 사본 (docs/와 중복)
 docs/*.zip
+
+# Claude Code 로컬 설정 (미리보기 실행 설정 등, 이 PC 전용)
+.claude/
