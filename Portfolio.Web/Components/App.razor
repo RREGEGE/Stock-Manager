@@ -12,7 +12,15 @@
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["Portfolio.Web.styles.css"]" />
     <ImportMap />
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="icon" type="image/png" href="icon-192.png" />
+    @* 휴대폰 홈 화면에 추가하면 주소창 없이 앱처럼 열린다 *@
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#1B1F24" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="포트폴리오" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <HeadOutlet @rendermode="PageRenderMode" />
 </head>
 
