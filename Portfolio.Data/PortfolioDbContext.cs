@@ -11,6 +11,7 @@ public class PortfolioDbContext(DbContextOptions<PortfolioDbContext> options) : 
     public DbSet<AssetGroup> AssetGroups => Set<AssetGroup>();
     public DbSet<PriceCache> PriceCaches => Set<PriceCache>();
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
+    public DbSet<ApiToken> ApiTokens => Set<ApiToken>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -44,6 +45,7 @@ public class PortfolioDbContext(DbContextOptions<PortfolioDbContext> options) : 
             e.HasKey(x => x.SymbolCode);
             e.Property(x => x.SymbolCode).HasMaxLength(12);
         });
+        b.Entity<ApiToken>(e => e.Property(x => x.Id).ValueGeneratedNever());
         b.Entity<AppSetting>(e =>
         {
             e.HasKey(x => x.Key);

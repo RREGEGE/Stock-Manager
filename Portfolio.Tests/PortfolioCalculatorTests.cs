@@ -13,7 +13,7 @@ public class PortfolioCalculatorTests
             db.Context.CashBalances.Add(new CashBalance { Amount = cash, UpdatedAt = DateTimeOffset.UtcNow });
             await db.Context.SaveChangesAsync();
         }
-        var reader = new PortfolioReader(db.Context, new FakePriceProvider(SeedData.Prices));
+        var reader = new PortfolioReader(db.Context, await db.SeedPriceStoreAsync());
         return await reader.GetSnapshotAsync();
     }
 

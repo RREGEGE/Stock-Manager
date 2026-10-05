@@ -10,7 +10,7 @@ public class RebalancerTests
     private static async Task<(IReadOnlyList<GroupState> Groups, IReadOnlyList<HoldingView> Holdings)> SeedAsync(TestDb db)
     {
         await SeedData.ApplyAsync(db.Context);
-        var snapshot = await new PortfolioReader(db.Context, new FakePriceProvider(SeedData.Prices)).GetSnapshotAsync();
+        var snapshot = await new PortfolioReader(db.Context, await db.SeedPriceStoreAsync()).GetSnapshotAsync();
         var groups = await db.Context.AssetGroups.OrderBy(g => g.SortOrder).ToListAsync();
         var states = groups.Select(g => new GroupState(g.Id, g.Name, g.TargetWeight,
             snapshot.Holdings.Where(h => h.GroupName == g.Name).Sum(h => h.EvalAmount))).ToList();

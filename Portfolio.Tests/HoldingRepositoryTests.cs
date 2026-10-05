@@ -61,10 +61,4 @@ public class HoldingRepositoryTests
         Assert.False(await repo.DeleteAsync("SEED01"));
         Assert.Empty(await db.Context.Holdings.ToListAsync());
     }
-
-    private sealed class ManualClock(DateTimeOffset now) : TimeProvider
-    {
-        public DateTimeOffset Now { get; set; } = now;
-        public override DateTimeOffset GetUtcNow() => Now;
-    }
 }
