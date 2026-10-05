@@ -30,6 +30,7 @@ public static class KisServiceCollectionExtensions
                 http.Timeout = TimeSpan.FromSeconds(30);
             })
             .ConfigurePrimaryHttpMessageHandler(Primary)
+            .AddHttpMessageHandler(() => new KisQuotationOnlyHandler())
             .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
 
         // 시세 조회: 통신 오류·일시적 상태 코드만 재시도한다. HTTP 500은 KIS가 업무 오류(토큰 만료 등)에도
@@ -37,6 +38,7 @@ public static class KisServiceCollectionExtensions
         services.AddHttpClient(ApiClient, (sp, http) =>
                 http.BaseAddress = sp.GetRequiredService<IOptions<KisOptions>>().Value.BaseAddress)
             .ConfigurePrimaryHttpMessageHandler(Primary)
+            .AddHttpMessageHandler(() => new KisQuotationOnlyHandler())
             .SetHandlerLifetime(Timeout.InfiniteTimeSpan)
             .AddResilienceHandler("kis-api", pipeline =>
             {
