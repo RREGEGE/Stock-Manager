@@ -25,6 +25,7 @@ public sealed class SymbolMasterRepository(IDbContextFactory<PortfolioDbContext>
         string like = "%" + query.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
         var matches = await db.SymbolMasters.AsNoTracking()
             .Where(s => EF.Functions.Like(s.SymbolName, like, "\\") || s.SymbolCode.StartsWith(upper))
+            .OrderBy(s => s.SymbolCode)   // 개수를 제한하기 전에 순서를 정해 결과가 매번 같게 한다
             .Take(200)
             .ToListAsync(ct);
 

@@ -49,7 +49,8 @@ public sealed class PriceUpdater(
         var updated = priceStore.Apply(symbolCodes, quotes);
         int stale = symbolCodes.Distinct().Count() - updated.Count;
         if (stale > 0)
-            _logger.LogWarning("시세 지연 종목 {Stale}개 / 전체 {Total}개", stale, symbolCodes.Distinct().Count());
+            // 실패 사유는 시세 출처가 경고로 남긴다. 여기서는 개수만 기록한다.
+            _logger.LogInformation("시세 지연 종목 {Stale}개 / 전체 {Total}개", stale, symbolCodes.Distinct().Count());
 
         if (updated.Count > 0)
             await SaveCacheAsync(updated, ct);

@@ -22,6 +22,9 @@ public sealed class KisClient(
     public const string PriceTrId = "FHKST01010100";
     public const int MaxMultiPriceSymbols = 30;
 
+    // 앱키가 설정되어 있는지. 없으면 호출해도 실패하므로 호출하는 쪽에서 미리 건너뛴다.
+    public bool IsConfigured => options.Value.IsConfigured;
+
     private const string MarketKrx = "J";
     private const string TokenExpiredMsgCode = "EGW00123";   // KIS 공식 예제의 토큰 만료 코드
 
