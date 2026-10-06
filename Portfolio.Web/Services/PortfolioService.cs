@@ -9,6 +9,8 @@ public sealed record PriceSourceInfo(bool Ready, string? SettingsPath);
 
 // 화면 한 번 그리는 데 필요한 데이터 묶음
 public sealed record PortfolioState(
+    TradingAccount Account,                             // 지금 보고 있는 계좌 (F-11)
+    IReadOnlyList<TradingAccount> Accounts,
     PortfolioSnapshot Snapshot,
     PortfolioSummary Summary,
     IReadOnlyList<AssetGroup> Groups,
@@ -29,26 +31,33 @@ public sealed record PortfolioState(
 }
 
 // 화면과 데이터 계층 사이의 얇은 연결. 변경 후에는 열려 있는 다른 화면에도 알린다.
+// 보유 종목·그룹·예수금은 계좌마다 따로 있으므로 어느 계좌인지(accountId)를 받는다 (F-11).
 public sealed class PortfolioService(
     IDbContextFactory<PortfolioDbContext> dbFactory,
     PriceStore priceStore,
     PriceUpdater priceUpdater,
     GroupRepository groups,
+    TradingAccountRepository accounts,
     SettingsRepository settings,
     SymbolMasterRepository symbols,
     PortfolioNotifier notifier,
     TimeProvider clock,
     PriceSourceInfo priceSource)
 {
-    public async Task<PortfolioState> LoadAsync(CancellationToken ct = default)
+    // 고른 계좌가 없어졌으면(삭제 등) 첫 번째 계좌를 보여 준다
+    public async Task<PortfolioState> LoadAsync(int accountId, CancellationToken ct = default)
     {
+        var accountList = await accounts.GetAllAsync(ct);
+        var account = accountList.FirstOrDefault(a => a.Id == accountId) ?? accountList[0];
+
         await using var db = await dbFactory.CreateDbContextAsync(ct);
-        var snapshot = await new PortfolioReader(db, priceStore, clock).GetSnapshotAsync(ct);
-        var rows = await db.Holdings.AsNoTracking().ToDictionaryAsync(h => h.SymbolCode, ct);
-        var groupList = await groups.GetAllAsync(ct);
+        var snapshot = await new PortfolioReader(db, priceStore, clock).GetSnapshotAsync(account.Id, ct);
+        var rows = await db.Holdings.AsNoTracking().Where(h => h.AccountId == account.Id).ToDictionaryAsync(h => h.SymbolCode, ct);
+        var groupList = await groups.GetAllAsync(account.Id, ct);
         bool includeCash = await settings.GetIncludeCashAsync(ct);
 
         return new PortfolioState(
+            account, accountList,
             snapshot,
             PortfolioCalculator.Calculate(snapshot, includeCash),
             groupList, rows, includeCash,
@@ -64,27 +73,27 @@ public sealed class PortfolioService(
 
     // 저장 즉시 해당 종목 현재가를 1회 조회해 반영한다 (설계서 5.4-4)
     public async Task SaveHoldingAsync(
-        string symbolCode, string symbolName, long quantity, decimal avgPrice, int? groupId, CancellationToken ct = default)
+        int accountId, string symbolCode, string symbolName, long quantity, decimal avgPrice, int? groupId, CancellationToken ct = default)
     {
         await using (var db = await dbFactory.CreateDbContextAsync(ct))
         {
-            await new HoldingRepository(db, clock).SaveAsync(symbolCode, symbolName, quantity, avgPrice, groupId, ct);
+            await new HoldingRepository(db, clock).SaveAsync(symbolCode, symbolName, quantity, avgPrice, groupId, accountId, ct);
         }
         await priceUpdater.RefreshAsync([symbolCode], ct);   // 끝나면 화면 알림까지 보낸다
     }
 
-    public async Task DeleteHoldingAsync(string symbolCode, CancellationToken ct = default)
+    public async Task DeleteHoldingAsync(int accountId, string symbolCode, CancellationToken ct = default)
     {
         await using (var db = await dbFactory.CreateDbContextAsync(ct))
         {
-            await new HoldingRepository(db, clock).DeleteAsync(symbolCode, ct);
+            await new HoldingRepository(db, clock).DeleteAsync(symbolCode, accountId, ct);
         }
         notifier.NotifyChanged();
     }
 
-    public async Task SetCashAsync(decimal amount, CancellationToken ct = default)
+    public async Task SetCashAsync(int accountId, decimal amount, CancellationToken ct = default)
     {
-        await settings.SetCashAsync(amount, ct);
+        await settings.SetCashAsync(amount, accountId, ct);
         notifier.NotifyChanged();
     }
 
@@ -94,9 +103,9 @@ public sealed class PortfolioService(
         notifier.NotifyChanged();
     }
 
-    public async Task<AssetGroup> AddGroupAsync(string name, CancellationToken ct = default)
+    public async Task<AssetGroup> AddGroupAsync(int accountId, string name, CancellationToken ct = default)
     {
-        var group = await groups.AddAsync(name, null, ct);
+        var group = await groups.AddAsync(name, null, accountId, ct);
         notifier.NotifyChanged();
         return group;
     }
@@ -119,9 +128,38 @@ public sealed class PortfolioService(
         notifier.NotifyChanged();
     }
 
-    public async Task SaveTargetsAsync(IReadOnlyDictionary<int, decimal> targetWeights, CancellationToken ct = default)
+    public async Task SaveTargetsAsync(int accountId, IReadOnlyDictionary<int, decimal> targetWeights, CancellationToken ct = default)
     {
-        await groups.SaveTargetsAsync(targetWeights, ct);
+        await groups.SaveTargetsAsync(targetWeights, accountId, ct);
         notifier.NotifyChanged();
     }
+
+    // 계좌 관리 (F-11)
+    public async Task<TradingAccount> AddAccountAsync(string name, CancellationToken ct = default)
+    {
+        var account = await accounts.AddAsync(name, ct);
+        notifier.NotifyChanged();
+        return account;
+    }
+
+    public async Task RenameAccountAsync(int id, string name, CancellationToken ct = default)
+    {
+        await accounts.RenameAsync(id, name, ct);
+        notifier.NotifyChanged();
+    }
+
+    public async Task MoveAccountAsync(int id, int direction, CancellationToken ct = default)
+    {
+        await accounts.MoveAsync(id, direction, ct);
+        notifier.NotifyChanged();
+    }
+
+    public async Task DeleteAccountAsync(int id, CancellationToken ct = default)
+    {
+        await accounts.DeleteAsync(id, ct);
+        notifier.NotifyChanged();
+    }
+
+    public Task<int> CountHoldingsAsync(int accountId, CancellationToken ct = default) =>
+        accounts.CountHoldingsAsync(accountId, ct);
 }

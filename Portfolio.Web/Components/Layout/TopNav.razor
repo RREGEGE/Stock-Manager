@@ -4,6 +4,16 @@
 <header class="topbar">
     <div class="topbar-inner">
         <div class="brand">포트폴리오</div>
+        @if (Model is { } current)
+        {
+            @* 계좌 전환 (F-11): 고르면 모든 화면이 그 계좌 기준으로 바뀐다 *@
+            <select class="account-select" aria-label="계좌" @onchange="SwitchAccount">
+                @foreach (var a in current.State.Accounts)
+                {
+                    <option value="@a.Id" selected="@(a.Id == current.State.Account.Id)">@a.Name</option>
+                }
+            </select>
+        }
         <nav aria-label="주 메뉴" class="topnav">
             <NavLink href="" Match="NavLinkMatch.All">대시보드</NavLink>
             <NavLink href="holdings">보유 종목</NavLink>
@@ -37,3 +47,14 @@
         </div>
     }
 </header>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    // 고른 계좌를 쿠키에 적어야 하므로 화면 안 이동이 아니라 페이지를 새로 불러온다
+    private void SwitchAccount(ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out int id) || id == Account.Id) return;
+        Navigation.NavigateTo(CurrentAccount.SelectUrl(id, "/" + Navigation.ToBaseRelativePath(Navigation.Uri)), forceLoad: true);
+    }
+}

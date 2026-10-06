@@ -141,7 +141,9 @@ if (useDataDirectory && backupOptions.Enabled)
 // 화면용 서비스
 builder.Services.AddSingleton<GroupRepository>();
 builder.Services.AddSingleton<SettingsRepository>();
+builder.Services.AddSingleton<TradingAccountRepository>();
 builder.Services.AddSingleton<PortfolioService>();
+builder.Services.AddScoped<CurrentAccount>();   // 화면 연결마다 보고 있는 계좌 (F-11)
 
 // 로그인: 계정 1개(아이디 + 비밀번호), 쿠키로 90일 유지 (설계서 7.3 개인 사용 단계의 간소화)
 var authOptions = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
@@ -222,6 +224,22 @@ app.MapGet("/logout", async (HttpContext context) =>
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     return Results.Redirect("/login");
 }).AllowAnonymous();
+
+// 계좌 전환 (F-11): 고른 계좌를 이 브라우저의 쿠키에 적고 보던 화면으로 돌아간다.
+// 계좌번호가 아니라 계좌의 순번(Id)만 담는다. 없는 계좌면 화면이 첫 번째 계좌를 보여 준다.
+app.MapGet(CurrentAccount.SelectPath + "/{id:int}", (int id, string? returnUrl, HttpContext context) =>
+{
+    context.Response.Cookies.Append(CurrentAccount.CookieName, id.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        new CookieOptions
+        {
+            HttpOnly = true, SameSite = SameSiteMode.Lax, IsEssential = true,
+            Secure = context.Request.IsHttps, MaxAge = TimeSpan.FromDays(365),
+        });
+    // 이 사이트 안의 주소로만 돌아간다
+    bool local = !string.IsNullOrEmpty(returnUrl) && returnUrl[0] == '/'
+        && (returnUrl.Length == 1 || (returnUrl[1] != '/' && returnUrl[1] != '\\'));
+    return Results.LocalRedirect(local ? returnUrl! : "/");
+});
 
 app.Lifetime.ApplicationStarted.Register(() =>
 {

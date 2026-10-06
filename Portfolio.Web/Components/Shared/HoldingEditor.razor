@@ -160,7 +160,7 @@
             int groupId = int.Parse(_groupValue);
             string name = _symbol.SymbolName;
             bool wasExisting = _existing;
-            await Portfolio.SaveHoldingAsync(_symbol.SymbolCode, name, (long)_quantity, _avgPrice,
+            await Portfolio.SaveHoldingAsync(Model.State.Account.Id, _symbol.SymbolCode, name, (long)_quantity, _avgPrice,
                 groupId == 0 ? null : groupId);
             await Reset();
             await OnCompleted.InvokeAsync(wasExisting ? $"{name}을(를) 수정했습니다." : $"{name}을(를) 추가했습니다.");
@@ -179,7 +179,7 @@
     {
         if (_symbol is null) return;
         string name = _symbol.SymbolName;
-        await Portfolio.DeleteHoldingAsync(_symbol.SymbolCode);
+        await Portfolio.DeleteHoldingAsync(Model.State.Account.Id, _symbol.SymbolCode);
         await Reset();
         await OnCompleted.InvokeAsync($"{name}을(를) 삭제했습니다.");
     }

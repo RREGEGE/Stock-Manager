@@ -194,7 +194,7 @@
         _saving = true;
         try
         {
-            await Portfolio.SaveTargetsAsync(Model.State.Groups.ToDictionary(g => g.Id, g => TargetOf(g.Id) / 100m));
+            await Portfolio.SaveTargetsAsync(Model.State.Account.Id, Model.State.Groups.ToDictionary(g => g.Id, g => TargetOf(g.Id) / 100m));
             _justSaved = true;
         }
         finally
@@ -218,7 +218,7 @@
     {
         try
         {
-            var added = await Portfolio.AddGroupAsync(_newName);
+            var added = await Portfolio.AddGroupAsync(Model.State.Account.Id, _newName);
             _targets[added.Id] = "0";
             _shownTargets[added.Id] = "0";
             _adding = false;

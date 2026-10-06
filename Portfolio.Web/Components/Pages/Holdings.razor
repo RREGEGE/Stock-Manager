@@ -74,7 +74,7 @@
     // 표의 삭제 버튼 (그 줄에서 확인을 마친 뒤 호출된다)
     private async Task DeleteAsync(HoldingRow row)
     {
-        await Portfolio.DeleteHoldingAsync(row.View.SymbolCode);
+        await Portfolio.DeleteHoldingAsync(Account.Id, row.View.SymbolCode);
         if (_selectedCode == row.View.SymbolCode && _editor is not null)
             await _editor.BeginAddAsync();
         ShowResult($"{row.View.SymbolName}을(를) 삭제했습니다.");
@@ -82,7 +82,7 @@
 
     private async Task SaveCashAsync(decimal amount)
     {
-        await Portfolio.SetCashAsync(amount);
+        await Portfolio.SetCashAsync(Account.Id, amount);
         ShowResult($"예수금 {DisplayFormat.Won(amount)}을 저장했습니다.");
     }
 

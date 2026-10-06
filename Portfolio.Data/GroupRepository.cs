@@ -2,24 +2,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Portfolio.Data;
 
-// 그룹 관리 (설계서 2장 F-04·F-06, 6장 그룹 관리)
+// 그룹 관리 (설계서 2장 F-04·F-06, 6장 그룹 관리). 그룹과 목표 비중은 계좌마다 따로 둔다 (F-11).
 public sealed class GroupRepository(IDbContextFactory<PortfolioDbContext> dbFactory)
 {
     public const string DefaultColor = "#7A8088";
 
-    public async Task<List<AssetGroup>> GetAllAsync(CancellationToken ct = default)
+    public async Task<List<AssetGroup>> GetAllAsync(int accountId = TradingAccount.DefaultId, CancellationToken ct = default)
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct);
-        return await db.AssetGroups.AsNoTracking().OrderBy(g => g.SortOrder).ThenBy(g => g.Id).ToListAsync(ct);
+        return await db.AssetGroups.AsNoTracking().Where(g => g.AccountId == accountId).OrderBy(g => g.SortOrder).ThenBy(g => g.Id).ToListAsync(ct);
     }
 
     // 새 그룹은 목표 0%로 맨 뒤에 추가한다 (목표 합계는 그대로 유지)
-    public async Task<AssetGroup> AddAsync(string name, string? color = null, CancellationToken ct = default)
+    public async Task<AssetGroup> AddAsync(string name, string? color = null, int accountId = TradingAccount.DefaultId, CancellationToken ct = default)
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct);
-        name = await ValidateNameAsync(db, name, exceptId: null, ct);
-        int nextOrder = (await db.AssetGroups.MaxAsync(g => (int?)g.SortOrder, ct) ?? 0) + 1;
-        var group = new AssetGroup { Name = name, Color = NormalizeColor(color), SortOrder = nextOrder, TargetWeight = 0m };
+        name = await ValidateNameAsync(db, name, accountId, exceptId: null, ct);
+        int nextOrder = (await db.AssetGroups.Where(g => g.AccountId == accountId).MaxAsync(g => (int?)g.SortOrder, ct) ?? 0) + 1;
+        var group = new AssetGroup { AccountId = accountId, Name = name, Color = NormalizeColor(color), SortOrder = nextOrder, TargetWeight = 0m };
         db.AssetGroups.Add(group);
         await db.SaveChangesAsync(ct);
         return group;
@@ -29,7 +29,7 @@ public sealed class GroupRepository(IDbContextFactory<PortfolioDbContext> dbFact
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct);
         var group = await db.AssetGroups.FindAsync([id], ct) ?? throw new KeyNotFoundException("그룹을 찾을 수 없습니다.");
-        group.Name = await ValidateNameAsync(db, name, id, ct);
+        group.Name = await ValidateNameAsync(db, name, group.AccountId, id, ct);
         group.Color = NormalizeColor(color);
         await db.SaveChangesAsync(ct);
     }
@@ -38,7 +38,10 @@ public sealed class GroupRepository(IDbContextFactory<PortfolioDbContext> dbFact
     public async Task MoveAsync(int id, int direction, CancellationToken ct = default)
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct);
-        var groups = await db.AssetGroups.OrderBy(g => g.SortOrder).ThenBy(g => g.Id).ToListAsync(ct);
+        var moving = await db.AssetGroups.FindAsync([id], ct);
+        if (moving is null) return;
+        var groups = await db.AssetGroups.Where(g => g.AccountId == moving.AccountId)
+            .OrderBy(g => g.SortOrder).ThenBy(g => g.Id).ToListAsync(ct);
         int index = groups.FindIndex(g => g.Id == id);
         int target = index + Math.Sign(direction);
         if (index < 0 || target < 0 || target >= groups.Count) return;
@@ -64,7 +67,7 @@ public sealed class GroupRepository(IDbContextFactory<PortfolioDbContext> dbFact
         Math.Abs(targetWeights.Sum() - 1m) <= 0.00001m;
 
     // 그룹별 목표 비중(0~1) 저장. 합계가 100%가 아니면 저장하지 않는다 (설계서 6장, AC-11).
-    public async Task SaveTargetsAsync(IReadOnlyDictionary<int, decimal> targetWeights, CancellationToken ct = default)
+    public async Task SaveTargetsAsync(IReadOnlyDictionary<int, decimal> targetWeights, int accountId = TradingAccount.DefaultId, CancellationToken ct = default)
     {
         if (targetWeights.Values.Any(w => w < 0m))
             throw new ArgumentException("목표 비중은 0% 이상이어야 합니다.");
@@ -72,7 +75,7 @@ public sealed class GroupRepository(IDbContextFactory<PortfolioDbContext> dbFact
             throw new ArgumentException("목표 비중 합계가 100%가 아닙니다.");
 
         await using var db = await dbFactory.CreateDbContextAsync(ct);
-        var groups = await db.AssetGroups.ToListAsync(ct);
+        var groups = await db.AssetGroups.Where(g => g.AccountId == accountId).ToListAsync(ct);
         if (groups.Count != targetWeights.Count || groups.Any(g => !targetWeights.ContainsKey(g.Id)))
             throw new ArgumentException("모든 그룹의 목표 비중을 함께 저장해야 합니다.");
 
@@ -80,14 +83,14 @@ public sealed class GroupRepository(IDbContextFactory<PortfolioDbContext> dbFact
         await db.SaveChangesAsync(ct);
     }
 
-    private static async Task<string> ValidateNameAsync(PortfolioDbContext db, string name, int? exceptId, CancellationToken ct)
+    private static async Task<string> ValidateNameAsync(PortfolioDbContext db, string name, int accountId, int? exceptId, CancellationToken ct)
     {
         name = (name ?? "").Trim();
         if (name.Length is 0 or > 50)
             throw new ArgumentException("그룹 이름은 1~50자여야 합니다.");
         if (name == Core.PortfolioCalculator.UnclassifiedGroupName)
             throw new ArgumentException("'미분류'는 그룹 이름으로 쓸 수 없습니다.");
-        if (await db.AssetGroups.AnyAsync(g => g.Name == name && g.Id != exceptId, ct))
+        if (await db.AssetGroups.AnyAsync(g => g.AccountId == accountId && g.Name == name && g.Id != exceptId, ct))
             throw new ArgumentException("같은 이름의 그룹이 이미 있습니다.");
         return name;
     }
