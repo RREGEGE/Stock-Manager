@@ -1,5 +1,6 @@
+@inject ThemeState Theme
 <!DOCTYPE html>
-<html lang="@T.Language">
+<html lang="@T.Language" data-theme="@Theme.HtmlAttribute">
 
 <head>
     <meta charset="utf-8" />
@@ -25,7 +26,7 @@
 </head>
 
 <body>
-    <Routes @rendermode="PageRenderMode" AccountId="CurrentAccount.ReadCookie(HttpContext)" Language="@T.Language" />
+    <Routes @rendermode="PageRenderMode" AccountId="CurrentAccount.ReadCookie(HttpContext)" Language="@T.Language" Theme="@Theme.Mode" />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
@@ -40,7 +41,11 @@
     private static readonly IComponentRenderMode Interactive = new InteractiveServerRenderMode(prerender: false);
 
     // 이 브라우저가 고른 언어 (쿠키). 화면 연결에는 Routes가 다시 넘겨준다 (F-12).
-    protected override void OnInitialized() => T.Language = Loc.ReadCookie(HttpContext);
+    protected override void OnInitialized()
+    {
+        T.Language = Loc.ReadCookie(HttpContext);
+        Theme.Mode = ThemeState.ReadCookie(HttpContext);   // 화면 모드 (F-13)
+    }
 
     private IComponentRenderMode? PageRenderMode => HttpContext.AcceptsInteractiveRouting() ? Interactive : null;
 }

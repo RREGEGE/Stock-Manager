@@ -26,6 +26,84 @@
     --error: #B42318;
     --live: #4CC38A;
     --disabled: #9AA0A8;
+    /* 아래 넷은 어두운 모드 때문에 나눈 값 (F-13). 밝은 모드에서는 기존 색과 같다 */
+    --bg-input: #FFFFFF;        /* 입력창·기본 버튼 바탕 */
+    --primary-text: #23395B;    /* 글자·테두리로 쓰는 주 색상 (링크, 외곽선 버튼) */
+    --on-primary: #FFFFFF;      /* 주 색상 바탕 위의 글자 */
+    --chart-outline: transparent;   /* 그룹 색 조각의 테두리 */
+    color-scheme: light;
+}
+
+/* 어두운 모드 (설계서 9.12, F-13). 같은 값을 두 번 적는다:
+   ① 시스템이 어둡고 화면 모드를 '밝게'로 고정하지 않았을 때 ② '어둡게'로 고정했을 때.
+   값을 고치면 두 곳을 함께 고친다 (ThemeTests가 두 묶음이 같은지 확인한다). */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg-page: #121417;
+        --bg-card: #1C1F24;
+        --line-card: #2E333A;
+        --line-row: #262A30;
+        --line-input: #707882;
+        --bg-track: #2A2E34;
+        --text: #E8EAED;
+        --text-muted: #A3A9B1;
+        --header-bg: #0C0E10;
+        --header-text: #C9CCD1;
+        --header-active: #2A2F36;
+        --primary: #3D5F99;
+        --primary-soft: #232B3A;
+        --up: #FF8A80;
+        --up-on-dark: #FF8A80;
+        --down: #8FB8F0;
+        --down-on-dark: #8FB8F0;
+        --over-bg: #3A2A1A;
+        --over-fg: #F2B77A;
+        --under-bg: #1D2A3D;
+        --under-fg: #A9C7F2;
+        --ok-bg: #173225;
+        --ok-fg: #7FD1A6;
+        --error: #FF8A7A;
+        --live: #4CC38A;
+        --disabled: #6B727B;
+        --bg-input: #15181C;
+        --primary-text: #9DB8E8;
+        --on-primary: #FFFFFF;
+        --chart-outline: rgba(255, 255, 255, 0.3);
+        color-scheme: dark;
+    }
+}
+:root[data-theme="dark"] {
+    --bg-page: #121417;
+    --bg-card: #1C1F24;
+    --line-card: #2E333A;
+    --line-row: #262A30;
+    --line-input: #707882;
+    --bg-track: #2A2E34;
+    --text: #E8EAED;
+    --text-muted: #A3A9B1;
+    --header-bg: #0C0E10;
+    --header-text: #C9CCD1;
+    --header-active: #2A2F36;
+    --primary: #3D5F99;
+    --primary-soft: #232B3A;
+    --up: #FF8A80;
+    --up-on-dark: #FF8A80;
+    --down: #8FB8F0;
+    --down-on-dark: #8FB8F0;
+    --over-bg: #3A2A1A;
+    --over-fg: #F2B77A;
+    --under-bg: #1D2A3D;
+    --under-fg: #A9C7F2;
+    --ok-bg: #173225;
+    --ok-fg: #7FD1A6;
+    --error: #FF8A7A;
+    --live: #4CC38A;
+    --disabled: #6B727B;
+    --bg-input: #15181C;
+    --primary-text: #9DB8E8;
+    --on-primary: #FFFFFF;
+    --chart-outline: rgba(255, 255, 255, 0.3);
+    color-scheme: dark;
 }
 
 html, body { margin: 0; }
@@ -38,7 +116,7 @@ body {
     overflow-x: hidden;
 }
 
-a { color: var(--primary); }
+a { color: var(--primary-text); }
 a:hover { color: var(--text); }
 
 h1:focus { outline: none; }
@@ -63,7 +141,7 @@ h1:focus { outline: none; }
 
 /* 카드 */
 .card { background: var(--bg-card); border: 1px solid var(--line-card); border-radius: 12px; padding: 22px; box-sizing: border-box; }
-.card-active { border-color: var(--primary); }
+.card-active { border-color: var(--primary-text); }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .card-title { margin: 0; font-size: 16px; font-weight: 600; }
 .card-sub { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
@@ -75,17 +153,17 @@ h1:focus { outline: none; }
     display: inline-flex; align-items: center; justify-content: center;
     min-height: 44px; padding: 0 16px; box-sizing: border-box;
     border: 1px solid var(--line-input); border-radius: 8px;
-    background: #FFFFFF; color: var(--text);
+    background: var(--bg-input); color: var(--text);
     font: inherit; font-size: 14px; text-decoration: none; cursor: pointer;
 }
 .btn:hover { color: var(--text); }
-.btn-primary { border: 0; padding: 0 20px; background: var(--primary); color: #FFFFFF; font-weight: 600; }
-.btn-primary:hover { color: #FFFFFF; }
+.btn-primary { border: 0; padding: 0 20px; background: var(--primary); color: var(--on-primary); font-weight: 600; }
+.btn-primary:hover { color: var(--on-primary); }
 .btn-primary:disabled { background: var(--disabled); cursor: not-allowed; }
-.btn-outline { border-color: var(--primary); color: var(--primary); font-weight: 600; }
-.btn-outline:hover { color: var(--primary); }
+.btn-outline { border-color: var(--primary-text); color: var(--primary-text); font-weight: 600; }
+.btn-outline:hover { color: var(--primary-text); }
 .btn-ghost { border: 0; padding: 0 14px; background: transparent; color: var(--text-muted); }
-.btn-text { border: 0; min-width: 44px; padding: 0 10px; background: transparent; color: var(--primary); font-size: 13px; font-weight: 600; }
+.btn-text { border: 0; min-width: 44px; padding: 0 10px; background: transparent; color: var(--primary-text); font-size: 13px; font-weight: 600; }
 .btn-danger { border-color: var(--error); color: var(--error); }
 .btn-danger:hover { color: var(--error); }
 .btn-sm { padding: 0 14px; }
@@ -93,11 +171,11 @@ h1:focus { outline: none; }
 .input, .select {
     min-height: 44px; box-sizing: border-box; padding: 0 12px;
     border: 1px solid var(--line-input); border-radius: 8px;
-    background: #FFFFFF; color: var(--text);
+    background: var(--bg-input); color: var(--text);
     font: inherit; font-size: 14px;
 }
 .select { padding: 0 10px; }
-.input:focus, .select:focus { border-color: var(--primary); outline: 1px solid var(--primary); }
+.input:focus, .select:focus { border-color: var(--primary-text); outline: 1px solid var(--primary-text); }
 .input-num { text-align: right; }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
@@ -122,8 +200,8 @@ h1:focus { outline: none; }
 .table-compact td { padding: 10px 8px; }
 
 .group-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
-.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-.swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; box-shadow: 0 0 0 1px var(--chart-outline); }
+.swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; box-shadow: 0 0 0 1px var(--chart-outline); }
 
 .up { color: var(--up); }
 .down { color: var(--down); }

@@ -171,7 +171,7 @@ public sealed class PortfolioViewModel
     public static string ConicGradient(IReadOnlyList<ChartSegment> segments)
     {
         var visible = segments.Where(s => s.Ratio > 0).ToList();
-        if (visible.Count == 0) return "#ECECE7";
+        if (visible.Count == 0) return "var(--bg-track)";   // 빈 도넛: 화면 모드에 맞는 바탕색
 
         decimal sum = visible.Sum(s => s.Ratio);
         var parts = new List<string>();

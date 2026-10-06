@@ -1,2 +1,2 @@
 .path-line { display: block; margin-top: 4px; }
-code { font-size: 13px; background: rgba(255, 255, 255, 0.6); border-radius: 4px; padding: 1px 5px; word-break: break-all; }
+code { font-size: 13px; background: color-mix(in srgb, var(--bg-card) 60%, transparent); border-radius: 4px; padding: 1px 5px; word-break: break-all; }

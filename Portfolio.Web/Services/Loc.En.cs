@@ -298,6 +298,12 @@ public sealed partial class Loc
         ["언어 (Language)"] = "Language",
         ["고른 언어는 이 브라우저에서 계속 유지됩니다. 계좌·그룹 이름과 종목명은 입력된 그대로 표시합니다."] =
             "Your choice is remembered in this browser. Account names, group names and stock names are shown as entered.",
+        ["화면 모드"] = "Appearance",
+        ["시스템 설정 따르기"] = "Match system",
+        ["밝게"] = "Light",
+        ["어둡게"] = "Dark",
+        ["'시스템 설정 따르기'는 Windows나 휴대폰의 밝게·어둡게 설정을 따릅니다. 고른 모드는 이 브라우저에서 계속 유지됩니다."] =
+            "'Match system' follows the light or dark setting of Windows or your phone. Your choice is remembered in this browser.",
         ["시세 갱신"] = "Price refresh",
         ["장중 시세 폴링 주기 (초)"] = "Refresh interval during market hours (seconds)",
         ["{0}~{1}초. 장중(평일 09:00~15:30)에만 이 주기로 조회하고, 다음 조회부터 적용됩니다."] =

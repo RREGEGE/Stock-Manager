@@ -19,6 +19,7 @@ public abstract class UiTestBase : BunitContext
     protected CurrentAccount Account { get; } = new();
     // 화면 언어 (기본은 한국어). 영어 화면을 보려면 화면을 그리기 전에 T.Language를 바꾼다
     protected Loc T { get; } = new();
+    protected ThemeState Theme { get; } = new();
     // 시세를 받아올 수 있는 상태 (테스트에서 바꾸려면 서비스를 쓰기 전에 PriceSource를 바꾼다)
     protected PriceSourceInfo PriceSource { get; set; } = new(Ready: true, SettingsPath: null);
     // 2026-10-02(금) 09:41 KST — 목업의 '장중 · 09:41 시세 갱신'
@@ -47,6 +48,7 @@ public abstract class UiTestBase : BunitContext
         Services.AddSingleton<PortfolioService>();
         Services.AddSingleton(Account);
         Services.AddSingleton(T);
+        Services.AddSingleton(Theme);
         Services.Configure<PricePollingOptions>(_ => { });
     }
 

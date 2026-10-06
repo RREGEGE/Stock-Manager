@@ -145,6 +145,7 @@ builder.Services.AddSingleton<TradingAccountRepository>();
 builder.Services.AddSingleton<PortfolioService>();
 builder.Services.AddScoped<CurrentAccount>();   // 화면 연결마다 보고 있는 계좌 (F-11)
 builder.Services.AddScoped<Loc>();              // 화면 연결마다 고른 언어 (F-12)
+builder.Services.AddScoped<ThemeState>();       // 화면 연결마다 고른 화면 모드 (F-13)
 
 // 로그인: 계정 1개(아이디 + 비밀번호), 쿠키로 90일 유지 (설계서 7.3 개인 사용 단계의 간소화)
 var authOptions = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
@@ -243,6 +244,17 @@ app.MapGet(CurrentAccount.SelectPath + "/{id:int}", (int id, string? returnUrl, 
 app.MapGet(Loc.SelectPath + "/{language}", (string language, string? returnUrl, HttpContext context) =>
 {
     context.Response.Cookies.Append(Loc.CookieName, Loc.Normalize(language), new CookieOptions
+    {
+        HttpOnly = true, SameSite = SameSiteMode.Lax, IsEssential = true,
+        Secure = context.Request.IsHttps, MaxAge = TimeSpan.FromDays(365),
+    });
+    return Results.LocalRedirect(LocalReturnUrl(returnUrl));
+}).AllowAnonymous();
+
+// 화면 모드 전환 (F-13): 고른 모드를 이 브라우저의 쿠키에 적고 보던 화면으로 돌아간다. 로그인 전에도 쓸 수 있다.
+app.MapGet(ThemeState.SelectPath + "/{mode}", (string mode, string? returnUrl, HttpContext context) =>
+{
+    context.Response.Cookies.Append(ThemeState.CookieName, ThemeState.Normalize(mode), new CookieOptions
     {
         HttpOnly = true, SameSite = SameSiteMode.Lax, IsEssential = true,
         Secure = context.Request.IsHttps, MaxAge = TimeSpan.FromDays(365),

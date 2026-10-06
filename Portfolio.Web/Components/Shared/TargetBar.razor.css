@@ -7,7 +7,7 @@
 .target-diff.ok { background: var(--ok-bg); color: var(--ok-fg); }
 
 .target-track { position: relative; height: 10px; border-radius: 5px; background: var(--bg-track); }
-.target-fill { height: 10px; border-radius: 5px; max-width: 100%; }
+.target-fill { height: 10px; border-radius: 5px; max-width: 100%; box-shadow: 0 0 0 1px var(--chart-outline); }
 .target-line { position: absolute; top: -4px; width: 2px; height: 18px; background: var(--text); }
 
 /* 모바일 목업: 이름과 차이 글자만, 막대 8px */
