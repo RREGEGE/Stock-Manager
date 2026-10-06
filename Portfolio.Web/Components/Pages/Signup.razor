@@ -8,38 +8,38 @@
 @inject IOptions<AuthOptions> Auth
 @inject NavigationManager Navigation
 
-<PageTitle>가입</PageTitle>
+<PageTitle>@T["가입"]</PageTitle>
 
 @* 계정은 1개뿐이다. 계정이 아직 없을 때만 이 화면이 열리고, 가입하면 닫힌다 (설계서 7.3). *@
 <main class="auth-page">
     <section class="card auth-card" aria-labelledby="h-signup">
-        <h1 id="h-signup" class="auth-title">포트폴리오</h1>
-        <p class="auth-sub">처음 사용합니다. 로그인에 쓸 계정을 만드세요.</p>
+        <h1 id="h-signup" class="auth-title">@T["포트폴리오"]</h1>
+        <p class="auth-sub">@T["처음 사용합니다. 로그인에 쓸 계정을 만드세요."]</p>
 
         <form method="post" @formname="signup" @onsubmit="SubmitAsync" class="auth-form">
             <AntiforgeryToken />
             <div class="field">
-                <label for="username">아이디</label>
+                <label for="username">@T["아이디"]</label>
                 <input id="username" name="UserName" type="text" class="input" value="@UserName"
                        autocomplete="username" autocapitalize="none" spellcheck="false"
                        minlength="@AuthOptions.MinUserNameLength" maxlength="@AuthOptions.MaxUserNameLength" autofocus required />
             </div>
             <div class="field">
-                <label for="password">비밀번호 (@(AuthOptions.MinPasswordLength)자 이상)</label>
+                <label for="password">@T.F("비밀번호 ({0}자 이상)", AuthOptions.MinPasswordLength)</label>
                 <input id="password" name="Password" type="password" class="input" autocomplete="new-password"
                        minlength="@AuthOptions.MinPasswordLength" required />
             </div>
             <div class="field">
-                <label for="confirm">비밀번호 확인</label>
+                <label for="confirm">@T["비밀번호 확인"]</label>
                 <input id="confirm" name="ConfirmPassword" type="password" class="input" autocomplete="new-password" required />
             </div>
             @if (_message is not null)
             {
-                <p class="field-error" role="alert">@_message</p>
+                <p class="field-error" role="alert">@T[_message]</p>
             }
-            <button type="submit" class="btn btn-primary auth-button">가입하고 시작하기</button>
+            <button type="submit" class="btn btn-primary auth-button">@T["가입하고 시작하기"]</button>
         </form>
-        <p class="note">계정은 하나만 만들 수 있습니다. 가입한 뒤에는 다른 PC와 휴대폰에서도 같은 아이디로 로그인합니다.</p>
+        <p class="note">@T["계정은 하나만 만들 수 있습니다. 가입한 뒤에는 다른 PC와 휴대폰에서도 같은 아이디로 로그인합니다."]</p>
     </section>
 </main>
 

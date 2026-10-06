@@ -20,7 +20,7 @@
                 @if (Full)
                 {
                     @SortHeader("updated", "수정일", false)
-                    <th scope="col"><span class="sr-only">작업</span></th>
+                    <th scope="col"><span class="sr-only">@T["작업"]</span></th>
                 }
             </tr>
         </thead>
@@ -34,14 +34,14 @@
                         @h.SymbolName
                         @if (!h.HasPrice)
                         {
-                            <span class="badge badge-stale" title="현재가를 아직 받지 못했습니다">시세 없음</span>
+                            <span class="badge badge-stale" title="@T["현재가를 아직 받지 못했습니다"]">@T["시세 없음"]</span>
                         }
                         else if (h.IsStale)
                         {
-                            <span class="badge badge-stale" title="최근 시세 갱신에 실패해 마지막으로 받은 가격입니다">시세 지연</span>
+                            <span class="badge badge-stale" title="@T["최근 시세 갱신에 실패해 마지막으로 받은 가격입니다"]">@T["시세 지연"]</span>
                         }
                     </td>
-                    <td><span class="group-tag"><span class="dot" style="background: @row.GroupColor"></span>@h.GroupName</span></td>
+                    <td><span class="group-tag"><span class="dot" style="background: @row.GroupColor"></span>@T.Name(h.GroupName)</span></td>
                     @if (Full)
                     {
                         <td class="num">@DisplayFormat.Number(h.Quantity)</td>
@@ -49,10 +49,10 @@
                         <td class="num">@(h.HasPrice ? DisplayFormat.Number(h.CurrentPrice) : "-")</td>
                     }
                     <td class="num">
-                        @(Full ? DisplayFormat.Number(h.EstimatedAmount) : DisplayFormat.Won(h.EstimatedAmount))
+                        @(Full ? DisplayFormat.Number(h.EstimatedAmount) : T.Won(h.EstimatedAmount))
                         @if (!h.HasPrice)
                         {
-                            <span class="basis" title="현재가가 없어 매입금액으로 계산했습니다">매입가</span>
+                            <span class="basis" title="@T["현재가가 없어 매입금액으로 계산했습니다"]">@T["매입가"]</span>
                         }
                     </td>
                     @if (!Full)
@@ -64,24 +64,24 @@
                     </td>
                     @if (Full)
                     {
-                        <td class="updated">@(row.UpdatedAt is { } at ? DisplayFormat.MonthDay(at) : "")</td>
+                        <td class="updated">@(row.UpdatedAt is { } at ? T.MonthDay(at) : "")</td>
                         <td class="action">
                             @if (_confirmDeleteCode == h.SymbolCode)
                             {
-                                <span class="confirm" role="alertdialog" aria-label="@(h.SymbolName + " 삭제 확인")">
-                                    <span class="confirm-text">삭제할까요?</span>
-                                    <button type="button" class="btn btn-text danger" @onclick="() => ConfirmDeleteAsync(row)">삭제</button>
-                                    <button type="button" class="btn btn-text" @onclick="() => _confirmDeleteCode = null">취소</button>
+                                <span class="confirm" role="alertdialog" aria-label="@T.F("{0} 삭제 확인", h.SymbolName)">
+                                    <span class="confirm-text">@T["삭제할까요?"]</span>
+                                    <button type="button" class="btn btn-text danger" @onclick="() => ConfirmDeleteAsync(row)">@T["삭제"]</button>
+                                    <button type="button" class="btn btn-text" @onclick="() => _confirmDeleteCode = null">@T["취소"]</button>
                                 </span>
                             }
                             else
                             {
-                                <button type="button" class="btn btn-text" aria-label="@(h.SymbolName + " 수정")"
-                                        @onclick="() => OnEdit.InvokeAsync(row)">수정</button>
+                                <button type="button" class="btn btn-text" aria-label="@T.F("{0} 수정", h.SymbolName)"
+                                        @onclick="() => OnEdit.InvokeAsync(row)">@T["수정"]</button>
                                 @if (OnDelete.HasDelegate)
                                 {
-                                    <button type="button" class="btn btn-text danger" aria-label="@(h.SymbolName + " 삭제")"
-                                            @onclick="() => _confirmDeleteCode = h.SymbolCode">삭제</button>
+                                    <button type="button" class="btn btn-text danger" aria-label="@T.F("{0} 삭제", h.SymbolName)"
+                                            @onclick="() => _confirmDeleteCode = h.SymbolCode">@T["삭제"]</button>
                                 }
                             }
                         </td>
@@ -90,7 +90,7 @@
             }
             @if (Rows.Count == 0)
             {
-                <tr><td colspan="@(Full ? 9 : 5)" class="empty">@EmptyText</td></tr>
+                <tr><td colspan="@(Full ? 9 : 5)" class="empty">@(EmptyText ?? T["보유 종목이 없습니다."])</td></tr>
             }
         </tbody>
     </table>
@@ -102,7 +102,7 @@
     [Parameter] public string? SelectedCode { get; set; }
     [Parameter] public EventCallback<HoldingRow> OnEdit { get; set; }
     [Parameter] public EventCallback<HoldingRow> OnDelete { get; set; }   // 지정하면 각 줄에 삭제 버튼을 둔다 (누르면 그 줄에서 한 번 더 확인)
-    [Parameter] public string EmptyText { get; set; } = "보유 종목이 없습니다.";
+    [Parameter] public string? EmptyText { get; set; }   // 지정하지 않으면 "보유 종목이 없습니다."
 
     private string? _sortKey;          // null이면 받은 순서(그룹 순서 → 금액 큰 순)
     private bool _sortDescending;
@@ -161,8 +161,8 @@
     {
         bool active = _sortKey == key;
         <th scope="col" class="@(numeric ? "num" : "")" aria-sort="@(active ? (_sortDescending ? "descending" : "ascending") : "none")">
-            <button type="button" class="sort @(active ? "active" : "")" title="@(label + " 순으로 정렬")"
-                    @onclick="() => ToggleSort(key, numeric)">@label<span class="sort-mark" aria-hidden="true">@(active ? (_sortDescending ? "▼" : "▲") : "")</span></button>
+            <button type="button" class="sort @(active ? "active" : "")" title="@T.F("{0} 순으로 정렬", T[label])"
+                    @onclick="() => ToggleSort(key, numeric)">@T[label]<span class="sort-mark" aria-hidden="true">@(active ? (_sortDescending ? "▼" : "▲") : "")</span></button>
         </th>
     };
 

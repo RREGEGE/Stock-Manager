@@ -3,8 +3,8 @@
 @* 그룹 목록, 목표 비중 입력 + 합계 검증 (설계서 6장 그룹 관리, 9.3, 9.5, AC-11) *@
 <section aria-labelledby="h-groups" class="card group-card">
     <div class="card-head">
-        <h2 id="h-groups" class="card-title">그룹과 목표 비중</h2>
-        <button type="button" class="btn btn-outline" @onclick="BeginAdd">그룹 추가</button>
+        <h2 id="h-groups" class="card-title">@T["그룹과 목표 비중"]</h2>
+        <button type="button" class="btn btn-outline" @onclick="BeginAdd">@T["그룹 추가"]</button>
     </div>
 
     @if (_adding)
@@ -12,28 +12,28 @@
         @* 이름을 정한 뒤에 만든다 (누르자마자 '새 그룹'이 생기지 않게) *@
         <div class="add-panel">
             <div class="field">
-                <label for="new-group-name">새 그룹 이름</label>
-                <input id="new-group-name" class="input" maxlength="50" @bind="_newName" @bind:event="onchange" placeholder="예: 금, 현금성 자산" />
+                <label for="new-group-name">@T["새 그룹 이름"]</label>
+                <input id="new-group-name" class="input" maxlength="50" @bind="_newName" @bind:event="onchange" placeholder="@T["예: 금, 현금성 자산"]" />
             </div>
-            <button type="button" class="btn btn-primary" @onclick="AddGroupAsync">추가</button>
-            <button type="button" class="btn" @onclick="() => _adding = false">취소</button>
+            <button type="button" class="btn btn-primary" @onclick="AddGroupAsync">@T["추가"]</button>
+            <button type="button" class="btn" @onclick="() => _adding = false">@T["취소"]</button>
             @if (_addError is not null)
             {
-                <p class="field-error" role="alert">@_addError</p>
+                <p class="field-error" role="alert">@T[_addError]</p>
             }
-            <p class="note">새 그룹은 목표 비중 0%로 추가됩니다. 추가한 뒤 목표 비중을 다시 나눠 저장하세요.</p>
+            <p class="note">@T["새 그룹은 목표 비중 0%로 추가됩니다. 추가한 뒤 목표 비중을 다시 나눠 저장하세요."]</p>
         </div>
     }
     <div class="table-scroll">
         <table class="table group-table">
             <thead>
                 <tr>
-                    <th scope="col">그룹</th>
-                    <th scope="col" class="num">종목 수</th>
-                    <th scope="col" class="num">현재 비중</th>
-                    <th scope="col" class="num">목표 비중</th>
-                    <th scope="col" class="num">차이</th>
-                    <th scope="col"><span class="sr-only">작업</span></th>
+                    <th scope="col">@T["그룹"]</th>
+                    <th scope="col" class="num">@T["종목 수"]</th>
+                    <th scope="col" class="num">@T["현재 비중"]</th>
+                    <th scope="col" class="num">@T["목표 비중"]</th>
+                    <th scope="col" class="num">@T["차이"]</th>
+                    <th scope="col"><span class="sr-only">@T["작업"]</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -48,7 +48,7 @@
                         <td class="num">@DisplayFormat.Percent1(current)</td>
                         <td class="num">
                             <span class="target-input">
-                                <input @key="@($"{group.Id}-{_inputVersion}")" type="text" inputmode="decimal" class="input input-num" aria-label="@(group.Name + " 목표 비중")"
+                                <input @key="@($"{group.Id}-{_inputVersion}")" type="text" inputmode="decimal" class="input input-num" aria-label="@T.F("{0} 목표 비중", group.Name)"
                                        value="@_shownTargets.GetValueOrDefault(group.Id, "0")" onfocus="this.select()"
                                        @oninput="e => OnTargetInput(group.Id, e)" />
                                 <span class="muted">%</span>
@@ -58,8 +58,8 @@
                             @(Math.Abs(diff) < 0.05m ? "0.0%p" : DisplayFormat.SignedPoint1(diff / 100m))
                         </td>
                         <td class="action">
-                            <button type="button" class="btn btn-text" aria-label="@(group.Name + " 편집")"
-                                    @onclick="() => ToggleEdit(group)">@(_editId == group.Id ? "닫기" : "편집")</button>
+                            <button type="button" class="btn btn-text" aria-label="@T.F("{0} 편집", group.Name)"
+                                    @onclick="() => ToggleEdit(group)">@T[_editId == group.Id ? "닫기" : "편집"]</button>
                         </td>
                     </tr>
                     @if (_editId == group.Id)
@@ -68,36 +68,36 @@
                             <td colspan="6">
                                 <div class="edit-panel">
                                     <div class="field">
-                                        <label for="@($"gname-{group.Id}")">이름</label>
+                                        <label for="@($"gname-{group.Id}")">@T["이름"]</label>
                                         <input id="@($"gname-{group.Id}")" class="input" maxlength="50" @bind="_editName" />
                                     </div>
                                     <div class="field">
-                                        <label for="@($"gcolor-{group.Id}")">색상</label>
+                                        <label for="@($"gcolor-{group.Id}")">@T["색상"]</label>
                                         <input id="@($"gcolor-{group.Id}")" type="color" class="color-input" @bind="_editColor" />
                                     </div>
                                     <div class="field">
-                                        <span class="field-label">순서</span>
+                                        <span class="field-label">@T["순서"]</span>
                                         <div class="order">
-                                            <button type="button" class="btn btn-sm" aria-label="위로" @onclick="() => MoveAsync(group.Id, -1)">▲</button>
-                                            <button type="button" class="btn btn-sm" aria-label="아래로" @onclick="() => MoveAsync(group.Id, 1)">▼</button>
+                                            <button type="button" class="btn btn-sm" aria-label="@T["위로"]" @onclick="() => MoveAsync(group.Id, -1)">▲</button>
+                                            <button type="button" class="btn btn-sm" aria-label="@T["아래로"]" @onclick="() => MoveAsync(group.Id, 1)">▼</button>
                                         </div>
                                     </div>
                                     <div class="edit-buttons">
                                         @if (_confirmDeleteId == group.Id)
                                         {
-                                            <span class="confirm-text">소속 종목은 미분류로 옮겨집니다. 삭제할까요?</span>
-                                            <button type="button" class="btn" @onclick="() => _confirmDeleteId = null">아니요</button>
-                                            <button type="button" class="btn btn-danger" @onclick="() => DeleteAsync(group.Id)">삭제</button>
+                                            <span class="confirm-text">@T["소속 종목은 미분류로 옮겨집니다. 삭제할까요?"]</span>
+                                            <button type="button" class="btn" @onclick="() => _confirmDeleteId = null">@T["아니요"]</button>
+                                            <button type="button" class="btn btn-danger" @onclick="() => DeleteAsync(group.Id)">@T["삭제"]</button>
                                         }
                                         else
                                         {
-                                            <button type="button" class="btn btn-danger" @onclick="() => _confirmDeleteId = group.Id">그룹 삭제</button>
-                                            <button type="button" class="btn btn-outline" @onclick="() => SaveGroupAsync(group.Id)">이름·색상 저장</button>
+                                            <button type="button" class="btn btn-danger" @onclick="() => _confirmDeleteId = group.Id">@T["그룹 삭제"]</button>
+                                            <button type="button" class="btn btn-outline" @onclick="() => SaveGroupAsync(group.Id)">@T["이름·색상 저장"]</button>
                                         }
                                     </div>
                                     @if (_editError is not null)
                                     {
-                                        <p class="field-error" role="alert">@_editError</p>
+                                        <p class="field-error" role="alert">@T[_editError]</p>
                                     }
                                 </div>
                             </td>
@@ -105,7 +105,7 @@
                     }
                 }
                 <tr class="sum-row">
-                    <td class="strong">합계</td>
+                    <td class="strong">@T["합계"]</td>
                     <td class="num">@Model.Rows.Count</td>
                     <td class="num">@DisplayFormat.Percent1(Model.TargetRows.Sum(r => r.Current))</td>
                     <td class="num sum-target @(IsValid ? "text-ok" : "text-error")">@SumText</td>
@@ -119,8 +119,8 @@
     <div class="footer">
         <p role="status" class="status @(IsValid ? "text-ok" : "text-error")">@StatusText</p>
         <div class="footer-buttons">
-            <button type="button" class="btn" @onclick="ResetTargets">되돌리기</button>
-            <button type="button" class="btn btn-primary" disabled="@(!IsValid || _saving)" @onclick="SaveTargetsAsync">저장</button>
+            <button type="button" class="btn" @onclick="ResetTargets">@T["되돌리기"]</button>
+            <button type="button" class="btn btn-primary" disabled="@(!IsValid || _saving)" @onclick="SaveTargetsAsync">@T["저장"]</button>
         </div>
     </div>
 </section>
@@ -164,9 +164,9 @@
     private decimal Sum => Model.State.Groups.Sum(g => TargetOf(g.Id));
     private bool IsValid => Model.State.Groups.Count > 0 && Math.Abs(Sum - 100m) < 0.001m;
     private string SumText => Sum.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "%";
-    private string StatusText => _justSaved && IsValid ? "저장했습니다 · 추가매수 계산에 반영됩니다"
-        : IsValid ? "합계 100% · 저장할 수 있습니다"
-        : $"합계가 100%가 되도록 조정하세요 (현재 {SumText})";
+    private string StatusText => _justSaved && IsValid ? T["저장했습니다 · 추가매수 계산에 반영됩니다"]
+        : IsValid ? T["합계 100% · 저장할 수 있습니다"]
+        : T.F("합계가 100%가 되도록 조정하세요 (현재 {0})", SumText);
 
     private decimal CurrentOf(string groupName) => Model.TargetRows.FirstOrDefault(r => r.Name == groupName)?.Current ?? 0m;
     private int CountOf(string groupName) => Model.Rows.Count(r => r.View.GroupName == groupName);

@@ -16,7 +16,7 @@
                         aria-pressed="@(SelectedKey == seg.Key ? "true" : "false")"
                         @onclick="() => OnSelect.InvokeAsync(seg.Key)">
                     <span class="legend-swatch" style="background: @seg.Color"></span>
-                    <span class="legend-name">@seg.Name</span>
+                    <span class="legend-name">@T.Name(seg.Name)</span>
                     <span class="legend-value">@DisplayFormat.Percent1(seg.Ratio)</span>
                 </button>
             }
@@ -24,7 +24,7 @@
             {
                 <div class="legend-item">
                     <span class="legend-swatch" style="background: @seg.Color"></span>
-                    <span class="legend-name">@seg.Name</span>
+                    <span class="legend-name">@T.Name(seg.Name)</span>
                     <span class="legend-value">@DisplayFormat.Percent1(seg.Ratio)</span>
                 </div>
             }

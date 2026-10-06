@@ -1,4 +1,16 @@
-@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase
+@inject NavigationManager Navigation
 
 @* 로그인 화면용: 상단 바·하단 탭 없이 가운데 카드만 (설계서 9.3) *@
 @Body
+
+@* 로그인 전에도 언어를 고를 수 있다 (F-12) *@
+<nav class="language-links" aria-label="Language">
+    <a href="@Loc.SelectUrl(Loc.Korean, ReturnPath)" aria-current="@(T.IsEnglish ? null : "true")">한국어</a>
+    <span aria-hidden="true">|</span>
+    <a href="@Loc.SelectUrl(Loc.English, ReturnPath)" aria-current="@(T.IsEnglish ? "true" : null)">English</a>
+</nav>
+
+@code {
+    private string ReturnPath => "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+}

@@ -3,45 +3,45 @@
 @* 상단 바: 메뉴, 장 상태·마지막 시세 갱신 시각. 폭 640px 미만에서는 총 평가금액·손익을 담은 헤더로 바뀐다 (설계서 9.3, 9.4) *@
 <header class="topbar">
     <div class="topbar-inner">
-        <div class="brand">포트폴리오</div>
+        <div class="brand">@T["포트폴리오"]</div>
         @if (Model is { } current)
         {
             @* 계좌 전환 (F-11): 고르면 모든 화면이 그 계좌 기준으로 바뀐다 *@
-            <select class="account-select" aria-label="계좌" @onchange="SwitchAccount">
+            <select class="account-select" aria-label="@T["계좌"]" @onchange="SwitchAccount">
                 @foreach (var a in current.State.Accounts)
                 {
                     <option value="@a.Id" selected="@(a.Id == current.State.Account.Id)">@a.Name</option>
                 }
             </select>
         }
-        <nav aria-label="주 메뉴" class="topnav">
-            <NavLink href="" Match="NavLinkMatch.All">대시보드</NavLink>
-            <NavLink href="holdings">보유 종목</NavLink>
-            <NavLink href="rebalance">리밸런싱</NavLink>
-            <NavLink href="groups">그룹 관리</NavLink>
+        <nav aria-label="@T["주 메뉴"]" class="topnav">
+            <NavLink href="" Match="NavLinkMatch.All">@T["대시보드"]</NavLink>
+            <NavLink href="holdings">@T["보유 종목"]</NavLink>
+            <NavLink href="rebalance">@T["리밸런싱"]</NavLink>
+            <NavLink href="groups">@T["그룹 관리"]</NavLink>
         </nav>
         <div class="market">
             <span class="market-dot @(Model?.State.MarketOpen == true ? "live" : "")"></span>
-            <span class="market-text">@(Model?.MarketText)</span>
-            <span class="market-text-short">@(Model?.MarketTextShort)</span>
-            <NavLink href="settings" class="settings-link">설정</NavLink>
+            <span class="market-text">@(Model?.MarketText(T))</span>
+            <span class="market-text-short">@(Model?.MarketTextShort(T))</span>
+            <NavLink href="settings" class="settings-link">@T["설정"]</NavLink>
         </div>
     </div>
     @if (Model is { } m)
     {
         var s = m.State.Summary;
         <div class="mobile-total">
-            <div class="mobile-total-label">총 평가금액</div>
-            <div class="mobile-total-amount">@DisplayFormat.Number(s.TotalAmount)<span>원</span></div>
+            <div class="mobile-total-label">@T["총 평가금액"]</div>
+            <div class="mobile-total-amount">@(T.IsEnglish ? "₩" : "")@DisplayFormat.Number(s.TotalAmount)<span>@(T.IsEnglish ? "" : "원")</span></div>
             @if (s.PricedCount == 0)
             {
                 @* 현재가가 없으면 손익을 0이나 손실로 보여 주지 않는다 *@
-                <div class="mobile-total-pl">@(m.Rows.Count == 0 ? "보유 종목을 추가하세요" : "현재가를 받으면 손익이 계산됩니다")</div>
+                <div class="mobile-total-pl">@T[m.Rows.Count == 0 ? "보유 종목을 추가하세요" : "현재가를 받으면 손익이 계산됩니다"]</div>
             }
             else
             {
                 <div class="mobile-total-pl @(s.ProfitLoss > 0 ? "up" : s.ProfitLoss < 0 ? "down" : "")">
-                    @DisplayFormat.SignedWon(s.ProfitLoss) (@DisplayFormat.SignedPercent2(s.ReturnRate))
+                    @T.SignedWon(s.ProfitLoss) (@DisplayFormat.SignedPercent2(s.ReturnRate))
                 </div>
             }
         </div>

@@ -11,8 +11,8 @@ public sealed record TargetRow(string Name, string Color, decimal Current, decim
     // ±0.05%p 이내면 '목표 도달' (설계서 9.3)
     public bool IsOver => Diff > 0.0005m;
     public bool IsUnder => Diff < -0.0005m;
-    public string DiffText => IsOver ? DisplayFormat.SignedPoint1(Diff) + " 초과"
-        : IsUnder ? DisplayFormat.SignedPoint1(Diff) + " 부족" : "목표 도달";
+    public string DiffText(Loc t) => IsOver ? DisplayFormat.SignedPoint1(Diff) + t[" 초과"]
+        : IsUnder ? DisplayFormat.SignedPoint1(Diff) + t[" 부족"] : t["목표 도달"];
     public string Tone => IsOver ? "over" : IsUnder ? "under" : "ok";
 }
 
@@ -162,11 +162,10 @@ public sealed class PortfolioViewModel
             .ToList();
     }
 
-    public string MarketText => State.PricedAt is { } at
-        ? $"{(State.MarketOpen ? "장중" : "장 마감")} · {DisplayFormat.Time(at)} 시세 갱신"
-        : $"{(State.MarketOpen ? "장중" : "장 마감")} · 시세 없음";
+    public string MarketText(Loc t) => t[State.MarketOpen ? "장중" : "장 마감"] + " · "
+        + (State.PricedAt is { } at ? t.F("{0} 시세 갱신", DisplayFormat.Time(at)) : t["시세 없음"]);
 
-    public string MarketTextShort => State.PricedAt is { } at ? $"{DisplayFormat.Time(at)} 갱신" : "시세 없음";
+    public string MarketTextShort(Loc t) => State.PricedAt is { } at ? t.F("{0} 갱신", DisplayFormat.Time(at)) : t["시세 없음"];
 
     // conic-gradient(#23395B 0 60%, #E08A2E 60% 80%, ...)
     public static string ConicGradient(IReadOnlyList<ChartSegment> segments)

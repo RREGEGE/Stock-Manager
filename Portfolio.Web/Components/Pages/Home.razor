@@ -1,32 +1,32 @@
 @page "/"
 @inherits LiveComponentBase
 
-<PageTitle>포트폴리오 대시보드</PageTitle>
+<PageTitle>@T["포트폴리오 대시보드"]</PageTitle>
 
 <main class="page-main">
     @if (Model is not { } m)
     {
-        <p class="loading" role="status">불러오는 중…</p>
+        <p class="loading" role="status">@T["불러오는 중…"]</p>
     }
     else if (m.Rows.Count == 0)
     {
         @* 처음 쓰는 상태: 0으로 가득 찬 화면 대신 시작 방법을 안내한다 *@
         <div class="page-head">
             <div>
-                <h1>대시보드</h1>
+                <h1>@T["대시보드"]</h1>
                 <p>@m.State.Account.Name</p>
             </div>
         </div>
         <MarketStrip />
         <section class="card empty-state" aria-labelledby="h-start">
-            <h2 id="h-start">보유 종목을 추가하면 시작됩니다</h2>
-            <p>삼성증권 잔고 화면의 종목·수량·평균매입단가를 옮겨 적으면, 총 평가금액과 종목·그룹별 비중을 여기서 볼 수 있습니다.</p>
+            <h2 id="h-start">@T["보유 종목을 추가하면 시작됩니다"]</h2>
+            <p>@T["삼성증권 잔고 화면의 종목·수량·평균매입단가를 옮겨 적으면, 총 평가금액과 종목·그룹별 비중을 여기서 볼 수 있습니다."]</p>
             <ol>
-                <li><strong>보유 종목</strong>에서 종목을 검색해 수량과 평균매입단가를 입력합니다.</li>
-                <li><strong>그룹 관리</strong>에서 주식·채권·배당의 목표 비중을 정합니다.</li>
-                <li><strong>추가매수 계산</strong>에서 투입 금액을 넣으면 살 종목과 주수가 나옵니다.</li>
+                <li>@((MarkupString)T["<strong>보유 종목</strong>에서 종목을 검색해 수량과 평균매입단가를 입력합니다."])</li>
+                <li>@((MarkupString)T["<strong>그룹 관리</strong>에서 주식·채권·배당의 목표 비중을 정합니다."])</li>
+                <li>@((MarkupString)T["<strong>추가매수 계산</strong>에서 투입 금액을 넣으면 살 종목과 주수가 나옵니다."])</li>
             </ol>
-            <a href="holdings" class="btn btn-primary">보유 종목 추가하기</a>
+            <a href="holdings" class="btn btn-primary">@T["보유 종목 추가하기"]</a>
         </section>
     }
     else
@@ -35,10 +35,10 @@
 
         <div class="page-head desktop-only">
             <div>
-                <h1>대시보드</h1>
-                <p>@m.State.Account.Name@(m.State.LastEditedAt is { } edited ? $" · 보유수량 최종 수정 {DisplayFormat.MonthDay(edited)}" : "")</p>
+                <h1>@T["대시보드"]</h1>
+                <p>@m.State.Account.Name@(m.State.LastEditedAt is { } edited ? T.F(" · 보유수량 최종 수정 {0}", T.MonthDay(edited)) : "")</p>
             </div>
-            <a href="rebalance" class="btn btn-primary cta">추가매수 계산하기</a>
+            <a href="rebalance" class="btn btn-primary cta">@T["추가매수 계산하기"]</a>
         </div>
 
         <MarketStrip />
@@ -48,54 +48,54 @@
         @if (m.State.UnclassifiedCount > 0)
         {
             <div class="notice notice-warn" role="status">
-                <span>그룹이 지정되지 않은 종목이 @(m.State.UnclassifiedCount)개 있습니다. 미분류 종목은 목표 비중 계산에서 0%로 취급됩니다.</span>
-                <a href="holdings">그룹 지정하기</a>
+                <span>@T.F("그룹이 지정되지 않은 종목이 {0}개 있습니다. 미분류 종목은 목표 비중 계산에서 0%로 취급됩니다.", m.State.UnclassifiedCount)</span>
+                <a href="holdings">@T["그룹 지정하기"]</a>
             </div>
         }
 
-        <section aria-label="요약" class="summary-grid desktop-only">
-            <SummaryCard Title="총 평가금액" Value="@DisplayFormat.Number(s.TotalAmount)" Sub="@TotalSub(m)" />
-            <SummaryCard Title="매입금액" Value="@DisplayFormat.Number(s.PurchaseAmount)" Sub="수량 × 평균매입단가" />
+        <section aria-label="@T["요약"]" class="summary-grid desktop-only">
+            <SummaryCard Title="@T["총 평가금액"]" Value="@DisplayFormat.Number(s.TotalAmount)" Sub="@TotalSub(m)" />
+            <SummaryCard Title="@T["매입금액"]" Value="@DisplayFormat.Number(s.PurchaseAmount)" Sub="@T["수량 × 평균매입단가"]" />
             @if (s.PricedCount == 0)
             {
                 @* 현재가가 하나도 없으면 손익을 0이나 손실로 보여 주지 않는다 *@
-                <SummaryCard Title="평가손익" Value="-" Unit="" Sub="현재가를 받으면 계산됩니다" />
+                <SummaryCard Title="@T["평가손익"]" Value="-" Unit="" Sub="@T["현재가를 받으면 계산됩니다"]" />
             }
             else
             {
-                <SummaryCard Title="평가손익" Value="@((s.ProfitLoss > 0 ? "+" : "") + DisplayFormat.Number(s.ProfitLoss))"
-                             Sub="@(DisplayFormat.SignedPercent2(s.ReturnRate) + (s.UnpricedCount > 0 ? $" · 시세 있는 {s.PricedCount}개 종목 기준" : ""))"
+                <SummaryCard Title="@T["평가손익"]" Value="@((s.ProfitLoss > 0 ? "+" : "") + DisplayFormat.Number(s.ProfitLoss))"
+                             Sub="@(DisplayFormat.SignedPercent2(s.ReturnRate) + (s.UnpricedCount > 0 ? T.F(" · 시세 있는 {0}개 종목 기준", s.PricedCount) : ""))"
                              SubStrong="true" Tone="@Tone(s.ProfitLoss)" />
             }
-            <SummaryCard Title="보유 종목" Value="@m.Rows.Count.ToString()" Unit="개"
+            <SummaryCard Title="@T["보유 종목"]" Value="@m.Rows.Count.ToString()" Unit="@T["개"]"
                          Sub="@CountSub(m)" />
         </section>
 
-        <section aria-label="비중" class="chart-grid">
+        <section aria-label="@T["비중"]" class="chart-grid">
             <div class="card">
-                <h2 class="card-title chart-title">그룹별 비중</h2>
-                <p class="hint">항목을 누르면 아래 표에서 그 그룹만 봅니다.</p>
+                <h2 class="card-title chart-title">@T["그룹별 비중"]</h2>
+                <p class="hint">@T["항목을 누르면 아래 표에서 그 그룹만 봅니다."]</p>
                 <DonutChart Segments="m.GroupSegments"
-                            CenterLabel="@($"{m.State.Groups.Count}개 그룹")"
-                            CenterValue="@DisplayFormat.ShortWon(s.TotalAmount)"
-                            AriaLabel="@("그룹별 비중 도넛 차트: " + string.Join(", ", m.GroupSegments.Select(g => $"{g.Name} {DisplayFormat.Percent1(g.Ratio)}")))"
+                            CenterLabel="@T.F("{0}개 그룹", m.State.Groups.Count)"
+                            CenterValue="@T.ShortWon(s.TotalAmount)"
+                            AriaLabel="@(T["그룹별 비중 도넛 차트"] + ": " + string.Join(", ", m.GroupSegments.Select(g => $"{T.Name(g.Name)} {DisplayFormat.Percent1(g.Ratio)}")))"
                             SelectedKey="@_groupFilter" OnSelect="ToggleGroupFilter" />
             </div>
 
             <div class="card symbol-chart">
-                <h2 class="card-title chart-title">종목별 비중</h2>
-                <p class="hint">항목을 누르면 아래 표에서 그 종목만 봅니다.</p>
+                <h2 class="card-title chart-title">@T["종목별 비중"]</h2>
+                <p class="hint">@T["항목을 누르면 아래 표에서 그 종목만 봅니다."]</p>
                 <DonutChart Segments="m.SymbolSegments" Dense="true"
-                            CenterLabel="@($"{m.Rows.Count}개 종목")"
-                            CenterValue="@DisplayFormat.ShortWon(s.TotalAmount)"
-                            AriaLabel="종목별 비중 도넛 차트"
+                            CenterLabel="@T.F("{0}개 종목", m.Rows.Count)"
+                            CenterValue="@T.ShortWon(s.TotalAmount)"
+                            AriaLabel="@T["종목별 비중 도넛 차트"]"
                             SelectedKey="@_symbolFilter" OnSelect="ToggleSymbolFilter" />
             </div>
 
             <div class="card target-card">
                 <div class="target-card-head">
-                    <h2 class="card-title">목표 대비</h2>
-                    <p class="target-hint"><span class="desktop-only">막대 = 현재 비중, </span>세로선 = 목표<span class="desktop-only"> 비중</span></p>
+                    <h2 class="card-title">@T["목표 대비"]</h2>
+                    <p class="target-hint"><span class="desktop-only">@T["막대 = 현재 비중, "]</span>@T["세로선 = 목표"]<span class="desktop-only">@T[" 비중"]</span></p>
                 </div>
                 <div class="target-list">
                     @foreach (var row in m.TargetRows)
@@ -103,23 +103,23 @@
                         <TargetBar Row="row" />
                     }
                 </div>
-                <a href="rebalance" class="btn btn-primary mobile-cta mobile-only">추가매수 계산하기</a>
+                <a href="rebalance" class="btn btn-primary mobile-cta mobile-only">@T["추가매수 계산하기"]</a>
             </div>
         </section>
 
         <section aria-labelledby="h-holdings" class="card">
             <div class="card-head">
-                <h2 id="h-holdings" class="card-title">보유 종목</h2>
+                <h2 id="h-holdings" class="card-title">@T["보유 종목"]</h2>
                 <div class="head-actions">
                     @if (FilterLabel is { } label)
                     {
-                        <button type="button" class="btn btn-sm filter-chip" @onclick="ClearFilter">@label 만 보기 · 해제</button>
+                        <button type="button" class="btn btn-sm filter-chip" @onclick="ClearFilter">@T.F("{0} 만 보기 · 해제", T.Name(label))</button>
                     }
-                    <a href="holdings" class="edit-link">편집하기</a>
+                    <a href="holdings" class="edit-link">@T["편집하기"]</a>
                 </div>
             </div>
-            <HoldingTable Rows="FilteredRows(m)" EmptyText="해당하는 종목이 없습니다." />
-            <p class="note">비중은 소수점 1자리 반올림으로, 합계가 100.0%가 아닐 수 있습니다. 열 제목을 누르면 정렬됩니다.</p>
+            <HoldingTable Rows="FilteredRows(m)" EmptyText="@T["해당하는 종목이 없습니다."]" />
+            <p class="note">@T["비중은 소수점 1자리 반올림으로, 합계가 100.0%가 아닐 수 있습니다. 열 제목을 누르면 정렬됩니다."]</p>
         </section>
     }
 </main>
@@ -135,14 +135,14 @@
     private static string Tone(decimal value) => value > 0 ? "up" : value < 0 ? "down" : "";
 
     // '시세 지연'(마지막 가격으로 표시)과 '시세 없음'(한 번도 못 받음)을 나눠 센다
-    private static string CountSub(PortfolioViewModel m) =>
-        $"미분류 {m.State.UnclassifiedCount}개 · 시세 지연 {m.State.OutdatedCount}개"
-        + (m.State.UnpricedCount > 0 ? $" · 시세 없음 {m.State.UnpricedCount}개" : "");
+    private string CountSub(PortfolioViewModel m) =>
+        T.F("미분류 {0}개 · 시세 지연 {1}개", m.State.UnclassifiedCount, m.State.OutdatedCount)
+        + (m.State.UnpricedCount > 0 ? T.F(" · 시세 없음 {0}개", m.State.UnpricedCount) : "");
 
-    private static string TotalSub(PortfolioViewModel m)
+    private string TotalSub(PortfolioViewModel m)
     {
-        string cash = m.State.IncludeCash ? "예수금 포함" : "예수금 제외";
-        return m.State.UnpricedCount > 0 ? $"{cash} · {m.State.UnpricedCount}개 종목은 매입금액 기준" : cash;
+        string cash = T[m.State.IncludeCash ? "예수금 포함" : "예수금 제외"];
+        return m.State.UnpricedCount > 0 ? cash + T.F(" · {0}개 종목은 매입금액 기준", m.State.UnpricedCount) : cash;
     }
 
     private void ToggleGroupFilter(string key)

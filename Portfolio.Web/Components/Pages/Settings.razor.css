@@ -5,3 +5,4 @@
 .status { margin: 0; font-size: 13px; font-weight: 600; }
 .account-name { margin: 0; font-size: 14px; }
 .account-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.language-options { display: flex; flex-wrap: wrap; gap: 8px; }

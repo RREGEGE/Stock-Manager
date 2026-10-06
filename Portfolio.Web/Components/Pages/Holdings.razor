@@ -1,19 +1,19 @@
 @page "/holdings"
 @inherits LiveComponentBase
 
-<PageTitle>보유 종목</PageTitle>
+<PageTitle>@T["보유 종목"]</PageTitle>
 
 <main class="page-main">
     <div class="page-head">
         <div>
-            <h1>보유 종목</h1>
-            <p>삼성증권 잔고 화면의 수량과 평균매입단가를 옮겨 적습니다. 현재가는 자동으로 갱신됩니다.</p>
+            <h1>@T["보유 종목"]</h1>
+            <p>@T["삼성증권 잔고 화면의 수량과 평균매입단가를 옮겨 적습니다. 현재가는 자동으로 갱신됩니다."]</p>
         </div>
     </div>
 
     @if (Model is not { } m)
     {
-        <p class="loading" role="status">불러오는 중…</p>
+        <p class="loading" role="status">@T["불러오는 중…"]</p>
     }
     else
     {
@@ -22,29 +22,29 @@
         <div class="split">
             <section aria-labelledby="h-list" class="card list-card">
                 <div class="card-head">
-                    <h2 id="h-list" class="card-title">@(m.Rows.Count)개 종목</h2>
+                    <h2 id="h-list" class="card-title">@T.F("{0}개 종목", m.Rows.Count)</h2>
                     <div class="head-actions">
                         @* 저장·삭제 결과를 알려 준다 (화면 낭독기에도 전달) *@
                         <p class="result-message" role="status" aria-live="polite">@_resultMessage</p>
-                        <button type="button" class="btn btn-outline" @onclick="BeginAdd">종목 추가</button>
+                        <button type="button" class="btn btn-outline" @onclick="BeginAdd">@T["종목 추가"]</button>
                     </div>
                 </div>
 
                 <HoldingTable Rows="m.Rows" Full="true" SelectedCode="@_selectedCode" OnEdit="Edit" OnDelete="DeleteAsync"
-                              EmptyText="보유 종목이 없습니다. 오른쪽에서 종목을 검색해 추가하세요." />
+                              EmptyText="@T["보유 종목이 없습니다. 오른쪽에서 종목을 검색해 추가하세요."]" />
                 @if (m.Rows.Count > 1)
                 {
-                    <p class="note">열 제목을 누르면 정렬됩니다.</p>
+                    <p class="note">@T["열 제목을 누르면 정렬됩니다."]</p>
                 }
 
                 <div class="cash-row">
-                    <label for="cash" class="cash-label">예수금</label>
+                    <label for="cash" class="cash-label">@T["예수금"]</label>
                     <div class="cash-input">
                         <MoneyInput Id="cash" Value="m.State.Snapshot.Cash" OnCommitted="SaveCashAsync" />
-                        <span class="muted">원</span>
+                        <span class="muted">@T["원"]</span>
                     </div>
                     <label class="check">
-                        <input type="checkbox" checked="@m.State.IncludeCash" @onchange="SaveIncludeCashAsync" />총 보유금액에 포함
+                        <input type="checkbox" checked="@m.State.IncludeCash" @onchange="SaveIncludeCashAsync" />@T["총 보유금액에 포함"]
                     </label>
                 </div>
             </section>
@@ -77,20 +77,20 @@
         await Portfolio.DeleteHoldingAsync(Account.Id, row.View.SymbolCode);
         if (_selectedCode == row.View.SymbolCode && _editor is not null)
             await _editor.BeginAddAsync();
-        ShowResult($"{row.View.SymbolName}을(를) 삭제했습니다.");
+        ShowResult(T.F("{0}을(를) 삭제했습니다.", row.View.SymbolName));
     }
 
     private async Task SaveCashAsync(decimal amount)
     {
         await Portfolio.SetCashAsync(Account.Id, amount);
-        ShowResult($"예수금 {DisplayFormat.Won(amount)}을 저장했습니다.");
+        ShowResult(T.F("예수금 {0}을 저장했습니다.", T.Won(amount)));
     }
 
     private async Task SaveIncludeCashAsync(ChangeEventArgs e)
     {
         bool include = e.Value is true;
         await Portfolio.SetIncludeCashAsync(include);
-        ShowResult(include ? "예수금을 총 보유금액에 포함합니다." : "예수금을 총 보유금액에서 뺍니다.");
+        ShowResult(T[include ? "예수금을 총 보유금액에 포함합니다." : "예수금을 총 보유금액에서 뺍니다."]);
     }
 
     private void ShowResult(string message)
