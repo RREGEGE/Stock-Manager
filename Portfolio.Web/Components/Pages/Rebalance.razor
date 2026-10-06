@@ -1,17 +1,31 @@
 @page "/rebalance"
 @inherits LiveComponentBase
 
-<PageTitle>추가매수 계산</PageTitle>
+<PageTitle>@(_sellMode ? "리밸런싱 계산" : "추가매수 계산")</PageTitle>
 
 <main class="page-main">
     <div class="page-head">
         <div>
-            <h1>추가매수 계산</h1>
-            <p>매도 없이 매수만으로 목표 비중에 가깝게 배분합니다. @(PricedAtText) 수수료·세금은 제외합니다.</p>
+            @if (_sellMode)
+            {
+                <h1>리밸런싱 계산</h1>
+                <p>새 돈을 넣지 않고, 목표보다 많은 그룹을 팔아 부족한 그룹을 삽니다. @(PricedAtText) 수수료·세금은 제외합니다.</p>
+            }
+            else
+            {
+                <h1>추가매수 계산</h1>
+                <p>매도 없이 매수만으로 목표 비중에 가깝게 배분합니다. @(PricedAtText) 수수료·세금은 제외합니다.</p>
+            }
         </div>
     </div>
 
-    @if (Model is not { } m || _plan is not { } plan)
+    @* 계산 방식 전환: 새 돈으로 사기만 할지, 가진 것 안에서 팔고 살지 (설계서 F-10) *@
+    <div class="mode-tabs" role="group" aria-label="계산 방식">
+        <button type="button" class="mode-tab @(_sellMode ? "" : "active")" aria-pressed="@(_sellMode ? "false" : "true")" @onclick="() => _sellMode = false">추가매수</button>
+        <button type="button" class="mode-tab @(_sellMode ? "active" : "")" aria-pressed="@(_sellMode ? "true" : "false")" @onclick="() => _sellMode = true">리밸런싱</button>
+    </div>
+
+    @if (Model is not { } m || _plan is not { } plan || _sellPlan is not { } sell)
     {
         <p class="loading" role="status">불러오는 중…</p>
     }
@@ -19,7 +33,7 @@
     {
         <section class="card empty-state" aria-labelledby="h-start">
             <h2 id="h-start">보유 종목이 있어야 계산할 수 있습니다</h2>
-            <p>추가매수 배분은 지금 보유한 종목과 그룹별 목표 비중을 기준으로 계산합니다.</p>
+            <p>추가매수 배분과 리밸런싱은 지금 보유한 종목과 그룹별 목표 비중을 기준으로 계산합니다.</p>
             <a href="holdings" class="btn btn-primary">보유 종목 추가하기</a>
         </section>
     }
@@ -37,11 +51,139 @@
         @if (plan.HasUnclassified)
         {
             <div class="notice notice-warn" role="status">
-                <span>미분류 종목이 있습니다. 미분류는 목표 0%로 계산되어 매수 배정을 받지 않습니다.</span>
+                <span>미분류 종목이 있습니다. 미분류는 목표 0%로 계산되어 @(_sellMode ? "전부 매도 대상이 됩니다." : "매수 배정을 받지 않습니다.")</span>
                 <a href="holdings">그룹 지정하기</a>
             </div>
         }
 
+        @if (_sellMode)
+        {
+        <section aria-label="매매 합계" class="card sell-summary">
+            @if (sell.IsBalanced)
+            {
+                <p class="balanced" role="status">이미 목표 비중과 같습니다. 옮길 금액이 없습니다.</p>
+            }
+            else
+            {
+                <div class="totals sell-totals">
+                    <div>
+                        <div class="total-label">매도 합계</div>
+                        <div class="total-value down" id="sell-total">@DisplayFormat.Won(sell.SellTotal)</div>
+                    </div>
+                    <div>
+                        <div class="total-label">매수 합계</div>
+                        <div class="total-value up" id="buy-total">@DisplayFormat.Won(sell.BuyTotal)</div>
+                    </div>
+                    <div>
+                        <div class="total-label">남는 금액</div>
+                        <div class="total-value" id="sell-leftover">@DisplayFormat.Won(sell.Leftover)</div>
+                    </div>
+                </div>
+            }
+        </section>
+
+        <section aria-labelledby="h-sell-bars" class="card">
+            <div class="bars-head">
+                <h2 id="h-sell-bars" class="card-title">그룹 비중 변화</h2>
+                <div class="bars-legend">
+                    @foreach (var g in sell.Groups)
+                    {
+                        <span class="group-tag"><span class="swatch" style="background: @ColorOf(m, g.Name)"></span>@g.Name</span>
+                    }
+                </div>
+            </div>
+            <div class="bars">
+                <StackedBar Label="현재" Segments="Segments(m, sell, g => g.CurrentWeight)" />
+                <StackedBar Label="조정 후" Bold="true" Segments="Segments(m, sell, g => g.WeightAfter)" />
+                <StackedBar Label="목표" Segments="Segments(m, sell, g => g.TargetWeight)" />
+            </div>
+        </section>
+
+        <div class="split">
+            <section aria-labelledby="h-adjust" class="card group-card">
+                <h2 id="h-adjust" class="card-title table-title">그룹별 조정 금액</h2>
+                <div class="table-scroll">
+                    <table class="table" style="min-width: 560px">
+                        <thead>
+                            <tr>
+                                <th scope="col">그룹</th>
+                                <th scope="col" class="num">현재 금액</th>
+                                <th scope="col" class="num">현재</th>
+                                <th scope="col" class="num">목표</th>
+                                <th scope="col" class="num">조정 금액</th>
+                                <th scope="col" class="num">조정 후</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var g in sell.Groups)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="group-name"><span class="swatch" style="background: @ColorOf(m, g.Name)"></span>@g.Name</span>
+                                        @if (g.CannotTrade && !g.HasHoldings)
+                                        {
+                                            <span class="badge badge-over" title="이 그룹에 보유 종목이 없어 살 종목을 정할 수 없습니다">종목 없음</span>
+                                        }
+                                        else if (g.CannotTrade)
+                                        {
+                                            <span class="badge badge-stale" title="이 그룹 종목의 현재가가 없어 주수를 계산할 수 없습니다">시세 없음</span>
+                                        }
+                                    </td>
+                                    <td class="num">@DisplayFormat.Won(g.CurrentValue)</td>
+                                    <td class="num">@DisplayFormat.Percent1(g.CurrentWeight)</td>
+                                    <td class="num muted">@DisplayFormat.Percent1(g.TargetWeight)</td>
+                                    <td class="num buy @(g.Adjustment > 0 ? "up" : g.Adjustment < 0 ? "down" : "")">@AdjustmentText(g.Adjustment)</td>
+                                    <td class="num">@DisplayFormat.Percent1(g.WeightAfter)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="note">조정 금액은 '보유 종목 평가금액 합계 × 목표 비중'에서 현재 금액을 뺀 값입니다. 매도 금액의 합과 매수 금액의 합은 같습니다. 예수금은 계산에 넣지 않습니다.</p>
+            </section>
+
+            <section aria-labelledby="h-trades" class="card order-card">
+                <h2 id="h-trades" class="card-title table-title">종목별 매도·매수 수량</h2>
+                @if (sell.Trades.Count > 0)
+                {
+                    <div class="table-scroll">
+                        <table class="table" style="min-width: 560px">
+                            <thead>
+                                <tr>
+                                    <th scope="col">종목명</th>
+                                    <th scope="col">그룹</th>
+                                    <th scope="col">구분</th>
+                                    <th scope="col" class="num">현재가</th>
+                                    <th scope="col" class="num">주수</th>
+                                    <th scope="col" class="num">금액</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var t in sell.Trades)
+                                {
+                                    <tr>
+                                        <td class="name">@t.Order.SymbolName</td>
+                                        <td><span class="group-tag"><span class="dot" style="background: @ColorOf(m, t.GroupName)"></span>@t.GroupName</span></td>
+                                        <td class="buy @(t.IsSell ? "down" : "up")">@(t.IsSell ? "매도" : "매수")</td>
+                                        <td class="num">@DisplayFormat.Won(t.Order.Price)</td>
+                                        <td class="num buy">@(DisplayFormat.Number(t.Order.Shares))주</td>
+                                        <td class="num">@DisplayFormat.Won(t.Order.Amount)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="no-orders">@NoTradesText(sell)</p>
+                }
+                <p class="note">매도·매수 금액을 그룹 안 종목의 현재 평가금액 비율로 나눠 1주 단위로 맞춥니다. 그래서 실제 합계는 조정 금액과 조금 다를 수 있고, 판 돈 중 사지 못한 금액이 남습니다. 매도에는 세금과 수수료가 붙을 수 있습니다.</p>
+            </section>
+        </div>
+        }
+        else
+        {
         <section aria-label="투입 금액" class="card amount-card">
             <div class="field">
                 <label for="amount">투입 금액</label>
@@ -163,6 +305,7 @@
                 <p class="note">그룹 배정 금액을 그룹 안 종목의 현재 평가금액 비율로 나눈 뒤, 1주 단위로 내림하고 남는 금액으로 가장 덜 채워진 종목을 1주씩 더 삽니다.</p>
             </section>
         </div>
+        }
     }
 </main>
 
@@ -170,6 +313,8 @@
     // 계산 결과는 저장하지 않는다 (설계서 6장). 목업과 같이 처음에는 1,000만 원을 넣어 둔다.
     private decimal _amount = 10_000_000m;
     private RebalancePlan? _plan;
+    private SellRebalancePlan? _sellPlan;
+    private bool _sellMode;
 
     private string PricedAtText => Model?.State.PricedAt is { } at ? $"{DisplayFormat.Time(at)} 시세 기준이며" : "";
 
@@ -187,7 +332,23 @@
         if (Model is null) return;
         var targets = Model.State.Groups.Select(g => new GroupTarget(g.Id, g.Name, g.TargetWeight)).ToList();
         _plan = RebalancePlanner.Plan(targets, Model.State.Snapshot.Holdings, _amount);
+        _sellPlan = SellRebalancePlanner.Plan(targets, Model.State.Snapshot.Holdings);
     }
+
+    private static IReadOnlyList<ChartSegment> Segments(PortfolioViewModel m, SellRebalancePlan plan, Func<GroupAdjustment, decimal> ratio) =>
+        plan.Groups.Select(g => new ChartSegment(g.Name, g.Name, ColorOf(m, g.Name), ratio(g))).ToList();
+
+    private static string AdjustmentText(decimal adjustment) =>
+        adjustment > 0 ? $"{DisplayFormat.Won(adjustment)} 매수"
+        : adjustment < 0 ? $"{DisplayFormat.Won(-adjustment)} 매도"
+        : "유지";
+
+    private static string NoTradesText(SellRebalancePlan plan) =>
+        !plan.TargetsValid ? "그룹 목표 비중 합계를 100%로 맞추면 계산됩니다."
+        : plan.IsBalanced ? "매도하거나 매수할 종목이 없습니다."
+        : plan.Groups.Any(g => g.CannotTrade && g.HasHoldings)
+            ? "종목의 현재가가 없어 주수를 계산할 수 없습니다. 그룹별 조정 금액까지만 계산했습니다."
+        : "조정 금액이 1주 가격보다 작아 매매할 종목이 없습니다.";
 
     private static string ColorOf(PortfolioViewModel m, GroupPlan g) => ColorOf(m, g.Name);
 

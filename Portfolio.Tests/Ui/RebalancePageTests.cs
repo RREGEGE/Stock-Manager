@@ -101,4 +101,110 @@ public class RebalancePageTests : UiTestBase
         Assert.Empty(cut.FindAll(".order-card tbody tr"));
     }
 
+    // 리밸런싱(매도 포함) 방식 (설계서 F-10)
+    private IRenderedComponent<Rebalance> RenderSellMode()
+    {
+        var cut = RenderRebalance();
+        cut.FindAll(".mode-tab")[1].Click();
+        return cut;
+    }
+
+    [Fact]
+    public void 처음에는_추가매수_방식이고_리밸런싱으로_전환할_수_있다()
+    {
+        var cut = RenderRebalance();
+
+        Assert.Equal(["추가매수", "리밸런싱"], cut.FindAll(".mode-tab").Select(Text));
+        Assert.Equal(["true", "false"], cut.FindAll(".mode-tab").Select(b => b.GetAttribute("aria-pressed")));
+
+        cut.FindAll(".mode-tab")[1].Click();
+
+        Assert.Equal("리밸런싱 계산", cut.Find("h1").TextContent);
+        Assert.Contains("새 돈을 넣지 않고, 목표보다 많은 그룹을 팔아 부족한 그룹을 삽니다. 09:41 시세 기준이며 수수료·세금은 제외합니다.", Text(cut.Find(".page-head")));
+        Assert.Empty(cut.FindAll(".amount-card"));          // 투입 금액 입력은 없다
+        Assert.Equal(["false", "true"], cut.FindAll(".mode-tab").Select(b => b.GetAttribute("aria-pressed")));
+
+        cut.FindAll(".mode-tab")[0].Click();
+        Assert.Equal("추가매수 계산", cut.Find("h1").TextContent);
+        Assert.Equal("10,000,000", cut.Find("#amount").GetAttribute("value"));   // 넣어 둔 금액은 그대로
+    }
+
+    [Fact]
+    public void 리밸런싱은_그룹별_조정_금액과_종목별_매도_매수_수량을_보여_준다()
+    {
+        var cut = RenderSellMode();
+
+        Assert.Equal(("10,000,000원", "10,000,000원", "0원"),
+            (cut.Find("#sell-total").TextContent, cut.Find("#buy-total").TextContent, cut.Find("#sell-leftover").TextContent));
+        Assert.Equal(["현재", "조정 후", "목표"], cut.FindAll(".stacked-label").Select(Text));
+        Assert.Equal(
+            ["60.0% 20.0% 20.0%", "50.0% 30.0% 20.0%", "50.0% 30.0% 20.0%"],
+            cut.FindAll(".stacked-track").Select(Cells));
+
+        Assert.Equal(
+            ["주식 60,000,000원 60.0% 50.0% 10,000,000원 매도 50.0%",
+             "채권 20,000,000원 20.0% 30.0% 10,000,000원 매수 30.0%",
+             "배당 20,000,000원 20.0% 20.0% 유지 20.0%"],
+            cut.FindAll(".group-card tbody tr").Select(Cells));
+        // 팔 때는 파랑(down), 살 때는 빨강(up)
+        Assert.Equal([true, false, false], cut.FindAll(".group-card tbody tr").Select(r => r.Children[4].ClassList.Contains("down")));
+        Assert.True(cut.FindAll(".group-card tbody tr")[1].Children[4].ClassList.Contains("up"));
+
+        Assert.Equal(
+            ["KOSPI200 ETF 주식 매도 40,000원 101주 4,040,000원",
+             "미국 S&P500 ETF 주식 매도 20,000원 202주 4,040,000원",
+             "반도체 개별주 A 주식 매도 120,000원 16주 1,920,000원",
+             "국고채 10년 ETF 채권 매수 100,000원 50주 5,000,000원",
+             "미국채 10년 ETF 채권 매수 10,000원 500주 5,000,000원"],
+            cut.FindAll(".order-card tbody tr").Select(Cells));
+    }
+
+    [Fact]
+    public async Task 리밸런싱은_시세가_바뀌면_새로고침_없이_다시_계산한다()
+    {
+        var cut = RenderSellMode();
+
+        // 채권 값이 두 배가 되면 주식 60 / 채권 40 / 배당 20 (합계 1억 2,000만)
+        var prices = SeedData.Prices.ToDictionary(p => p.Key, p => p.Value);
+        prices["SEED04"] = 200_000m;
+        prices["SEED05"] = 20_000m;
+        await RefreshPricesAsync(prices);
+
+        cut.WaitForAssertion(() => Assert.Equal(
+            ["주식 60,000,000원 50.0% 50.0% 유지 50.0%",
+             "채권 40,000,000원 33.3% 30.0% 4,000,000원 매도 30.0%",
+             "배당 20,000,000원 16.7% 20.0% 4,000,000원 매수 20.0%"],
+            cut.FindAll(".group-card tbody tr").Select(Cells)));
+    }
+
+    [Fact]
+    public async Task 리밸런싱은_이미_목표_비중이면_옮길_금액이_없다고_알린다()
+    {
+        // 목표를 현재 비중(60/20/20)과 같게 바꾼다
+        var groups = new GroupRepository(Db);
+        await groups.SaveTargetsAsync(new Dictionary<int, decimal>
+        {
+            [SeedData.StockGroupId] = 0.6m, [SeedData.BondGroupId] = 0.2m, [SeedData.DividendGroupId] = 0.2m,
+        });
+
+        var cut = RenderSellMode();
+
+        Assert.Equal("이미 목표 비중과 같습니다. 옮길 금액이 없습니다.", Text(cut.Find(".balanced")));
+        Assert.Empty(cut.FindAll("#sell-total"));
+        Assert.Equal("매도하거나 매수할 종목이 없습니다.", cut.Find(".no-orders").TextContent);
+    }
+
+    [Fact]
+    public async Task 리밸런싱은_미분류가_전부_매도_대상이라고_경고한다()
+    {
+        await new GroupRepository(Db).DeleteAsync(SeedData.DividendGroupId);   // 배당 종목이 미분류가 되고 목표 합계는 80%
+
+        var cut = RenderSellMode();
+
+        var notices = cut.FindAll(".notice").Select(Text).ToList();
+        Assert.Contains(notices, n => n.StartsWith("미분류 종목이 있습니다. 미분류는 목표 0%로 계산되어 전부 매도 대상이 됩니다."));
+        Assert.Contains(notices, n => n.StartsWith("그룹 목표 비중 합계가 100%가 아니어서 계산할 수 없습니다."));
+        Assert.Equal("그룹 목표 비중 합계를 100%로 맞추면 계산됩니다.", cut.Find(".no-orders").TextContent);
+    }
+
 }

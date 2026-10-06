@@ -1,3 +1,14 @@
+/* 계산 방식 전환 (추가매수 | 리밸런싱) */
+.mode-tabs { display: inline-flex; padding: 4px; gap: 4px; background: var(--bg-card); border: 1px solid var(--line-card); border-radius: 10px; align-self: flex-start; }
+.mode-tab {
+    min-height: 44px; padding: 0 20px; border: 0; border-radius: 8px; background: transparent;
+    color: var(--text-muted); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.mode-tab.active { background: var(--primary); color: #FFFFFF; }
+
+.sell-totals { margin-left: 0; }
+.balanced { margin: 0; font-size: 15px; font-weight: 600; }
+
 .amount-card { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 24px; }
 
 .amount-input { display: flex; align-items: center; gap: 8px; font-size: 16px; }
