@@ -14,7 +14,7 @@
         <div class="page-head">
             <div>
                 <h1>대시보드</h1>
-                <p>삼성증권 계좌</p>
+                <p>@m.State.Account.Name</p>
             </div>
         </div>
         <MarketStrip />
@@ -36,7 +36,7 @@
         <div class="page-head desktop-only">
             <div>
                 <h1>대시보드</h1>
-                <p>삼성증권 계좌@(m.State.LastEditedAt is { } edited ? $" · 보유수량 최종 수정 {DisplayFormat.MonthDay(edited)}" : "")</p>
+                <p>@m.State.Account.Name@(m.State.LastEditedAt is { } edited ? $" · 보유수량 최종 수정 {DisplayFormat.MonthDay(edited)}" : "")</p>
             </div>
             <a href="rebalance" class="btn btn-primary cta">추가매수 계산하기</a>
         </div>

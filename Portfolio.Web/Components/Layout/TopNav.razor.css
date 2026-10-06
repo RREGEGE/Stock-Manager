@@ -7,6 +7,15 @@
 
 .brand { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
 
+/* 계좌 선택: 어두운 상단 바 위의 선택 상자 */
+.account-select {
+    min-height: 44px; max-width: 180px; min-width: 0; padding: 0 10px; box-sizing: border-box;
+    border: 1px solid var(--header-active); border-radius: 8px;
+    background: var(--header-active); color: #FFFFFF;
+    font: inherit; font-size: 14px; font-weight: 600; text-overflow: ellipsis;
+}
+.account-select option { background: #FFFFFF; color: var(--text); }
+
 .topnav { display: flex; flex-wrap: wrap; gap: 4px; flex-grow: 1; }
 
 .topnav ::deep a {
@@ -31,6 +40,7 @@
     .topbar { padding: 16px 20px 18px; display: flex; flex-direction: column; gap: 14px; }
     .topbar-inner { padding: 0; min-height: 0; gap: 8px; flex-wrap: nowrap; justify-content: space-between; }
     .brand { font-size: 17px; }
+    .account-select { flex: 0 1 auto; max-width: 130px; margin-right: auto; font-size: 13px; }
     .topnav { display: none; }
     .market { gap: 6px; font-size: 12px; }
     .market-dot { width: 7px; height: 7px; }

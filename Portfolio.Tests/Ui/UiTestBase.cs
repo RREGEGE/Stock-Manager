@@ -15,6 +15,8 @@ public abstract class UiTestBase : BunitContext
     protected PriceStore Prices { get; } = new();
     protected PortfolioNotifier Notifier { get; } = new();
     protected MarketIndicatorStore Indicators { get; } = new();
+    // 이 화면이 보고 있는 계좌 (앱에서는 브라우저 연결마다 하나)
+    protected CurrentAccount Account { get; } = new();
     // 시세를 받아올 수 있는 상태 (테스트에서 바꾸려면 서비스를 쓰기 전에 PriceSource를 바꾼다)
     protected PriceSourceInfo PriceSource { get; set; } = new(Ready: true, SettingsPath: null);
     // 2026-10-02(금) 09:41 KST — 목업의 '장중 · 09:41 시세 갱신'
@@ -39,7 +41,9 @@ public abstract class UiTestBase : BunitContext
         Services.AddSingleton<SymbolMasterRepository>();
         Services.AddSingleton(_ => PriceSource);
         Services.AddSingleton(Indicators);
+        Services.AddSingleton<TradingAccountRepository>();
         Services.AddSingleton<PortfolioService>();
+        Services.AddSingleton(Account);
         Services.Configure<PricePollingOptions>(_ => { });
     }
 
@@ -48,7 +52,7 @@ public abstract class UiTestBase : BunitContext
         new PriceUpdater(Db, new FakePriceProvider(prices, Clock), Prices, null, Notifier).RefreshHoldingsAsync();
 
     protected async Task<PortfolioViewModel> LoadModelAsync() =>
-        new(await Services.GetRequiredService<PortfolioService>().LoadAsync());
+        new(await Services.GetRequiredService<PortfolioService>().LoadAsync(TradingAccount.DefaultId));
 
     protected static string Text(AngleSharp.Dom.IElement element) =>
         string.Join(" ", element.TextContent.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));

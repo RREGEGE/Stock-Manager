@@ -1,0 +1,154 @@
+@inherits LiveComponentBase
+@inject NavigationManager Navigation
+
+@* 계좌 관리 (F-11): 추가, 이름 변경, 순서 변경, 삭제. 계좌번호는 받지 않는다. *@
+<section aria-labelledby="h-accounts" class="card accounts-card">
+    <h2 id="h-accounts" class="card-title">계좌</h2>
+
+    @if (Model is { } m)
+    {
+        <ul class="account-list">
+            @foreach (var (a, index) in m.State.Accounts.Select((a, i) => (a, i)))
+            {
+                bool current = a.Id == m.State.Account.Id;
+                <li class="account-row" @key="a.Id">
+                    @if (_editId == a.Id)
+                    {
+                        <input class="input account-name-input" aria-label="계좌 이름" maxlength="50" @bind="_editName" @bind:event="oninput"
+                               @onkeydown="@(e => OnEditKey(e, a.Id))" />
+                        <div class="row-actions">
+                            <button type="button" class="btn btn-primary btn-sm" @onclick="() => RenameAsync(a.Id)">저장</button>
+                            <button type="button" class="btn btn-ghost" @onclick="CancelEdit">취소</button>
+                        </div>
+                    }
+                    else if (_deleteId == a.Id)
+                    {
+                        <p class="delete-confirm" role="alert">
+                            <strong>@a.Name</strong> 계좌를 삭제할까요?
+                            @(_deleteHoldings > 0 ? $"보유 종목 {_deleteHoldings}개와 그룹·예수금이 함께 지워지고 되돌릴 수 없습니다." : "이 계좌의 그룹·예수금도 함께 지워집니다.")
+                        </p>
+                        <div class="row-actions">
+                            <button type="button" class="btn btn-danger btn-sm" @onclick="() => DeleteAsync(a.Id)">삭제</button>
+                            <button type="button" class="btn btn-ghost" @onclick="() => _deleteId = null">취소</button>
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="account-name">
+                            <span>@a.Name</span>
+                            @if (current)
+                            {
+                                <span class="badge badge-ok">보는 중</span>
+                            }
+                        </span>
+                        <div class="row-actions">
+                            @if (!current)
+                            {
+                                <button type="button" class="btn btn-text" @onclick="() => View(a.Id)">보기</button>
+                            }
+                            <button type="button" class="btn btn-text" @onclick="() => BeginEdit(a)">이름 변경</button>
+                            <button type="button" class="btn btn-text" aria-label="@($"{a.Name} 위로")" disabled="@(index == 0)" @onclick="() => Portfolio.MoveAccountAsync(a.Id, -1)">↑</button>
+                            <button type="button" class="btn btn-text" aria-label="@($"{a.Name} 아래로")" disabled="@(index == m.State.Accounts.Count - 1)" @onclick="() => Portfolio.MoveAccountAsync(a.Id, 1)">↓</button>
+                            <button type="button" class="btn btn-text danger" disabled="@(m.State.Accounts.Count <= 1)"
+                                    title="@(m.State.Accounts.Count <= 1 ? "마지막 남은 계좌는 삭제할 수 없습니다" : null)" @onclick="() => BeginDeleteAsync(a.Id)">삭제</button>
+                        </div>
+                    }
+                </li>
+            }
+        </ul>
+
+        <div class="account-add">
+            <input id="new-account" class="input" aria-label="새 계좌 이름" placeholder="새 계좌 이름 (예: 연금저축)" maxlength="50"
+                   @bind="_newName" @bind:event="oninput" @onkeydown="OnAddKey" />
+            <button type="button" class="btn btn-outline" @onclick="AddAsync">계좌 추가</button>
+        </div>
+        @if (_message is not null)
+        {
+            <p class="status @(_error ? "text-error" : "text-ok")" role="status">@_message</p>
+        }
+        <p class="note">보유 종목·그룹·목표 비중·예수금은 계좌마다 따로 관리합니다. 상단의 계좌 선택에서 볼 계좌를 바꿉니다. 새 계좌는 주식 50 / 채권 30 / 배당 20 그룹으로 시작합니다. 계좌번호는 저장하지 않습니다.</p>
+    }
+</section>
+
+@code {
+    private string _newName = "";
+    private int? _editId;
+    private string _editName = "";
+    private int? _deleteId;
+    private int _deleteHoldings;
+    private string? _message;
+    private bool _error;
+
+    private void View(int id) =>
+        Navigation.NavigateTo(CurrentAccount.SelectUrl(id, "/" + Navigation.ToBaseRelativePath(Navigation.Uri)), forceLoad: true);
+
+    private async Task AddAsync()
+    {
+        await RunAsync(async () =>
+        {
+            var added = await Portfolio.AddAccountAsync(_newName);
+            _newName = "";
+            return $"{added.Name} 계좌를 추가했습니다. '보기'를 누르면 그 계좌로 바뀝니다.";
+        });
+    }
+
+    private Task OnAddKey(KeyboardEventArgs e) => e.Key == "Enter" ? AddAsync() : Task.CompletedTask;
+
+    private void BeginEdit(TradingAccount account)
+    {
+        _editId = account.Id;
+        _editName = account.Name;
+        _deleteId = null;
+        _message = null;
+    }
+
+    private void CancelEdit() => _editId = null;
+
+    private Task OnEditKey(KeyboardEventArgs e, int id)
+    {
+        if (e.Key == "Escape") CancelEdit();
+        return e.Key == "Enter" ? RenameAsync(id) : Task.CompletedTask;
+    }
+
+    private async Task RenameAsync(int id)
+    {
+        await RunAsync(async () =>
+        {
+            await Portfolio.RenameAccountAsync(id, _editName);
+            _editId = null;
+            return "계좌 이름을 바꿨습니다.";
+        });
+    }
+
+    private async Task BeginDeleteAsync(int id)
+    {
+        _deleteHoldings = await Portfolio.CountHoldingsAsync(id);
+        _deleteId = id;
+        _editId = null;
+        _message = null;
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        await RunAsync(async () =>
+        {
+            await Portfolio.DeleteAccountAsync(id);
+            _deleteId = null;
+            return "계좌를 삭제했습니다.";
+        });
+    }
+
+    private async Task RunAsync(Func<Task<string>> action)
+    {
+        try
+        {
+            _message = await action();
+            _error = false;
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or KeyNotFoundException)
+        {
+            _message = ex.Message;
+            _error = true;
+        }
+    }
+}

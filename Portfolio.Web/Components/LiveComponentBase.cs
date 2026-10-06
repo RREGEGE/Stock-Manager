@@ -9,6 +9,7 @@ public abstract class LiveComponentBase : ComponentBase, IDisposable
 {
     [Inject] protected PortfolioService Portfolio { get; set; } = default!;
     [Inject] protected PortfolioNotifier Notifier { get; set; } = default!;
+    [Inject] protected CurrentAccount Account { get; set; } = default!;
 
     protected PortfolioViewModel? Model { get; private set; }
     private bool _disposed;
@@ -21,7 +22,8 @@ public abstract class LiveComponentBase : ComponentBase, IDisposable
 
     protected async Task ReloadAsync()
     {
-        Model = new PortfolioViewModel(await Portfolio.LoadAsync());
+        Model = new PortfolioViewModel(await Portfolio.LoadAsync(Account.Id));
+        Account.Id = Model.State.Account.Id;   // 고른 계좌가 없어졌으면 대신 보여 준 계좌로 맞춘다
         OnModelLoaded();
     }
 

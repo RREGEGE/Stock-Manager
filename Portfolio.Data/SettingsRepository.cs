@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Portfolio.Data;
 
-// 예수금과 설정값 (설계서 5.1 CashBalance·AppSetting, 6장 설정)
+// 예수금과 설정값 (설계서 5.1 CashBalance·AppSetting, 6장 설정). 예수금은 계좌마다 따로 둔다 (F-11).
 public sealed class SettingsRepository(IDbContextFactory<PortfolioDbContext> dbFactory, TimeProvider? clock = null)
 {
     public const string IncludeCashKey = "IncludeCash";
@@ -11,23 +11,22 @@ public sealed class SettingsRepository(IDbContextFactory<PortfolioDbContext> dbF
     public const int MinPollingIntervalSeconds = 10;
     public const int MaxPollingIntervalSeconds = 3600;
 
-    private const int CashRowId = 1;
     private readonly TimeProvider _clock = clock ?? TimeProvider.System;
 
-    public async Task<decimal> GetCashAsync(CancellationToken ct = default)
+    public async Task<decimal> GetCashAsync(int accountId = TradingAccount.DefaultId, CancellationToken ct = default)
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct);
-        return (await db.CashBalances.AsNoTracking().SingleOrDefaultAsync(c => c.Id == CashRowId, ct))?.Amount ?? 0m;
+        return (await db.CashBalances.AsNoTracking().SingleOrDefaultAsync(c => c.AccountId == accountId, ct))?.Amount ?? 0m;
     }
 
-    public async Task SetCashAsync(decimal amount, CancellationToken ct = default)
+    public async Task SetCashAsync(decimal amount, int accountId = TradingAccount.DefaultId, CancellationToken ct = default)
     {
         if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount), "예수금은 0 이상이어야 합니다.");
         await using var db = await dbFactory.CreateDbContextAsync(ct);
-        var row = await db.CashBalances.SingleOrDefaultAsync(c => c.Id == CashRowId, ct);
+        var row = await db.CashBalances.SingleOrDefaultAsync(c => c.AccountId == accountId, ct);
         if (row is null)
         {
-            row = new CashBalance { Id = CashRowId };
+            row = new CashBalance { AccountId = accountId };
             db.CashBalances.Add(row);
         }
         row.Amount = amount;

@@ -1,6 +1,18 @@
-﻿<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+@inject CurrentAccount Account
+
+<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
     <Found Context="routeData">
         <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
 </Router>
+
+@code {
+    // 이 브라우저가 마지막으로 고른 계좌 (쿠키에서 읽어 App이 넘겨준다, F-11)
+    [Parameter] public int AccountId { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (AccountId > 0) Account.Id = AccountId;
+    }
+}

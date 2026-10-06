@@ -8,10 +8,11 @@ public class PortfolioReader(PortfolioDbContext db, PriceStore priceStore, TimeP
 {
     private readonly TimeProvider _clock = clock ?? TimeProvider.System;
 
-    public async Task<PortfolioSnapshot> GetSnapshotAsync(CancellationToken ct = default)
+    // 한 계좌의 보유종목·예수금 (F-11)
+    public async Task<PortfolioSnapshot> GetSnapshotAsync(int accountId = TradingAccount.DefaultId, CancellationToken ct = default)
     {
-        var holdings = await db.Holdings.AsNoTracking().Include(h => h.Group).ToListAsync(ct);
-        var cash = (await db.CashBalances.AsNoTracking().ToListAsync(ct))
+        var holdings = await db.Holdings.AsNoTracking().Include(h => h.Group).Where(h => h.AccountId == accountId).ToListAsync(ct);
+        var cash = (await db.CashBalances.AsNoTracking().Where(c => c.AccountId == accountId).ToListAsync(ct))
             .OrderByDescending(c => c.UpdatedAt)
             .FirstOrDefault()?.Amount ?? 0m;
 

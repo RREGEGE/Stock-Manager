@@ -26,7 +26,8 @@ public sealed class PriceUpdater(
     public async Task RefreshHoldingsAsync(CancellationToken ct = default)
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct);
-        var codes = await db.Holdings.AsNoTracking().Select(h => h.SymbolCode).ToListAsync(ct);
+        // 모든 계좌의 종목을 한 번에 조회한다. 여러 계좌에 있는 종목은 한 번만.
+        var codes = await db.Holdings.AsNoTracking().Select(h => h.SymbolCode).Distinct().ToListAsync(ct);
         await RefreshAsync(codes, ct);
     }
 

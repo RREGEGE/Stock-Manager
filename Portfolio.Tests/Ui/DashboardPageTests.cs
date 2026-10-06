@@ -107,7 +107,7 @@ public class DashboardPageTests : UiTestBase
         }
         await RefreshPricesAsync(prices);
 
-        var model = new PortfolioViewModel(await service.LoadAsync());
+        var model = new PortfolioViewModel(await service.LoadAsync(TradingAccount.DefaultId));
 
         Assert.Equal(12, model.Rows.Count);
         Assert.Equal(10, model.SymbolSegments.Count);
