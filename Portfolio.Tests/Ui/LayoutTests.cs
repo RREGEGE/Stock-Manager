@@ -18,7 +18,7 @@ public class LayoutTests : UiTestBase
         cut.WaitForElement(".mobile-total");
 
         Assert.Equal("포트폴리오", cut.Find(".brand").TextContent);
-        Assert.Equal(["대시보드", "보유 종목", "추가매수 계산", "그룹 관리"], cut.FindAll(".topnav a").Select(Text));
+        Assert.Equal(["대시보드", "보유 종목", "리밸런싱", "그룹 관리"], cut.FindAll(".topnav a").Select(Text));
         Assert.Equal(["", "holdings", "rebalance", "groups"], cut.FindAll(".topnav a").Select(a => a.GetAttribute("href")));
         Assert.Contains("live", cut.Find(".market-dot").ClassName);
     }
