@@ -4,7 +4,7 @@
     min-height: 44px; padding: 0 20px; border: 0; border-radius: 8px; background: transparent;
     color: var(--text-muted); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
 }
-.mode-tab.active { background: var(--primary); color: #FFFFFF; }
+.mode-tab.active { background: var(--primary); color: var(--on-primary); }
 
 .sell-totals { margin-left: 0; }
 .balanced { margin: 0; font-size: 15px; font-weight: 600; }
@@ -13,7 +13,7 @@
 
 .amount-input { display: flex; align-items: center; gap: 8px; font-size: 16px; }
 .amount-input ::deep .amount {
-    width: 240px; min-height: 52px; padding: 0 14px; border-color: var(--primary);
+    width: 240px; min-height: 52px; padding: 0 14px; border-color: var(--primary-text);
     font-size: 22px; font-weight: 700;
 }
 

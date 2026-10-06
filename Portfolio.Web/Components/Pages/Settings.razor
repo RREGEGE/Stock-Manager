@@ -4,6 +4,7 @@
 @inject Microsoft.Extensions.Options.IOptions<PricePollingOptions> PollingOptions
 @inject Microsoft.Extensions.Options.IOptions<Portfolio.Web.Auth.AuthOptions> AuthSettings
 @inject NavigationManager Navigation
+@inject ThemeState Theme
 
 <PageTitle>@T["설정"]</PageTitle>
 
@@ -27,6 +28,17 @@
                 <button type="button" class="btn @(T.IsEnglish ? "btn-primary" : "")" aria-pressed="@(T.IsEnglish ? "true" : "false")" @onclick="() => SetLanguage(Loc.English)">English</button>
             </div>
             <p class="note">@T["고른 언어는 이 브라우저에서 계속 유지됩니다. 계좌·그룹 이름과 종목명은 입력된 그대로 표시합니다."]</p>
+        </section>
+
+        <section aria-labelledby="h-theme" class="card settings-card">
+            <h2 id="h-theme" class="card-title">@T["화면 모드"]</h2>
+            <div class="language-options theme-options" role="group" aria-label="@T["화면 모드"]">
+                @foreach (var (mode, label) in ThemeOptions)
+                {
+                    <button type="button" class="btn @(Theme.Mode == mode ? "btn-primary" : "")" aria-pressed="@(Theme.Mode == mode ? "true" : "false")" @onclick="() => SetTheme(mode)">@T[label]</button>
+                }
+            </div>
+            <p class="note">@T["'시스템 설정 따르기'는 Windows나 휴대폰의 밝게·어둡게 설정을 따릅니다. 고른 모드는 이 브라우저에서 계속 유지됩니다."]</p>
         </section>
 
         <section aria-labelledby="h-polling" class="card settings-card">
@@ -85,6 +97,15 @@
         _includeCash = await SettingsRepo.GetIncludeCashAsync();
         _userName = await SettingsRepo.GetUserNameAsync();
         _loaded = true;
+    }
+
+    private static readonly (string Mode, string Label)[] ThemeOptions =
+        [(ThemeState.System, "시스템 설정 따르기"), (ThemeState.Light, "밝게"), (ThemeState.Dark, "어둡게")];
+
+    private void SetTheme(string mode)
+    {
+        if (mode != Theme.Mode)
+            Navigation.NavigateTo(ThemeState.SelectUrl(mode, "/settings"), forceLoad: true);
     }
 
     // 고른 언어를 쿠키에 적어야 하므로 페이지를 새로 불러온다

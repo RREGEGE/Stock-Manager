@@ -14,7 +14,7 @@
     background: var(--header-active); color: #FFFFFF;
     font: inherit; font-size: 14px; font-weight: 600; text-overflow: ellipsis;
 }
-.account-select option { background: #FFFFFF; color: var(--text); }
+.account-select option { background: var(--bg-input); color: var(--text); }
 
 .topnav { display: flex; flex-wrap: wrap; gap: 4px; flex-grow: 1; }
 

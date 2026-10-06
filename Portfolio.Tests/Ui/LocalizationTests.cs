@@ -272,10 +272,10 @@ public partial class LocalizationTests : UiTestBase
         var cut = Render<Settings>();
         cut.WaitForElement(".language-options");
 
-        Assert.Equal(["한국어", "English"], cut.FindAll(".language-options button").Select(Text));
-        Assert.Equal(["true", "false"], cut.FindAll(".language-options button").Select(b => b.GetAttribute("aria-pressed")));
+        Assert.Equal(["한국어", "English"], cut.FindAll(".language-options:not(.theme-options) button").Select(Text));
+        Assert.Equal(["true", "false"], cut.FindAll(".language-options:not(.theme-options) button").Select(b => b.GetAttribute("aria-pressed")));
 
-        cut.FindAll(".language-options button")[1].Click();
+        cut.FindAll(".language-options:not(.theme-options) button")[1].Click();
 
         Assert.Equal("http://localhost/language/en?returnUrl=%2Fsettings", Services.GetRequiredService<NavigationManager>().Uri);
     }

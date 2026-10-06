@@ -11,7 +11,7 @@
 .cta { padding: 0 18px; }
 .head-actions { display: flex; align-items: center; gap: 8px; }
 .edit-link { font-size: 14px; font-weight: 600; padding: 12px 4px; }
-.filter-chip { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+.filter-chip { border-color: var(--primary-text); color: var(--primary-text); background: var(--primary-soft); }
 
 /* 모바일 목업: 요약 카드는 헤더로 올라가고, 그룹 비중·목표 대비가 먼저 나온다 */
 @media (max-width: 639.98px) {
