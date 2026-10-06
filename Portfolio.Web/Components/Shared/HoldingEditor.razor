@@ -3,8 +3,8 @@
 @* 종목 검색·수량·단가·그룹 입력 패널 (설계서 5.4, 9.3, 9.5) *@
 <section aria-labelledby="h-form" class="card card-active editor">
     <div>
-        <h2 id="h-form" class="card-title">@(_existing ? "종목 수정" : "종목 추가")</h2>
-        <p class="card-sub">이미 보유 중인 종목을 고르면 기존 행을 수정합니다.</p>
+        <h2 id="h-form" class="card-title">@T[_existing ? "종목 수정" : "종목 추가"]</h2>
+        <p class="card-sub">@T["이미 보유 중인 종목을 고르면 기존 행을 수정합니다."]</p>
     </div>
 
     <SymbolSearch @ref="_search" HeldCodes="HeldCodes" SelectedCode="@_symbol?.SymbolCode" OnSelected="SelectSymbol" />
@@ -13,56 +13,56 @@
     {
         <div class="chosen">
             <span class="chosen-name">@_symbol.SymbolName</span>
-            <span class="chosen-code">@_symbol.SymbolCode · @(_existing ? "보유 중" : "신규")</span>
+            <span class="chosen-code">@_symbol.SymbolCode · @T[_existing ? "보유 중" : "신규"]</span>
         </div>
     }
 
     <div class="pair">
         <div class="field">
-            <label for="qty">수량 (주)</label>
+            <label for="qty">@T["수량 (주)"]</label>
             <MoneyInput @ref="_quantityInput" Id="qty" @bind-Value="_quantity" Max="1_000_000_000m" />
         </div>
         <div class="field">
-            <label for="avg">평균매입단가 (원)</label>
+            <label for="avg">@T["평균매입단가 (원)"]</label>
             <MoneyInput Id="avg" @bind-Value="_avgPrice" Max="1_000_000_000m" />
         </div>
     </div>
 
     <div class="field">
-        <label for="group">그룹</label>
+        <label for="group">@T["그룹"]</label>
         <select id="group" class="select" @bind="_groupValue">
             @foreach (var g in Model.State.Groups)
             {
                 <option value="@g.Id">@g.Name</option>
             }
-            <option value="0">@PortfolioCalculator.UnclassifiedGroupName</option>
+            <option value="0">@T[PortfolioCalculator.UnclassifiedGroupName]</option>
         </select>
     </div>
 
     <div class="preview">
         @if (CurrentPrice is { } price)
         {
-            <span class="muted">현재가 @DisplayFormat.Won(price) 기준 평가금액</span>
-            <span class="preview-value">@DisplayFormat.Won(price * _quantity)</span>
+            <span class="muted">@T.F("현재가 {0} 기준 평가금액", T.Won(price))</span>
+            <span class="preview-value">@T.Won(price * _quantity)</span>
         }
         else
         {
-            <span class="muted">저장하면 현재가를 조회해 평가금액을 계산합니다.</span>
+            <span class="muted">@T["저장하면 현재가를 조회해 평가금액을 계산합니다."]</span>
         }
     </div>
 
     @if (_error is not null)
     {
-        <p class="field-error" role="alert">@_error</p>
+        <p class="field-error" role="alert">@T[_error]</p>
     }
 
     @if (_confirmDelete)
     {
-        <div class="confirm" role="alertdialog" aria-label="삭제 확인">
-            <span>@(_symbol?.SymbolName)을(를) 삭제할까요?</span>
+        <div class="confirm" role="alertdialog" aria-label="@T["삭제 확인"]">
+            <span>@T.F("{0}을(를) 삭제할까요?", _symbol?.SymbolName)</span>
             <div class="actions">
-                <button type="button" class="btn" @onclick="() => _confirmDelete = false">아니요</button>
-                <button type="button" class="btn btn-danger" @onclick="DeleteAsync">삭제</button>
+                <button type="button" class="btn" @onclick="() => _confirmDelete = false">@T["아니요"]</button>
+                <button type="button" class="btn btn-danger" @onclick="DeleteAsync">@T["삭제"]</button>
             </div>
         </div>
     }
@@ -71,10 +71,10 @@
         <div class="buttons">
             @if (_existing)
             {
-                <button type="button" class="btn btn-danger delete" @onclick="() => _confirmDelete = true">삭제</button>
+                <button type="button" class="btn btn-danger delete" @onclick="() => _confirmDelete = true">@T["삭제"]</button>
             }
-            <button type="button" class="btn" @onclick="Reset">취소</button>
-            <button type="button" class="btn btn-primary" disabled="@_saving" @onclick="SaveAsync">저장</button>
+            <button type="button" class="btn" @onclick="Reset">@T["취소"]</button>
+            <button type="button" class="btn btn-primary" disabled="@_saving" @onclick="SaveAsync">@T["저장"]</button>
         </div>
     }
 </section>
@@ -163,7 +163,7 @@
             await Portfolio.SaveHoldingAsync(Model.State.Account.Id, _symbol.SymbolCode, name, (long)_quantity, _avgPrice,
                 groupId == 0 ? null : groupId);
             await Reset();
-            await OnCompleted.InvokeAsync(wasExisting ? $"{name}을(를) 수정했습니다." : $"{name}을(를) 추가했습니다.");
+            await OnCompleted.InvokeAsync(T.F(wasExisting ? "{0}을(를) 수정했습니다." : "{0}을(를) 추가했습니다.", name));
         }
         catch (ArgumentException ex)
         {
@@ -181,7 +181,7 @@
         string name = _symbol.SymbolName;
         await Portfolio.DeleteHoldingAsync(Model.State.Account.Id, _symbol.SymbolCode);
         await Reset();
-        await OnCompleted.InvokeAsync($"{name}을(를) 삭제했습니다.");
+        await OnCompleted.InvokeAsync(T.F("{0}을(를) 삭제했습니다.", name));
     }
 
     private async Task Reset()

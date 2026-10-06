@@ -2,14 +2,14 @@
 
 @* SymbolMaster 검색 + 결과 목록, 보유 중 표시 (설계서 5.4, 9.5) *@
 <div class="field">
-    <label for="search">종목 검색</label>
+    <label for="search">@T["종목 검색"]</label>
     @* 입력하는 동안에는 서버가 입력창 내용을 다시 써 넣지 않는다.
        한글은 조합 중인 글자가 있어서, 칠 때마다 값을 되돌려 쓰면 글자가 두 번 입력된다. *@
     <input @key="_inputVersion" id="search" type="search" class="input search-input" autocomplete="off"
-           placeholder="종목명 또는 종목코드" value="@_inputValue" @oninput="OnInput" />
+           placeholder="@T["종목명 또는 종목코드"]" value="@_inputValue" @oninput="OnInput" />
     @if (_results.Count > 0)
     {
-        <ul aria-label="검색 결과" class="results">
+        <ul aria-label="@T["검색 결과"]" class="results">
             @foreach (var s in _results)
             {
                 var symbol = s;
@@ -18,7 +18,7 @@
                     <button type="button" class="result @(SelectedCode == symbol.SymbolCode ? "selected" : "")"
                             @onclick="() => Select(symbol)">
                         <span class="result-name">@symbol.SymbolName <span class="result-code">@symbol.SymbolCode</span></span>
-                        <span class="result-state">@(held ? "보유 중 · 수정" : "신규")</span>
+                        <span class="result-state">@T[held ? "보유 중 · 수정" : "신규"]</span>
                     </button>
                 </li>
             }
@@ -26,7 +26,7 @@
     }
     else if (_searched)
     {
-        <p class="no-result">검색 결과가 없습니다.</p>
+        <p class="no-result">@T["검색 결과가 없습니다."]</p>
     }
 </div>
 

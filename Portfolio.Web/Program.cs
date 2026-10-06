@@ -144,6 +144,7 @@ builder.Services.AddSingleton<SettingsRepository>();
 builder.Services.AddSingleton<TradingAccountRepository>();
 builder.Services.AddSingleton<PortfolioService>();
 builder.Services.AddScoped<CurrentAccount>();   // 화면 연결마다 보고 있는 계좌 (F-11)
+builder.Services.AddScoped<Loc>();              // 화면 연결마다 고른 언어 (F-12)
 
 // 로그인: 계정 1개(아이디 + 비밀번호), 쿠키로 90일 유지 (설계서 7.3 개인 사용 단계의 간소화)
 var authOptions = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
@@ -235,11 +236,19 @@ app.MapGet(CurrentAccount.SelectPath + "/{id:int}", (int id, string? returnUrl, 
             HttpOnly = true, SameSite = SameSiteMode.Lax, IsEssential = true,
             Secure = context.Request.IsHttps, MaxAge = TimeSpan.FromDays(365),
         });
-    // 이 사이트 안의 주소로만 돌아간다
-    bool local = !string.IsNullOrEmpty(returnUrl) && returnUrl[0] == '/'
-        && (returnUrl.Length == 1 || (returnUrl[1] != '/' && returnUrl[1] != '\\'));
-    return Results.LocalRedirect(local ? returnUrl! : "/");
+    return Results.LocalRedirect(LocalReturnUrl(returnUrl));
 });
+
+// 언어 전환 (F-12): 고른 언어를 이 브라우저의 쿠키에 적고 보던 화면으로 돌아간다. 로그인 화면에서도 쓴다.
+app.MapGet(Loc.SelectPath + "/{language}", (string language, string? returnUrl, HttpContext context) =>
+{
+    context.Response.Cookies.Append(Loc.CookieName, Loc.Normalize(language), new CookieOptions
+    {
+        HttpOnly = true, SameSite = SameSiteMode.Lax, IsEssential = true,
+        Secure = context.Request.IsHttps, MaxAge = TimeSpan.FromDays(365),
+    });
+    return Results.LocalRedirect(LocalReturnUrl(returnUrl));
+}).AllowAnonymous();
 
 app.Lifetime.ApplicationStarted.Register(() =>
 {
@@ -261,6 +270,12 @@ app.Lifetime.ApplicationStarted.Register(() =>
 
 app.Run();
 return 0;
+
+// 이 사이트 안의 주소로만 돌아간다
+static string LocalReturnUrl(string? returnUrl) =>
+    !string.IsNullOrEmpty(returnUrl) && returnUrl[0] == '/'
+        && (returnUrl.Length == 1 || (returnUrl[1] != '/' && returnUrl[1] != '\\'))
+        ? returnUrl : "/";
 
 // 통합 테스트(WebApplicationFactory)에서 참조하기 위한 선언
 public partial class Program;

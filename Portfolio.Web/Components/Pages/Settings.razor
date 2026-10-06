@@ -5,14 +5,14 @@
 @inject Microsoft.Extensions.Options.IOptions<Portfolio.Web.Auth.AuthOptions> AuthSettings
 @inject NavigationManager Navigation
 
-<PageTitle>설정</PageTitle>
+<PageTitle>@T["설정"]</PageTitle>
 
 @* 목업이 없는 화면: 같은 카드 양식을 쓴다 (설계서 9.3). 변경은 즉시 적용한다 (설계서 6장). *@
 <main class="page-main">
     <div class="page-head">
         <div>
-            <h1>설정</h1>
-            <p>변경하면 바로 적용됩니다.</p>
+            <h1>@T["설정"]</h1>
+            <p>@T["변경하면 바로 적용됩니다."]</p>
         </div>
     </div>
 
@@ -20,18 +20,27 @@
     {
         <AccountManager />
 
+        <section aria-labelledby="h-language" class="card settings-card">
+            <h2 id="h-language" class="card-title">@T["언어 (Language)"]</h2>
+            <div class="language-options" role="group" aria-label="Language">
+                <button type="button" class="btn @(T.IsEnglish ? "" : "btn-primary")" aria-pressed="@(T.IsEnglish ? "false" : "true")" @onclick="() => SetLanguage(Loc.Korean)">한국어</button>
+                <button type="button" class="btn @(T.IsEnglish ? "btn-primary" : "")" aria-pressed="@(T.IsEnglish ? "true" : "false")" @onclick="() => SetLanguage(Loc.English)">English</button>
+            </div>
+            <p class="note">@T["고른 언어는 이 브라우저에서 계속 유지됩니다. 계좌·그룹 이름과 종목명은 입력된 그대로 표시합니다."]</p>
+        </section>
+
         <section aria-labelledby="h-polling" class="card settings-card">
-            <h2 id="h-polling" class="card-title">시세 갱신</h2>
+            <h2 id="h-polling" class="card-title">@T["시세 갱신"]</h2>
             <div class="field">
-                <label for="interval">장중 시세 폴링 주기 (초)</label>
+                <label for="interval">@T["장중 시세 폴링 주기 (초)"]</label>
                 <div class="inline">
                     <input id="interval" type="number" class="input input-num" inputmode="numeric"
                            min="@SettingsRepository.MinPollingIntervalSeconds" max="@SettingsRepository.MaxPollingIntervalSeconds"
                            value="@_interval" @onchange="SaveIntervalAsync" />
-                    <span class="muted">초</span>
+                    <span class="muted">@T["초"]</span>
                 </div>
             </div>
-            <p class="note">@(SettingsRepository.MinPollingIntervalSeconds)~@(SettingsRepository.MaxPollingIntervalSeconds)초. 장중(평일 09:00~15:30)에만 이 주기로 조회하고, 다음 조회부터 적용됩니다.</p>
+            <p class="note">@T.F("{0}~{1}초. 장중(평일 09:00~15:30)에만 이 주기로 조회하고, 다음 조회부터 적용됩니다.", SettingsRepository.MinPollingIntervalSeconds, SettingsRepository.MaxPollingIntervalSeconds)</p>
             @if (_intervalMessage is not null)
             {
                 <p class="status @(_intervalError ? "text-error" : "text-ok")" role="status">@_intervalMessage</p>
@@ -39,24 +48,24 @@
         </section>
 
         <section aria-labelledby="h-cash" class="card settings-card">
-            <h2 id="h-cash" class="card-title">예수금</h2>
+            <h2 id="h-cash" class="card-title">@T["예수금"]</h2>
             <label class="check">
-                <input type="checkbox" checked="@_includeCash" @onchange="SaveIncludeCashAsync" />총 보유금액에 예수금 포함
+                <input type="checkbox" checked="@_includeCash" @onchange="SaveIncludeCashAsync" />@T["총 보유금액에 예수금 포함"]
             </label>
-            <p class="note">포함하면 대시보드에 '현금' 항목이 따로 표시됩니다. 예수금 금액은 보유 종목 화면에서 입력합니다.</p>
+            <p class="note">@T["포함하면 대시보드에 '현금' 항목이 따로 표시됩니다. 예수금 금액은 보유 종목 화면에서 입력합니다."]</p>
         </section>
 
         @if (AuthSettings.Value.Enabled)
         {
             <section aria-labelledby="h-login" class="card settings-card">
-                <h2 id="h-login" class="card-title">계정</h2>
-                <p class="account-name">아이디 <strong>@_userName</strong></p>
+                <h2 id="h-login" class="card-title">@T["계정"]</h2>
+                <p class="account-name">@T["아이디"] <strong>@_userName</strong></p>
                 <div class="account-actions">
                     @* 쿠키를 다루는 화면이라 새로 불러와야 한다 (화면 안 이동이 아니라 페이지 이동) *@
-                    <button type="button" class="btn" @onclick="@(() => Navigation.NavigateTo("account/password", forceLoad: true))">비밀번호 변경</button>
-                    <button type="button" class="btn" @onclick="@(() => Navigation.NavigateTo("logout", forceLoad: true))">로그아웃</button>
+                    <button type="button" class="btn" @onclick="@(() => Navigation.NavigateTo("account/password", forceLoad: true))">@T["비밀번호 변경"]</button>
+                    <button type="button" class="btn" @onclick="@(() => Navigation.NavigateTo("logout", forceLoad: true))">@T["로그아웃"]</button>
                 </div>
-                <p class="note">비밀번호를 바꾸면 다른 기기는 모두 다시 로그인해야 합니다. 비밀번호를 잊었으면 앱을 실행하는 PC에서 <code>scripts\set-password.cmd</code>로 다시 정합니다.</p>
+                <p class="note">@((MarkupString)T["비밀번호를 바꾸면 다른 기기는 모두 다시 로그인해야 합니다. 비밀번호를 잊었으면 앱을 실행하는 PC에서 <code>scripts\\set-password.cmd</code>로 다시 정합니다."])</p>
             </section>
         }
     }
@@ -78,19 +87,26 @@
         _loaded = true;
     }
 
+    // 고른 언어를 쿠키에 적어야 하므로 페이지를 새로 불러온다
+    private void SetLanguage(string language)
+    {
+        if (language != T.Language)
+            Navigation.NavigateTo(Loc.SelectUrl(language, "/settings"), forceLoad: true);
+    }
+
     private async Task SaveIntervalAsync(ChangeEventArgs e)
     {
         if (!int.TryParse(e.Value?.ToString(), out int seconds)
             || seconds < SettingsRepository.MinPollingIntervalSeconds || seconds > SettingsRepository.MaxPollingIntervalSeconds)
         {
             _intervalError = true;
-            _intervalMessage = $"{SettingsRepository.MinPollingIntervalSeconds}~{SettingsRepository.MaxPollingIntervalSeconds} 사이의 숫자를 입력하세요.";
+            _intervalMessage = T.F("{0}~{1} 사이의 숫자를 입력하세요.", SettingsRepository.MinPollingIntervalSeconds, SettingsRepository.MaxPollingIntervalSeconds);
             return;
         }
         await SettingsRepo.SetPollingIntervalSecondsAsync(seconds);
         _interval = seconds;
         _intervalError = false;
-        _intervalMessage = $"{seconds}초로 저장했습니다.";
+        _intervalMessage = T.F("{0}초로 저장했습니다.", seconds);
     }
 
     private async Task SaveIncludeCashAsync(ChangeEventArgs e)

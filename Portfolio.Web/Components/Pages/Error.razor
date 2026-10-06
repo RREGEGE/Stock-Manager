@@ -1,16 +1,16 @@
 @page "/Error"
 @using System.Diagnostics
 
-<PageTitle>오류</PageTitle>
+<PageTitle>@T["오류"]</PageTitle>
 
 <main class="page-main">
     <div class="page-head">
         <div>
-            <h1>처리 중 오류가 발생했습니다</h1>
-            <p>잠시 후 다시 시도하세요. <a href="">대시보드로 이동</a></p>
+            <h1>@T["처리 중 오류가 발생했습니다"]</h1>
+            <p>@T["잠시 후 다시 시도하세요."] <a href="">@T["대시보드로 이동"]</a></p>
             @if (!string.IsNullOrEmpty(RequestId))
             {
-                <p>요청 ID: <code>@RequestId</code></p>
+                <p>@T["요청 ID"]: <code>@RequestId</code></p>
             }
         </div>
     </div>

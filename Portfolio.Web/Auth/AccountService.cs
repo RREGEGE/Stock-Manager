@@ -144,6 +144,7 @@ public sealed class LoginThrottle(TimeProvider clock)
         lock (_gate) { _failures = 0; }
     }
 
-    public static string Message(TimeSpan remaining) =>
-        $"여러 번 틀려서 잠시 막았습니다. {Math.Max(1, (int)Math.Ceiling(remaining.TotalSeconds))}초 뒤에 다시 시도하세요.";
+    public static string Message(TimeSpan remaining, Services.Loc? t = null) =>
+        (t ?? new Services.Loc()).F("여러 번 틀려서 잠시 막았습니다. {0}초 뒤에 다시 시도하세요.",
+            Math.Max(1, (int)Math.Ceiling(remaining.TotalSeconds)));
 }

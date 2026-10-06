@@ -9,32 +9,32 @@
 @inject IOptions<AuthOptions> Auth
 @inject NavigationManager Navigation
 
-<PageTitle>로그인</PageTitle>
+<PageTitle>@T["로그인"]</PageTitle>
 
 @* 쿠키를 발급해야 하므로 이 화면은 서버 렌더링(폼 전송)으로 동작한다 *@
 <main class="auth-page">
     <section class="card auth-card" aria-labelledby="h-login">
-        <h1 id="h-login" class="auth-title">포트폴리오</h1>
-        <p class="auth-sub">로그인</p>
+        <h1 id="h-login" class="auth-title">@T["포트폴리오"]</h1>
+        <p class="auth-sub">@T["로그인"]</p>
 
         <form method="post" @formname="login" @onsubmit="SubmitAsync" class="auth-form">
             <AntiforgeryToken />
             <div class="field">
-                <label for="username">아이디</label>
+                <label for="username">@T["아이디"]</label>
                 <input id="username" name="UserName" type="text" class="input" value="@UserName"
                        autocomplete="username" autocapitalize="none" spellcheck="false" autofocus required />
             </div>
             <div class="field">
-                <label for="password">비밀번호</label>
+                <label for="password">@T["비밀번호"]</label>
                 <input id="password" name="Password" type="password" class="input" autocomplete="current-password" required />
             </div>
             @if (_message is not null)
             {
-                <p class="field-error" role="alert">@_message</p>
+                <p class="field-error" role="alert">@T[_message]</p>
             }
-            <button type="submit" class="btn btn-primary auth-button">로그인</button>
+            <button type="submit" class="btn btn-primary auth-button">@T["로그인"]</button>
         </form>
-        <p class="note">한 번 로그인하면 이 기기에서 90일 동안 유지됩니다.</p>
+        <p class="note">@T["한 번 로그인하면 이 기기에서 90일 동안 유지됩니다."]</p>
     </section>
 </main>
 
@@ -61,14 +61,14 @@
             return;
         }
         if (Throttle.LockRemaining is { } remaining)
-            _message = LoginThrottle.Message(remaining);
+            _message = LoginThrottle.Message(remaining, T);
     }
 
     private async Task SubmitAsync()
     {
         if (Throttle.LockRemaining is { } remaining)
         {
-            _message = LoginThrottle.Message(remaining);
+            _message = LoginThrottle.Message(remaining, T);
             return;
         }
 
@@ -76,7 +76,7 @@
         {
             Throttle.RecordFailure();
             _message = Throttle.LockRemaining is { } locked
-                ? LoginThrottle.Message(locked)
+                ? LoginThrottle.Message(locked, T)
                 : "아이디 또는 비밀번호가 맞지 않습니다.";
             return;
         }

@@ -181,6 +181,10 @@ h1:focus { outline: none; }
 .auth-form .input { width: 100%; }
 .auth-button { width: 100%; }
 .auth-card .note { margin: 0; }
+/* 로그인 화면 아래의 언어 선택 (F-12) */
+.language-links { position: fixed; left: 0; right: 0; bottom: 16px; display: flex; justify-content: center; align-items: center; gap: 4px; font-size: 13px; color: var(--text-muted); }
+.language-links a { padding: 12px 10px; color: var(--text-muted); text-decoration: none; }
+.language-links a[aria-current] { color: var(--text); font-weight: 600; }
 
 /* 안내 띠: 원인과 해결 방법을 알려 준다 (경고 색보다 차분하게) */
 .notice-info { background: var(--under-bg); color: var(--under-fg); line-height: 1.6; }

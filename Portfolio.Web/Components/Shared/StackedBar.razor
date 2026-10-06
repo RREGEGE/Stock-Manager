@@ -14,5 +14,5 @@
     [Parameter, EditorRequired] public IReadOnlyList<ChartSegment> Segments { get; set; } = [];
     [Parameter] public bool Bold { get; set; }
 
-    private string AriaLabel => $"{Label}: " + string.Join(", ", Segments.Select(s => $"{s.Name} {DisplayFormat.Percent1(s.Ratio)}"));
+    private string AriaLabel => $"{Label}: " + string.Join(", ", Segments.Select(s => $"{T.Name(s.Name)} {DisplayFormat.Percent1(s.Ratio)}"));
 }

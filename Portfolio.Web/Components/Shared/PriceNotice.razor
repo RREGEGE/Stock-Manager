@@ -4,11 +4,11 @@
 {
     <div class="notice notice-info" role="status">
         <div>
-            <strong>현재가를 받아오지 못하고 있습니다.</strong>
-            KIS 앱키가 설정되지 않았습니다. 그동안 시세가 없는 종목은 <strong>매입금액</strong>으로 계산해 보여 주고, 손익은 계산하지 않습니다.
+            <strong>@T["현재가를 받아오지 못하고 있습니다."]</strong>
+            @((MarkupString)T["KIS 앱키가 설정되지 않았습니다. 그동안 시세가 없는 종목은 <strong>매입금액</strong>으로 계산해 보여 주고, 손익은 계산하지 않습니다."])
             @if (State.PriceSource.SettingsPath is { } path)
             {
-                <span class="path-line">키를 발급받으면 <code>@path</code> 파일의 AppKey·AppSecret에 넣고 앱을 다시 켜세요.</span>
+                <span class="path-line">@T["키를 발급받으면 아래 파일의 AppKey·AppSecret에 넣고 앱을 다시 켜세요:"] <code>@path</code></span>
             }
         </div>
     </div>
@@ -17,8 +17,8 @@ else if (State.UnpricedCount > 0)
 {
     <div class="notice notice-info" role="status">
         <div>
-            <strong>@(State.UnpricedCount)개 종목의 현재가를 아직 받지 못했습니다.</strong>
-            해당 종목은 <strong>매입금액</strong>으로 계산해 보여 주고, 손익은 계산하지 않습니다. 장중에는 다음 갱신 때 반영됩니다.
+            <strong>@T.F("{0}개 종목의 현재가를 아직 받지 못했습니다.", State.UnpricedCount)</strong>
+            @((MarkupString)T["해당 종목은 <strong>매입금액</strong>으로 계산해 보여 주고, 손익은 계산하지 않습니다. 장중에는 다음 갱신 때 반영됩니다."])
         </div>
     </div>
 }
@@ -26,8 +26,8 @@ else if (State.OutdatedCount > 0)
 {
     <div class="notice notice-info" role="status">
         <div>
-            <strong>@(State.OutdatedCount)개 종목은 시세 갱신에 실패했습니다.</strong>
-            마지막으로 받은 가격으로 표시하고 있습니다.
+            <strong>@T.F("{0}개 종목은 시세 갱신에 실패했습니다.", State.OutdatedCount)</strong>
+            @T["마지막으로 받은 가격으로 표시하고 있습니다."]
         </div>
     </div>
 }
