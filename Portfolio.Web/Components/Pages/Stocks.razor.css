@@ -1,0 +1,23 @@
+.search-card { max-width: 640px; }
+
+.detail-card { display: flex; flex-direction: column; gap: 16px; }
+.detail-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.stock-name { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.stock-meta { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
+
+.price-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.price { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; }
+.change { font-size: 16px; font-weight: 600; }
+.as-of { font-size: 13px; color: var(--text-muted); }
+
+/* 시세 항목: 폭에 맞춰 열 수가 줄어든다 */
+.facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0 20px; margin: 0; }
+.facts > div { padding: 10px 0; border-bottom: 1px solid var(--line-row); min-width: 0; }
+.facts dt { font-size: 12px; color: var(--text-muted); }
+.facts dd { margin: 2px 0 0; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.fact-date { display: block; font-size: 12px; font-weight: 400; color: var(--text-muted); }
+
+.detail-card .note { margin: 0; }
+.detail-card .loading { padding: 16px 0; }
+.detail-empty { margin: 0; font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+.mine-title { margin-bottom: 12px; }

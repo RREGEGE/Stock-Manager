@@ -12,14 +12,14 @@ namespace Portfolio.Tests.Ui;
 public class LayoutTests : UiTestBase
 {
     [Fact]
-    public void 상단_바는_메뉴_4개와_장_상태를_보여_준다()
+    public void 상단_바는_메뉴_5개와_장_상태를_보여_준다()
     {
         var cut = Render<TopNav>();
         cut.WaitForElement(".mobile-total");
 
         Assert.Equal("포트폴리오", cut.Find(".brand").TextContent);
-        Assert.Equal(["대시보드", "보유 종목", "리밸런싱", "그룹 관리"], cut.FindAll(".topnav a").Select(Text));
-        Assert.Equal(["", "holdings", "rebalance", "groups"], cut.FindAll(".topnav a").Select(a => a.GetAttribute("href")));
+        Assert.Equal(["대시보드", "보유 종목", "리밸런싱", "종목 검색", "그룹 관리"], cut.FindAll(".topnav a").Select(Text));
+        Assert.Equal(["", "holdings", "rebalance", "stocks", "groups"], cut.FindAll(".topnav a").Select(a => a.GetAttribute("href")));
         Assert.Contains("live", cut.Find(".market-dot").ClassName);
     }
 

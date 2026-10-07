@@ -39,6 +39,14 @@ public sealed class SymbolMasterRepository(IDbContextFactory<PortfolioDbContext>
             .ToList();
     }
 
+    // 종목코드로 한 종목을 찾는다 (종목 정보 화면의 이름 표시용, F-15)
+    public async Task<SymbolInfo?> FindAsync(string symbolCode, CancellationToken ct = default)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var s = await db.SymbolMasters.AsNoTracking().SingleOrDefaultAsync(x => x.SymbolCode == symbolCode, ct);
+        return s is null ? null : new SymbolInfo(s.SymbolCode, s.SymbolName, s.Market);
+    }
+
     public async Task<DateTimeOffset?> GetUpdatedAtAsync(CancellationToken ct = default)
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct);

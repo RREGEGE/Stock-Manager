@@ -28,7 +28,7 @@ public class LiveUpdateTests : UiTestBase
         {
             Assert.Equal("100,600,000원", Text(cut.Find(".summary-value")));
             Assert.Equal("+5,100,000원", Text(cut.FindAll(".summary-value")[2]));
-            Assert.StartsWith("KOSPI200 ETF 주식 24,600,000원", Cells(cut.Find(".table tbody tr")));
+            Assert.StartsWith("KOSPI200 ETF 주식 +3.54% 24,600,000원", Cells(cut.Find(".table tbody tr")));
         });
     }
 

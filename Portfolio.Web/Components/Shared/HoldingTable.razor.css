@@ -18,3 +18,7 @@ td.empty { padding: 24px 8px; color: var(--text-muted); text-align: left; }
 .danger { color: var(--error); }
 .confirm { display: inline-flex; align-items: center; gap: 2px; }
 .confirm-text { font-size: 13px; font-weight: 600; color: var(--error); margin-right: 4px; }
+
+/* 종목명을 누르면 종목 정보로 간다 (F-15). 표 안에서는 글자색을 그대로 두고 밑줄로만 알린다 */
+.stock-link { color: inherit; text-decoration: none; }
+.stock-link:hover { text-decoration: underline; }

@@ -18,6 +18,7 @@
             <NavLink href="" Match="NavLinkMatch.All">@T["대시보드"]</NavLink>
             <NavLink href="holdings">@T["보유 종목"]</NavLink>
             <NavLink href="rebalance">@T["리밸런싱"]</NavLink>
+            <NavLink href="stocks">@T["종목 검색"]</NavLink>
             <NavLink href="groups">@T["그룹 관리"]</NavLink>
         </nav>
         <div class="market">
@@ -43,6 +44,13 @@
                 <div class="mobile-total-pl @(s.ProfitLoss > 0 ? "up" : s.ProfitLoss < 0 ? "down" : "")">
                     @T.SignedWon(s.ProfitLoss) (@DisplayFormat.SignedPercent2(s.ReturnRate))
                 </div>
+                @if (m.DayChangeAmount is { } dayAmount)
+                {
+                    @* 오늘 등락 (F-14) *@
+                    <div class="mobile-total-day @(dayAmount > 0 ? "up" : dayAmount < 0 ? "down" : "")">
+                        @T["오늘"] @T.SignedWon(dayAmount) (@DisplayFormat.SignedPercent2(m.DayChangeRate ?? 0m))
+                    </div>
+                }
             }
         </div>
     }

@@ -20,6 +20,8 @@ public abstract class UiTestBase : BunitContext
     // 화면 언어 (기본은 한국어). 영어 화면을 보려면 화면을 그리기 전에 T.Language를 바꾼다
     protected Loc T { get; } = new();
     protected ThemeState Theme { get; } = new();
+    // 종목 정보 출처 (테스트에서 바꾸려면 서비스를 쓰기 전에 바꾼다)
+    protected IStockDetailProvider StockDetails { get; set; }
     // 시세를 받아올 수 있는 상태 (테스트에서 바꾸려면 서비스를 쓰기 전에 PriceSource를 바꾼다)
     protected PriceSourceInfo PriceSource { get; set; } = new(Ready: true, SettingsPath: null);
     // 2026-10-02(금) 09:41 KST — 목업의 '장중 · 09:41 시세 갱신'
@@ -30,6 +32,7 @@ public abstract class UiTestBase : BunitContext
 
     protected UiTestBase()
     {
+        StockDetails = new FakeStockDetailProvider(SeedData.Prices, SeedData.PrevCloses, Clock);
         SeedData.ApplyAsync(Db.Context).GetAwaiter().GetResult();
         if (StartWithPrices)
             RefreshPricesAsync(SeedData.Prices).GetAwaiter().GetResult();
@@ -38,13 +41,14 @@ public abstract class UiTestBase : BunitContext
         Services.AddSingleton<TimeProvider>(Clock);
         Services.AddSingleton(Prices);
         Services.AddSingleton(Notifier);
-        Services.AddSingleton(sp => new PriceUpdater(Db, new FakePriceProvider(SeedData.Prices, Clock), Prices, null, Notifier));
+        Services.AddSingleton(sp => new PriceUpdater(Db, new FakePriceProvider(SeedData.Prices, Clock, SeedData.PrevCloses), Prices, null, Notifier));
         Services.AddSingleton<GroupRepository>();
         Services.AddSingleton<SettingsRepository>();
         Services.AddSingleton<SymbolMasterRepository>();
         Services.AddSingleton(_ => PriceSource);
         Services.AddSingleton(Indicators);
         Services.AddSingleton<TradingAccountRepository>();
+        Services.AddSingleton<IStockDetailProvider>(_ => StockDetails);
         Services.AddSingleton<PortfolioService>();
         Services.AddSingleton(Account);
         Services.AddSingleton(T);
@@ -54,7 +58,7 @@ public abstract class UiTestBase : BunitContext
 
     // 시세 폴링 1회에 해당: 새 가격을 받아 반영하고 화면에 알린다
     protected Task RefreshPricesAsync(IReadOnlyDictionary<string, decimal> prices) =>
-        new PriceUpdater(Db, new FakePriceProvider(prices, Clock), Prices, null, Notifier).RefreshHoldingsAsync();
+        new PriceUpdater(Db, new FakePriceProvider(prices, Clock, SeedData.PrevCloses), Prices, null, Notifier).RefreshHoldingsAsync();
 
     protected async Task<PortfolioViewModel> LoadModelAsync() =>
         new(await Services.GetRequiredService<PortfolioService>().LoadAsync(TradingAccount.DefaultId));

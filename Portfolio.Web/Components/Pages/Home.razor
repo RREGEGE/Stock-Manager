@@ -67,6 +67,17 @@
                              Sub="@(DisplayFormat.SignedPercent2(s.ReturnRate) + (s.UnpricedCount > 0 ? T.F(" · 시세 있는 {0}개 종목 기준", s.PricedCount) : ""))"
                              SubStrong="true" Tone="@Tone(s.ProfitLoss)" />
             }
+            @* 오늘 손익 (F-14): 전일 종가 대비 오늘 하루의 변화 *@
+            @if (m.DayChangeAmount is { } dayAmount)
+            {
+                <SummaryCard Title="@T["오늘 손익"]" Value="@((dayAmount > 0 ? "+" : "") + DisplayFormat.Number(dayAmount))"
+                             Sub="@(DisplayFormat.SignedPercent2(m.DayChangeRate ?? 0m) + T[" · 전일 종가 대비"])"
+                             SubStrong="true" Tone="@Tone(dayAmount)" />
+            }
+            else
+            {
+                <SummaryCard Title="@T["오늘 손익"]" Value="-" Unit="" Sub="@T["현재가를 받으면 계산됩니다"]" />
+            }
             <SummaryCard Title="@T["보유 종목"]" Value="@m.Rows.Count.ToString()" Unit="@T["개"]"
                          Sub="@CountSub(m)" />
         </section>

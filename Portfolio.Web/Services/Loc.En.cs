@@ -173,7 +173,7 @@ public sealed partial class Loc
         ["예수금을 총 보유금액에 포함합니다."] = "Cash is now included in the total.",
         ["예수금을 총 보유금액에서 뺍니다."] = "Cash is now excluded from the total.",
         ["이미 보유 중인 종목을 고르면 기존 행을 수정합니다."] = "Picking a stock you already hold edits the existing row.",
-        ["종목 검색"] = "Search",
+        ["종목 검색"] = "Stock search",
         ["종목명 또는 종목코드"] = "Name or code",
         ["검색 결과"] = "Search results",
         ["검색 결과가 없습니다."] = "No results.",
@@ -193,6 +193,36 @@ public sealed partial class Loc
         ["평균매입단가는 0보다 커야 합니다."] = "Average cost must be greater than 0.",
         ["이 계좌에 없는 그룹입니다."] = "That group does not belong to this account.",
         ["예수금은 0 이상이어야 합니다."] = "Cash cannot be negative.",
+
+        // 오늘 등락 (F-14)
+        ["오늘"] = "Today",
+        ["오늘 손익"] = "Today's P/L",
+        [" · 전일 종가 대비"] = " · vs. previous close",
+        ["전일 대비 {0}"] = "{0} vs. previous close",
+
+        // 종목 검색·종목 정보 (F-15)
+        ["종목을 검색해 현재가와 시세 정보를 봅니다. 보유하지 않은 종목도 볼 수 있습니다."] =
+            "Search for a stock to see its price and market data. Stocks you do not hold can be viewed too.",
+        ["새로 고침"] = "Refresh",
+        ["{0} 기준 · 전일 대비"] = "as of {0} · vs. previous close",
+        ["전일 종가"] = "Previous close",
+        ["시가"] = "Open",
+        ["고가"] = "High",
+        ["저가"] = "Low",
+        ["거래량"] = "Volume",
+        ["시가총액"] = "Market cap",
+        ["상한가"] = "Upper limit",
+        ["하한가"] = "Lower limit",
+        ["52주 최고"] = "52-week high",
+        ["52주 최저"] = "52-week low",
+        ["화면을 열 때와 '새로 고침'을 누를 때 조회합니다. ETF처럼 PER·PBR·EPS가 없는 종목은 '-'로 표시합니다."] =
+            "Data is fetched when the screen opens and when you click 'Refresh'. Stocks without PER, PBR or EPS, such as ETFs, show '-'.",
+        ["KIS 앱키가 설정되지 않아 종목 정보를 받아올 수 없습니다."] = "Stock data is unavailable because no KIS app key is set.",
+        ["종목 정보를 받아오지 못했습니다. 종목코드를 확인하거나 잠시 뒤 '새로 고침'을 눌러 주세요."] =
+            "Could not load the stock data. Check the stock code, or click 'Refresh' in a moment.",
+        ["내 보유 현황"] = "My position",
+        ["보유하지 않은 종목입니다."] = "You do not hold this stock.",
+        ["보유 종목에 추가하기"] = "Add it to Holdings",
 
         // 리밸런싱·추가매수
         ["추가매수"] = "Buy only",

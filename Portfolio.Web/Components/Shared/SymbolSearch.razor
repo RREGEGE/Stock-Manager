@@ -18,7 +18,7 @@
                     <button type="button" class="result @(SelectedCode == symbol.SymbolCode ? "selected" : "")"
                             @onclick="() => Select(symbol)">
                         <span class="result-name">@symbol.SymbolName <span class="result-code">@symbol.SymbolCode</span></span>
-                        <span class="result-state">@T[held ? "보유 중 · 수정" : "신규"]</span>
+                        <span class="result-state">@T[held ? HeldLabel : NewLabel]</span>
                     </button>
                 </li>
             }
@@ -34,6 +34,9 @@
     [Parameter] public IReadOnlySet<string> HeldCodes { get; set; } = new HashSet<string>();
     [Parameter] public string? SelectedCode { get; set; }
     [Parameter] public EventCallback<SymbolInfo> OnSelected { get; set; }
+    // 결과 오른쪽의 표시. 종목 추가 화면은 '보유 중 · 수정 / 신규', 종목 정보 화면은 '보유 중 / (없음)'
+    [Parameter] public string HeldLabel { get; set; } = "보유 중 · 수정";
+    [Parameter] public string NewLabel { get; set; } = "신규";
 
     private string _query = "";          // 검색에 쓰는 현재 입력값
     private string _inputValue = "";     // 서버가 입력창에 써 넣은 값 (수정 버튼·초기화 때만 바뀜)

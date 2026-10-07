@@ -1,0 +1,189 @@
+@page "/stocks"
+@page "/stocks/{Code}"
+@inherits LiveComponentBase
+@inject NavigationManager Navigation
+
+<PageTitle>@(_name is null ? T["종목 검색"] : _name)</PageTitle>
+
+@* 종목 검색과 종목 정보 (F-15). 보유하지 않은 종목도 볼 수 있다. *@
+<main class="page-main">
+    <div class="page-head">
+        <div>
+            <h1>@T["종목 검색"]</h1>
+            <p>@T["종목을 검색해 현재가와 시세 정보를 봅니다. 보유하지 않은 종목도 볼 수 있습니다."]</p>
+        </div>
+    </div>
+
+    @if (Model is not { } m)
+    {
+        <p class="loading" role="status">@T["불러오는 중…"]</p>
+    }
+    else
+    {
+        <section class="card search-card" aria-label="@T["종목 검색"]">
+            <SymbolSearch HeldCodes="HeldCodes(m)" SelectedCode="@Code" OnSelected="Open" HeldLabel="보유 중" NewLabel="" />
+        </section>
+
+        @if (Code is not null)
+        {
+            <section class="card detail-card" aria-labelledby="h-stock">
+                <div class="detail-head">
+                    <div>
+                        <h2 id="h-stock" class="stock-name">@(_name ?? Code)</h2>
+                        <p class="stock-meta">@string.Join(" · ", new[] { Code, _detail?.Market, _detail?.Sector }.Where(s => !string.IsNullOrEmpty(s)))</p>
+                    </div>
+                    <button type="button" class="btn btn-sm" disabled="@_loading" @onclick="LoadDetailAsync">@T["새로 고침"]</button>
+                </div>
+
+                @if (_loading)
+                {
+                    <p class="loading" role="status">@T["불러오는 중…"]</p>
+                }
+                else if (_detail is { } d)
+                {
+                    <div class="price-line">
+                        <span class="price">@T.Won(d.Price)</span>
+                        <span class="change @Tone(d.Change)">
+                            <span aria-hidden="true">@Arrow(d.Change)</span>
+                            <span class="sr-only">@T[d.Change > 0 ? "상승" : d.Change < 0 ? "하락" : "보합"]</span>
+                            @DisplayFormat.Number(Math.Abs(d.Change)) (@DisplayFormat.SignedPercent2(d.ChangeRate))
+                        </span>
+                        <span class="as-of">@T.F("{0} 기준 · 전일 대비", DisplayFormat.Time(d.FetchedAt))</span>
+                    </div>
+
+                    <dl class="facts">
+                        <div><dt>@T["전일 종가"]</dt><dd>@T.Won(d.PrevClose)</dd></div>
+                        <div><dt>@T["시가"]</dt><dd class="@Tone(d.Open - d.PrevClose)">@T.Won(d.Open)</dd></div>
+                        <div><dt>@T["고가"]</dt><dd class="@Tone(d.High - d.PrevClose)">@T.Won(d.High)</dd></div>
+                        <div><dt>@T["저가"]</dt><dd class="@Tone(d.Low - d.PrevClose)">@T.Won(d.Low)</dd></div>
+                        <div><dt>@T["거래량"]</dt><dd>@T.Shares(d.Volume)</dd></div>
+                        <div><dt>@T["시가총액"]</dt><dd>@(d.MarketCap is { } cap ? T.LargeWon(cap) : "-")</dd></div>
+                        <div><dt>@T["상한가"]</dt><dd>@T.Won(d.UpperLimit)</dd></div>
+                        <div><dt>@T["하한가"]</dt><dd>@T.Won(d.LowerLimit)</dd></div>
+                        <div>
+                            <dt>@T["52주 최고"]</dt>
+                            <dd>@(d.Week52High is { } high ? T.Won(high) : "-")@if (d.Week52HighDate is { } highDate) { <span class="fact-date">@highDate.ToString("yyyy-MM-dd")</span> }</dd>
+                        </div>
+                        <div>
+                            <dt>@T["52주 최저"]</dt>
+                            <dd>@(d.Week52Low is { } low ? T.Won(low) : "-")@if (d.Week52LowDate is { } lowDate) { <span class="fact-date">@lowDate.ToString("yyyy-MM-dd")</span> }</dd>
+                        </div>
+                        <div><dt>PER</dt><dd>@(d.Per is { } per ? DisplayFormat.Decimal2(per) : "-")</dd></div>
+                        <div><dt>PBR</dt><dd>@(d.Pbr is { } pbr ? DisplayFormat.Decimal2(pbr) : "-")</dd></div>
+                        <div><dt>EPS</dt><dd>@(d.Eps is { } eps ? T.Won(eps) : "-")</dd></div>
+                    </dl>
+                    <p class="note">@T["화면을 열 때와 '새로 고침'을 누를 때 조회합니다. ETF처럼 PER·PBR·EPS가 없는 종목은 '-'로 표시합니다."]</p>
+                }
+                else if (!Portfolio.PriceSourceReady)
+                {
+                    <p class="detail-empty" role="status">@T["KIS 앱키가 설정되지 않아 종목 정보를 받아올 수 없습니다."]</p>
+                }
+                else
+                {
+                    <p class="detail-empty" role="alert">@T["종목 정보를 받아오지 못했습니다. 종목코드를 확인하거나 잠시 뒤 '새로 고침'을 눌러 주세요."]</p>
+                }
+            </section>
+
+            <section class="card" aria-labelledby="h-mine">
+                <h2 id="h-mine" class="card-title mine-title">@T["내 보유 현황"]</h2>
+                @if (_positions.Count == 0)
+                {
+                    <p class="detail-empty">@T["보유하지 않은 종목입니다."] <a href="holdings">@T["보유 종목에 추가하기"]</a></p>
+                }
+                else
+                {
+                    <div class="table-scroll">
+                        <table class="table" style="min-width: 520px">
+                            <thead>
+                                <tr>
+                                    <th scope="col">@T["계좌"]</th>
+                                    <th scope="col" class="num">@T["수량"]</th>
+                                    <th scope="col" class="num">@T["평균매입단가"]</th>
+                                    <th scope="col" class="num">@T["평가금액"]</th>
+                                    <th scope="col" class="num">@T["평가손익"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var p in _positions)
+                                {
+                                    decimal? price = _detail?.Price;
+                                    decimal? profit = price is { } now ? (now - p.AvgPrice) * p.Quantity : null;
+                                    <tr>
+                                        <td class="name">@p.Account.Name</td>
+                                        <td class="num">@T.Shares(p.Quantity)</td>
+                                        <td class="num">@T.Won(p.AvgPrice)</td>
+                                        <td class="num">@(price is { } value ? T.Won(value * p.Quantity) : "-")</td>
+                                        <td class="num strong @(profit is { } pl ? Tone(pl) : "")">
+                                            @(profit is { } amount ? $"{T.SignedWon(amount)} ({DisplayFormat.SignedPercent2(p.AvgPrice > 0 ? (price!.Value - p.AvgPrice) / p.AvgPrice : 0m)})" : "-")
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </section>
+        }
+    }
+</main>
+
+@code {
+    [Parameter] public string? Code { get; set; }
+
+    private string? _loadedCode;
+    private string? _name;
+    private StockDetail? _detail;
+    private IReadOnlyList<StockPosition> _positions = [];
+    private bool _loading;
+
+    private static IReadOnlySet<string> HeldCodes(PortfolioViewModel m) => m.State.HoldingRows.Keys.ToHashSet();
+
+    private void Open(SymbolInfo symbol) => Navigation.NavigateTo($"stocks/{symbol.SymbolCode}");
+
+    // 주소의 종목코드가 바뀌면 그 종목을 조회한다
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Code == _loadedCode) return;
+        _loadedCode = Code;
+        _name = null;
+        _detail = null;
+        _positions = [];
+        if (Code is null) return;
+
+        _name = (await Portfolio.FindSymbolAsync(Code))?.SymbolName;
+        await LoadDetailAsync();
+    }
+
+    // 보유 수량이 바뀌면(다른 화면·다른 기기에서 고침) 내 보유 현황도 다시 읽는다
+    protected override void OnModelLoaded()
+    {
+        if (Code is not null && !_loading)
+            _ = InvokeAsync(async () =>
+            {
+                _positions = await Portfolio.GetPositionsAsync(Code);
+                StateHasChanged();
+            });
+    }
+
+    private async Task LoadDetailAsync()
+    {
+        if (Code is not { } code) return;
+        _loading = true;
+        try
+        {
+            _positions = await Portfolio.GetPositionsAsync(code);
+            _detail = await Portfolio.GetStockDetailAsync(code);
+        }
+        catch (Exception ex) when (ex is global::Portfolio.Kis.KisApiException or HttpRequestException or TaskCanceledException)
+        {
+            _detail = null;   // 화면에 '받아오지 못했습니다'로 알린다
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string Tone(decimal value) => value > 0 ? "up" : value < 0 ? "down" : "";
+    private static string Arrow(decimal change) => change > 0 ? "▲" : change < 0 ? "▼" : "-";
+}
