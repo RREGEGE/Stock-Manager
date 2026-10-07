@@ -1,6 +1,6 @@
 @* 보유 종목 표. 열 구성은 Full 매개변수로 고른다 (설계서 9.3, 9.5). 열 제목을 누르면 정렬한다 (F-03). *@
 <div class="table-scroll">
-    <table class="table @(Full ? "table-compact" : "")" style="min-width: @(Full ? "820px" : "640px")">
+    <table class="table @(Full ? "table-compact" : "")" style="min-width: @(Full ? "880px" : "700px")">
         <thead>
             <tr>
                 @SortHeader("name", "종목명", false)
@@ -11,6 +11,7 @@
                     @SortHeader("avg", "평균매입단가", true)
                     @SortHeader("price", "현재가", true)
                 }
+                @SortHeader("day", "오늘", true)
                 @SortHeader("amount", "평가금액", true)
                 @if (!Full)
                 {
@@ -31,7 +32,7 @@
                 var h = row.View;
                 <tr class="@(SelectedCode == h.SymbolCode ? "selected" : "") @(h.IsStale ? "stale" : "")">
                     <td class="name">
-                        @h.SymbolName
+                        <a class="stock-link" href="stocks/@h.SymbolCode">@h.SymbolName</a>
                         @if (!h.HasPrice)
                         {
                             <span class="badge badge-stale" title="@T["현재가를 아직 받지 못했습니다"]">@T["시세 없음"]</span>
@@ -48,6 +49,11 @@
                         <td class="num">@DisplayFormat.Number(h.AvgPrice)</td>
                         <td class="num">@(h.HasPrice ? DisplayFormat.Number(h.CurrentPrice) : "-")</td>
                     }
+                    @* 오늘 등락 (F-14): 전일 종가 대비 *@
+                    <td class="num strong day @(h.DayChangeRate is not { } day ? "" : day > 0 ? "up" : day < 0 ? "down" : "")"
+                        title="@(h.DayChange is { } change ? T.F("전일 대비 {0}", T.SignedWon(change)) : null)">
+                        @(h.DayChangeRate is { } dayRate ? DisplayFormat.SignedPercent2(dayRate) : "-")
+                    </td>
                     <td class="num">
                         @(Full ? DisplayFormat.Number(h.EstimatedAmount) : T.Won(h.EstimatedAmount))
                         @if (!h.HasPrice)
@@ -90,7 +96,7 @@
             }
             @if (Rows.Count == 0)
             {
-                <tr><td colspan="@(Full ? 9 : 5)" class="empty">@(EmptyText ?? T["보유 종목이 없습니다."])</td></tr>
+                <tr><td colspan="@(Full ? 10 : 6)" class="empty">@(EmptyText ?? T["보유 종목이 없습니다."])</td></tr>
             }
         </tbody>
     </table>
@@ -120,6 +126,7 @@
                 "quantity" => r => r.View.Quantity,
                 "avg" => r => r.View.AvgPrice,
                 "price" => r => r.View.HasPrice ? r.View.CurrentPrice : null,
+                "day" => r => r.View.DayChangeRate,
                 "amount" => r => r.View.EstimatedAmount,
                 "weight" => r => r.Weight,
                 "return" => r => r.ReturnRate,

@@ -27,6 +27,7 @@ public class DashboardPageTests : UiTestBase
             "총 평가금액 100,000,000원 예수금 제외",
             "매입금액 95,500,000원 수량 × 평균매입단가",
             "평가손익 +4,500,000원 +4.71%",
+            "오늘 손익 +270,000원 +0.27% · 전일 종가 대비",
             "보유 종목 7개 미분류 0개 · 시세 지연 0개",
         ], cut.FindAll(".summary-card").Select(Text));
         Assert.Contains("up", cut.FindAll(".summary-value")[2].ClassName);
@@ -45,11 +46,11 @@ public class DashboardPageTests : UiTestBase
         ], cut.FindAll(".target-head").Select(Text));
         Assert.Equal(["over", "under", "ok"], cut.FindAll(".target-diff").Select(d => d.ClassList.Last()));
 
-        Assert.Equal(["종목명", "그룹", "평가금액", "비중", "손익률"], cut.FindAll(".table th").Select(Text));
+        Assert.Equal(["종목명", "그룹", "오늘", "평가금액", "비중", "손익률"], cut.FindAll(".table th").Select(Text));
         var rows = cut.FindAll(".table tbody tr").Select(Cells).ToList();
         Assert.Equal(7, rows.Count);
-        Assert.Equal("KOSPI200 ETF 주식 24,000,000원 24.0% +11.11%", rows[0]);
-        Assert.Equal("리츠 ETF 배당 8,000,000원 8.0% -9.09%", rows[6]);
+        Assert.Equal("KOSPI200 ETF 주식 +1.01% 24,000,000원 24.0% +11.11%", rows[0]);
+        Assert.Equal("리츠 ETF 배당 +0.00% 8,000,000원 8.0% -9.09%", rows[6]);
         Assert.Contains("비중은 소수점 1자리 반올림으로, 합계가 100.0%가 아닐 수 있습니다.", cut.Markup);
     }
 
@@ -63,7 +64,7 @@ public class DashboardPageTests : UiTestBase
 
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("시세 지연 1개", Text(cut.FindAll(".summary-card")[3]));
+            Assert.Contains("시세 지연 1개", Text(cut.FindAll(".summary-card")[4]));
             var stale = Assert.Single(cut.FindAll(".table tr.stale"));
             Assert.Contains("반도체 개별주 A", stale.TextContent);
             Assert.Contains("시세 지연", stale.TextContent);
@@ -78,7 +79,7 @@ public class DashboardPageTests : UiTestBase
         var cut = RenderDashboard();
 
         Assert.Contains("그룹이 지정되지 않은 종목이 2개 있습니다", cut.Find(".notice").TextContent);
-        Assert.Contains("미분류 2개", Text(cut.FindAll(".summary-card")[3]));
+        Assert.Contains("미분류 2개", Text(cut.FindAll(".summary-card")[4]));
     }
 
     [Fact]

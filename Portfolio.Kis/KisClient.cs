@@ -71,6 +71,17 @@ public sealed class KisClient(
         return KisResponseParser.ParsePrice(doc.RootElement, symbolCode, _clock.GetUtcNow());
     }
 
+    // 종목 정보 (F-15): 단일 현재가와 같은 API의 응답에서 시가·고가·저가, 52주 최고·최저, PER 등을 함께 읽는다
+    public async Task<StockDetail?> GetStockDetailAsync(string symbolCode, CancellationToken ct = default)
+    {
+        using var doc = await GetAsync(PricePath, PriceTrId,
+        [
+            new("FID_COND_MRKT_DIV_CODE", MarketKrx),
+            new("FID_INPUT_ISCD", symbolCode),
+        ], ct);
+        return KisResponseParser.ParseStockDetail(doc.RootElement, symbolCode, _clock.GetUtcNow());
+    }
+
     // 국내 업종 지수 현재가 (코스피 0001, 코스닥 1001)
     public async Task<MarketIndicator?> GetDomesticIndexAsync(string key, string indexCode, CancellationToken ct = default)
     {
@@ -204,6 +215,37 @@ public static class KisResponseParser
         // stck_sdpr(기준가)를 전일 종가로 쓴다
         return new PriceQuote(symbolCode, Num(output, "stck_prpr"), Num(output, "stck_sdpr"), fetchedAt);
     }
+
+    // 종목 정보: 항목 이름은 실제 응답으로 확인했다 (2026-10-07, 삼성전자·KODEX 200).
+    // 없는 종목코드는 현재가가 0으로 오므로 null을 돌려준다. ETF는 PER·PBR·EPS가 0으로 와서 '없음'으로 본다.
+    public static StockDetail? ParseStockDetail(JsonElement root, string symbolCode, DateTimeOffset fetchedAt)
+    {
+        if (!root.TryGetProperty("output", out var o) || o.ValueKind != JsonValueKind.Object) return null;
+        decimal price = Num(o, "stck_prpr");
+        if (price <= 0) return null;
+
+        string sign = Str(o, "prdy_vrss_sign");
+        return new StockDetail(
+            symbolCode, price,
+            Signed(Num(o, "prdy_vrss"), sign),
+            Signed(Num(o, "prdy_ctrt"), sign) / 100m,
+            PrevClose: Num(o, "stck_sdpr"),
+            Open: Num(o, "stck_oprc"), High: Num(o, "stck_hgpr"), Low: Num(o, "stck_lwpr"),
+            Volume: (long)Num(o, "acml_vol"),
+            UpperLimit: Num(o, "stck_mxpr"), LowerLimit: Num(o, "stck_llam"),
+            MarketCap: Positive(Num(o, "hts_avls")) * 100_000_000m,   // 응답 단위는 억 원
+            Per: Positive(Num(o, "per")), Pbr: Positive(Num(o, "pbr")), Eps: NonZero(Num(o, "eps")),
+            Week52High: Positive(Num(o, "w52_hgpr")), Week52HighDate: Date(o, "w52_hgpr_date"),
+            Week52Low: Positive(Num(o, "w52_lwpr")), Week52LowDate: Date(o, "w52_lwpr_date"),
+            Market: Str(o, "rprs_mrkt_kor_name").Trim(), Sector: Str(o, "bstp_kor_isnm").Trim(),
+            fetchedAt);
+    }
+
+    private static decimal? Positive(decimal value) => value > 0 ? value : null;
+    private static decimal? NonZero(decimal value) => value != 0 ? value : null;
+
+    private static DateOnly? Date(JsonElement e, string name) =>
+        DateOnly.TryParseExact(Str(e, name), "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d) ? d : null;
 
     // 국내 업종 지수: output 객체의 현재가·전일 대비·대비율
     public static MarketIndicator? ParseDomesticIndex(JsonElement root, string key, DateTimeOffset fetchedAt)

@@ -29,12 +29,12 @@ public class HoldingsPageTests : UiTestBase
         Assert.Equal("보유 종목", cut.Find("h1").TextContent);
         Assert.Contains("삼성증권 잔고 화면의 수량과 평균매입단가를 옮겨 적습니다. 현재가는 자동으로 갱신됩니다.", cut.Markup);
         Assert.Equal("7개 종목", cut.Find("#h-list").TextContent);
-        Assert.Equal(["종목명", "그룹", "수량", "평균매입단가", "현재가", "평가금액", "손익률", "수정일", "작업"],
+        Assert.Equal(["종목명", "그룹", "수량", "평균매입단가", "현재가", "오늘", "평가금액", "손익률", "수정일", "작업"],
             cut.FindAll(".list-card th").Select(Text));
 
         var rows = cut.FindAll(".list-card tbody tr").Select(Cells).ToList();
-        Assert.StartsWith("KOSPI200 ETF 주식 600 36,000 40,000 24,000,000 +11.11%", rows[0]);
-        Assert.StartsWith("리츠 ETF 배당 1,600 5,500 5,000 8,000,000 -9.09%", rows[6]);
+        Assert.StartsWith("KOSPI200 ETF 주식 600 36,000 40,000 +1.01% 24,000,000 +11.11%", rows[0]);
+        Assert.StartsWith("리츠 ETF 배당 1,600 5,500 5,000 +0.00% 8,000,000 -9.09%", rows[6]);
         // 각 줄에 수정·삭제 버튼
         Assert.All(cut.FindAll(".list-card tbody tr"), r =>
             Assert.Equal(["수정", "삭제"], r.QuerySelectorAll("td.action button").Select(b => b.TextContent.Trim())));
@@ -76,7 +76,7 @@ public class HoldingsPageTests : UiTestBase
         cut.WaitForAssertion(() =>
         {
             Assert.Equal("7개 종목", cut.Find("#h-list").TextContent);
-            Assert.StartsWith("리츠 ETF 배당 2,000 5,500 5,000 10,000,000", Cells(cut.FindAll(".list-card tbody tr")[6]));
+            Assert.StartsWith("리츠 ETF 배당 2,000 5,500 5,000 +0.00% 10,000,000", Cells(cut.FindAll(".list-card tbody tr")[6]));
             Assert.Equal("종목 추가", cut.Find("#h-form").TextContent);
         });
         Assert.Equal(7, await Db.CreateDbContext().Holdings.CountAsync());

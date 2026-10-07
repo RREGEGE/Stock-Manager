@@ -21,6 +21,12 @@ public sealed record HoldingView(
     public decimal EstimatedAmount => HasPrice ? EvalAmount : PurchaseAmount;
 
     public decimal ProfitLoss => HasPrice ? EvalAmount - PurchaseAmount : 0m;
+
+    // 전일 종가 (F-14). 받지 못했으면 0이고, 그때는 오늘 등락을 계산하지 않는다 (null).
+    public decimal PrevClose { get; init; }
+    public decimal? DayChange => HasPrice && PrevClose > 0 ? CurrentPrice - PrevClose : null;
+    public decimal? DayChangeRate => DayChange is { } change ? change / PrevClose : null;
+    public decimal? DayChangeAmount => DayChange is { } change ? change * Quantity : null;   // 오늘 이 종목으로 늘거나 준 금액
 }
 
 public sealed record PortfolioSnapshot(

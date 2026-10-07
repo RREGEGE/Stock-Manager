@@ -29,6 +29,13 @@ public static class SeedData
     public static IReadOnlyDictionary<string, decimal> Prices =>
         Holdings.ToDictionary(h => h.SymbolCode, h => h.CurrentPrice);
 
+    // 전일 종가 (F-14 오늘 등락 확인용 가상 값): 오른 종목, 내린 종목, 그대로인 종목을 섞었다.
+    public static IReadOnlyDictionary<string, decimal> PrevCloses => new Dictionary<string, decimal>
+    {
+        ["SEED01"] = 39_600m, ["SEED02"] = 20_200m, ["SEED03"] = 118_000m, ["SEED04"] = 100_000m,
+        ["SEED05"] = 10_050m, ["SEED06"] = 14_850m, ["SEED07"] = 5_000m,
+    };
+
     // 보유종목이 비어 있을 때만 시드를 넣는다. 그룹(주식/채권/배당, 목표 50/30/20%)은 마이그레이션 초기값을 쓴다.
     public static async Task ApplyAsync(PortfolioDbContext db, CancellationToken ct = default)
     {

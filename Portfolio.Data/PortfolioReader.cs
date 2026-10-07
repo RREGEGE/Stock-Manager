@@ -27,7 +27,10 @@ public class PortfolioReader(PortfolioDbContext db, PriceStore priceStore, TimeP
                 h.Group?.Name ?? PortfolioCalculator.UnclassifiedGroupName,
                 h.Quantity, h.AvgPrice,
                 e?.Price ?? 0m,
-                IsStale: e is null || e.IsStale || e.Price <= 0);
+                IsStale: e is null || e.IsStale || e.Price <= 0)
+            {
+                PrevClose = e?.PrevClose ?? 0m,
+            };
         }).ToList();
 
         var fetched = entries.Values.Where(e => e is { IsStale: false }).Select(e => e!.FetchedAt).ToList();

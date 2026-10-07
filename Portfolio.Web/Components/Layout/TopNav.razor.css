@@ -55,4 +55,7 @@
     .mobile-total-pl { margin-top: 4px; font-size: 14px; font-weight: 600; }
     .mobile-total-pl.up { color: var(--up-on-dark); }
     .mobile-total-pl.down { color: var(--down-on-dark); }
+    .mobile-total-day { margin-top: 2px; font-size: 13px; font-weight: 600; color: var(--header-text); }
+    .mobile-total-day.up { color: var(--up-on-dark); }
+    .mobile-total-day.down { color: var(--down-on-dark); }
 }

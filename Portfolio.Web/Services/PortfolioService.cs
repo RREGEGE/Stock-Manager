@@ -7,6 +7,9 @@ namespace Portfolio.Web.Services;
 // 시세를 받아올 수 있는 상태인지 (KIS 키가 있거나 개발용 가짜 시세). 화면에서 '왜 시세가 없는지'를 안내하는 데 쓴다.
 public sealed record PriceSourceInfo(bool Ready, string? SettingsPath);
 
+// 종목 정보 화면 (F-15): 한 종목을 어느 계좌에 얼마나 들고 있는지
+public sealed record StockPosition(TradingAccount Account, long Quantity, decimal AvgPrice);
+
 // 화면 한 번 그리는 데 필요한 데이터 묶음
 public sealed record PortfolioState(
     TradingAccount Account,                             // 지금 보고 있는 계좌 (F-11)
@@ -42,7 +45,8 @@ public sealed class PortfolioService(
     SymbolMasterRepository symbols,
     PortfolioNotifier notifier,
     TimeProvider clock,
-    PriceSourceInfo priceSource)
+    PriceSourceInfo priceSource,
+    IStockDetailProvider stockDetails)
 {
     // 고른 계좌가 없어졌으면(삭제 등) 첫 번째 계좌를 보여 준다
     public async Task<PortfolioState> LoadAsync(int accountId, CancellationToken ct = default)
@@ -70,6 +74,26 @@ public sealed class PortfolioService(
         symbols.SearchAsync(query, 8, ct);
 
     public PriceEntry? GetPrice(string symbolCode) => priceStore.Get(symbolCode);
+
+    // 종목 정보 (F-15). 화면을 열 때 한 번 조회한다. 없는 종목이거나 받아오지 못하면 null.
+    public Task<SymbolInfo?> FindSymbolAsync(string symbolCode, CancellationToken ct = default) =>
+        symbols.FindAsync(symbolCode, ct);
+
+    public Task<StockDetail?> GetStockDetailAsync(string symbolCode, CancellationToken ct = default) =>
+        stockDetails.GetAsync(symbolCode, ct);
+
+    public bool PriceSourceReady => priceSource.Ready;
+
+    // 이 종목을 들고 있는 계좌들 (계좌 표시 순서대로)
+    public async Task<IReadOnlyList<StockPosition>> GetPositionsAsync(string symbolCode, CancellationToken ct = default)
+    {
+        var accountList = await accounts.GetAllAsync(ct);
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var held = await db.Holdings.AsNoTracking().Where(h => h.SymbolCode == symbolCode).ToListAsync(ct);
+        return accountList
+            .Join(held, a => a.Id, h => h.AccountId, (a, h) => new StockPosition(a, h.Quantity, h.AvgPrice))
+            .ToList();
+    }
 
     // 저장 즉시 해당 종목 현재가를 1회 조회해 반영한다 (설계서 5.4-4)
     public async Task SaveHoldingAsync(

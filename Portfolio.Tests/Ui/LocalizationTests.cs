@@ -19,7 +19,7 @@ public partial class LocalizationTests : UiTestBase
 
     // 번역하지 않는 것: 입력된 데이터(종목명, 그룹·계좌 이름)와 언어 이름
     private static readonly string[] DataNames =
-        [.. SeedData.Holdings.Select(h => h.SymbolName), "주식", "채권", "배당", TradingAccount.DefaultName, "한국어"];
+        [.. SeedData.Holdings.Select(h => h.SymbolName), "주식", "채권", "배당", TradingAccount.DefaultName, "한국어", "가상 업종", "가상"];
 
     private static string WithoutData(string text) =>
         DataNames.OrderByDescending(n => n.Length).Aggregate(System.Net.WebUtility.HtmlDecode(text), (t, name) => t.Replace(name, ""));
@@ -177,7 +177,7 @@ public partial class LocalizationTests : UiTestBase
 
         var nav = Render<TopNav>();
         nav.WaitForElement(".mobile-total");
-        Assert.Equal(["Dashboard", "Holdings", "Rebalance", "Groups"], nav.FindAll(".topnav a").Select(Text));
+        Assert.Equal(["Dashboard", "Holdings", "Rebalance", "Stock search", "Groups"], nav.FindAll(".topnav a").Select(Text));
         Assert.Equal("Market open · prices as of 09:41", nav.Find(".market-text").TextContent);
         Assert.Equal("₩100,000,000", Text(nav.Find(".mobile-total-amount")));
         Assert.Equal("+₩4,500,000 (+4.71%)", Text(nav.Find(".mobile-total-pl")));
@@ -185,9 +185,9 @@ public partial class LocalizationTests : UiTestBase
         var home = Render<Home>();
         home.WaitForElement(".summary-grid");
         Assert.Equal(
-            ["Total value ₩100,000,000 Cash excluded", "Cost ₩95,500,000 Quantity × average cost", "Unrealized P/L +₩4,500,000 +4.71%", "Holdings 7 0 unclassified · 0 stale"],
+            ["Total value ₩100,000,000 Cash excluded", "Cost ₩95,500,000 Quantity × average cost", "Unrealized P/L +₩4,500,000 +4.71%", "Today's P/L +₩270,000 +0.27% · vs. previous close", "Holdings 7 0 unclassified · 0 stale"],
             home.FindAll(".summary-card").Select(Text));
-        Assert.Equal(["Name", "Group", "Value", "Weight", "Return"], home.FindAll("thead th").Select(Text));
+        Assert.Equal(["Name", "Group", "Today", "Value", "Weight", "Return"], home.FindAll("thead th").Select(Text));
         Assert.Equal("3 groups", home.Find(".donut-label").TextContent);
         Assert.Equal("₩100M", home.Find(".donut-value").TextContent);
         Assert.Equal("+10.0%p over", Text(home.Find(".target-diff")));
@@ -246,6 +246,13 @@ public partial class LocalizationTests : UiTestBase
             ["Settings"] = () => Markup<Settings>(".accounts-card .account-row"),
             ["MarketStrip"] = () => Render<MarketStrip>().Markup,
             ["NotFound"] = () => Render<NotFound>().Markup,
+            ["Stocks"] = () => Render<Stocks>().Markup,
+            ["Stocks(detail)"] = () =>
+            {
+                var cut = Render<Stocks>(p => p.Add(x => x.Code, "SEED01"));
+                cut.WaitForElement(".facts");
+                return cut.Markup;
+            },
         };
 
         foreach (var (name, render) in screens)

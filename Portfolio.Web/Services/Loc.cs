@@ -52,6 +52,14 @@ public sealed partial class Loc
         return Won(value);
     }
 
+    // 시가총액처럼 큰 금액: "1,591.6조 원" / "₩1,591.6T"
+    public string LargeWon(decimal value)
+    {
+        if (value < 1_000_000_000_000m) return ShortWon(value);
+        string trillions = Math.Round(value / 1_000_000_000_000m, 1, MidpointRounding.AwayFromZero).ToString("#,0.#", Inv);
+        return IsEnglish ? $"₩{trillions}T" : $"{trillions}조 원";
+    }
+
     // "1,600주" / "1,600 sh"
     public string Shares(decimal count) => DisplayFormat.Number(count) + (IsEnglish ? " sh" : "주");
 

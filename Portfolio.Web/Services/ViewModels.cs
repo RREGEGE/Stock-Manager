@@ -93,6 +93,11 @@ public sealed class PortfolioViewModel
     public IReadOnlyList<ChartSegment> SymbolSegments { get; }
     public IReadOnlyList<TargetRow> TargetRows { get; }
 
+    // 오늘 등락 (F-14): 전일 종가를 아는 종목만 더한다. 하나도 없으면 null.
+    public decimal? DayChangeAmount { get; }
+    public decimal? DayChangeRate { get; }
+    public int DayChangeCount { get; }
+
     public PortfolioViewModel(PortfolioState state)
     {
         State = state;
@@ -124,6 +129,14 @@ public sealed class PortfolioViewModel
             }
         }
         Rows = rows;
+
+        var moved = state.Snapshot.Holdings.Where(h => h.DayChangeAmount is not null).ToList();
+        DayChangeCount = moved.Count;
+        if (moved.Count > 0)
+        {
+            DayChangeAmount = moved.Sum(h => h.DayChangeAmount!.Value);
+            DayChangeRate = Ratio(DayChangeAmount.Value, moved.Sum(h => h.PrevClose * h.Quantity));
+        }
 
         // 그룹 도넛: 그룹 순서대로, 미분류, (포함 설정 시) 현금
         var groupSegments = new List<ChartSegment>();

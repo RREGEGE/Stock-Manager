@@ -90,10 +90,11 @@ if (priceSource == PriceSource.Fake)
     decimal fluctuation = builder.Configuration.GetValue("FakePrices:FluctuationPercent", 0m);
     builder.Services.AddSingleton<IPriceProvider>(sp =>
     {
-        IPriceProvider fake = new FakePriceProvider(SeedData.Prices, sp.GetRequiredService<TimeProvider>());
+        IPriceProvider fake = new FakePriceProvider(SeedData.Prices, sp.GetRequiredService<TimeProvider>(), SeedData.PrevCloses);
         return fluctuation > 0 ? new FluctuatingPriceProvider(fake, fluctuation) : fake;
     });
     builder.Services.AddSingleton<IMarketIndicatorProvider>(sp => new FakeMarketIndicatorProvider(sp.GetRequiredService<TimeProvider>()));
+    builder.Services.AddSingleton<IStockDetailProvider>(sp => new FakeStockDetailProvider(SeedData.Prices, SeedData.PrevCloses, sp.GetRequiredService<TimeProvider>()));
     builder.Services.Configure<KisOptions>(builder.Configuration.GetSection(KisOptions.SectionName));
 }
 else

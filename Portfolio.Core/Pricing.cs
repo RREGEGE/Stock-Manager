@@ -9,8 +9,9 @@ public interface IPriceProvider
         IReadOnlyCollection<string> symbolCodes, CancellationToken ct = default);
 }
 
-// KIS 없이 고정 가격을 돌려주는 가짜 구현 (설계서 10.4)
-public sealed class FakePriceProvider(IReadOnlyDictionary<string, decimal> prices, TimeProvider? clock = null)
+// KIS 없이 고정 가격을 돌려주는 가짜 구현 (설계서 10.4). 전일 종가를 주지 않으면 현재가와 같게 둔다 (등락 0).
+public sealed class FakePriceProvider(
+    IReadOnlyDictionary<string, decimal> prices, TimeProvider? clock = null, IReadOnlyDictionary<string, decimal>? prevCloses = null)
     : IPriceProvider
 {
     private readonly TimeProvider _clock = clock ?? TimeProvider.System;
@@ -22,7 +23,7 @@ public sealed class FakePriceProvider(IReadOnlyDictionary<string, decimal> price
         IReadOnlyDictionary<string, PriceQuote> result = symbolCodes
             .Where(prices.ContainsKey)
             .Distinct()
-            .ToDictionary(code => code, code => new PriceQuote(code, prices[code], prices[code], now));
+            .ToDictionary(code => code, code => new PriceQuote(code, prices[code], prevCloses?.GetValueOrDefault(code, prices[code]) ?? prices[code], now));
         return Task.FromResult(result);
     }
 }
