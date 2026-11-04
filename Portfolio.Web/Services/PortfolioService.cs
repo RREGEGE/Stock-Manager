@@ -21,7 +21,9 @@ public sealed record PortfolioState(
     bool IncludeCash,
     bool MarketOpen,
     DateTimeOffset? PricedAt,
-    PriceSourceInfo PriceSource)
+    PriceSourceInfo PriceSource,
+    DateOnly Today,                                     // 한국 시간 기준 오늘 (배당 예상의 기준일)
+    IReadOnlyDictionary<string, IReadOnlyList<DividendRecord>> Dividends)   // 이 계좌 종목들의 배당 이력 (F-16)
 {
     // 현재가를 한 번도 받지 못해 매입금액으로 계산한 종목 수
     public int UnpricedCount => Snapshot.Holdings.Count(h => !h.HasPrice);
@@ -46,7 +48,9 @@ public sealed class PortfolioService(
     PortfolioNotifier notifier,
     TimeProvider clock,
     PriceSourceInfo priceSource,
-    IStockDetailProvider stockDetails)
+    IStockDetailProvider stockDetails,
+    DividendRepository dividends,
+    IDividendProvider dividendProvider)
 {
     // 고른 계좌가 없어졌으면(삭제 등) 첫 번째 계좌를 보여 준다
     public async Task<PortfolioState> LoadAsync(int accountId, CancellationToken ct = default)
@@ -67,7 +71,9 @@ public sealed class PortfolioService(
             groupList, rows, includeCash,
             MarketSchedule.IsOpen(clock.GetUtcNow()),
             priceStore.LatestFetchedAt,
-            priceSource);
+            priceSource,
+            dividends.Today,
+            await dividends.GetAsync(rows.Keys.ToList(), ct));
     }
 
     public Task<IReadOnlyList<SymbolInfo>> SearchSymbolsAsync(string? query, CancellationToken ct = default) =>
@@ -171,6 +177,17 @@ public sealed class PortfolioService(
         await accounts.RenameAsync(id, name, ct);
         notifier.NotifyChanged();
     }
+
+    // 계좌의 배당 세금 방식 (F-16)
+    public async Task SetAccountTaxTypeAsync(int id, AccountTaxType taxType, CancellationToken ct = default)
+    {
+        await accounts.SetTaxTypeAsync(id, taxType, ct);
+        notifier.NotifyChanged();
+    }
+
+    // 종목 정보 화면의 배당 이력 (F-16). 화면을 열 때 한 번 조회한다.
+    public Task<IReadOnlyList<DividendRecord>> GetDividendHistoryAsync(string symbolCode, CancellationToken ct = default) =>
+        dividendProvider.GetAsync(symbolCode, dividends.Today.AddMonths(-DividendRepository.FetchMonths), dividends.Today, ct);
 
     public async Task MoveAccountAsync(int id, int direction, CancellationToken ct = default)
     {

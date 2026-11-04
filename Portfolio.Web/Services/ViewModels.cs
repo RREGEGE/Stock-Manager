@@ -98,6 +98,9 @@ public sealed class PortfolioViewModel
     public decimal? DayChangeRate { get; }
     public int DayChangeCount { get; }
 
+    // 예상 배당 (F-16): 이 계좌 종목들의 최근 12개월 배당 기준
+    public DividendForecast Dividend { get; }
+
     public PortfolioViewModel(PortfolioState state)
     {
         State = state;
@@ -129,6 +132,8 @@ public sealed class PortfolioViewModel
             }
         }
         Rows = rows;
+
+        Dividend = DividendEstimator.Estimate(state.Snapshot.Holdings, state.Dividends, state.Today, state.Account.TaxType);
 
         var moved = state.Snapshot.Holdings.Where(h => h.DayChangeAmount is not null).ToList();
         DayChangeCount = moved.Count;

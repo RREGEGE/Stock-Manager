@@ -82,6 +82,25 @@ public sealed class KisClient(
         return KisResponseParser.ParseStockDetail(doc.RootElement, symbolCode, _clock.GetUtcNow());
     }
 
+    // 배당 이력 (F-16): 예탁원 배당일정. 주식 배당과 ETF 분배금이 모두 나온다.
+    public const string DividendPath = "/uapi/domestic-stock/v1/ksdinfo/dividend";
+    public const string DividendTrId = "HHKDB669102C0";
+
+    public async Task<IReadOnlyList<DividendRecord>> GetDividendsAsync(
+        string symbolCode, DateOnly from, DateOnly to, CancellationToken ct = default)
+    {
+        using var doc = await GetAsync(DividendPath, DividendTrId,
+        [
+            new("CTS", ""),
+            new("GB1", "0"),   // 0: 전체 (결산·중간·분기)
+            new("F_DT", from.ToString("yyyyMMdd", CultureInfo.InvariantCulture)),
+            new("T_DT", to.ToString("yyyyMMdd", CultureInfo.InvariantCulture)),
+            new("SHT_CD", symbolCode),
+            new("HIGH_GB", ""),
+        ], ct);
+        return KisResponseParser.ParseDividends(doc.RootElement, symbolCode);
+    }
+
     // 국내 업종 지수 현재가 (코스피 0001, 코스닥 1001)
     public async Task<MarketIndicator?> GetDomesticIndexAsync(string key, string indexCode, CancellationToken ct = default)
     {
@@ -239,6 +258,27 @@ public static class KisResponseParser
             Week52Low: Positive(Num(o, "w52_lwpr")), Week52LowDate: Date(o, "w52_lwpr_date"),
             Market: Str(o, "rprs_mrkt_kor_name").Trim(), Sector: Str(o, "bstp_kor_isnm").Trim(),
             fetchedAt);
+    }
+
+    // 배당 이력: output1 배열. 항목 이름은 실제 응답으로 확인했다 (2026-11-04, 삼성전자·TIGER 미국배당다우존스·KODEX 200).
+    // 지급일은 "2026/11/27" 형식이다. 주식 배당만 있는 줄(현금 배당 0원)은 뺀다.
+    public static IReadOnlyList<DividendRecord> ParseDividends(JsonElement root, string symbolCode)
+    {
+        if (!root.TryGetProperty("output1", out var rows) || rows.ValueKind != JsonValueKind.Array) return [];
+        var result = new List<DividendRecord>();
+        foreach (var r in rows.EnumerateArray())
+        {
+            string code = Str(r, "sht_cd").Trim();
+            if (code.Length > 0 && code != symbolCode) continue;
+            if (!DateOnly.TryParseExact(Str(r, "record_date"), "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var record))
+                continue;
+            decimal perShare = Num(r, "per_sto_divi_amt");
+            if (perShare <= 0) continue;
+            DateOnly? pay = DateOnly.TryParseExact(Str(r, "divi_pay_dt"), "yyyy/MM/dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var p)
+                ? p : null;
+            result.Add(new DividendRecord(symbolCode, record, pay, perShare, Str(r, "divi_kind").Trim()));
+        }
+        return result.OrderByDescending(r => r.RecordDate).ToList();
     }
 
     private static decimal? Positive(decimal value) => value > 0 ? value : null;

@@ -1,0 +1,69 @@
+@* 예상 배당 (F-16): 이번 달부터 12개월의 달별 예상 배당과 종목별 내역. 최근 12개월 실적이 반복된다고 본 추정이다. *@
+<section aria-labelledby="h-dividend" class="card dividend-card">
+    <div class="dividend-head">
+        <h2 id="h-dividend" class="card-title">@T["월별 예상 배당"]</h2>
+        <span class="tax-badge">@T.F("{0} 계좌", T.TaxTypeName(Forecast.TaxType))</span>
+    </div>
+
+    @if (!Forecast.HasDividends)
+    {
+        <p class="dividend-empty">@T["최근 12개월에 배당을 준 보유 종목이 없습니다. 배당 이력은 하루 한 번 받아 옵니다."]</p>
+    }
+    else
+    {
+        <dl class="dividend-totals">
+            <div><dt>@T["월평균 (세전)"]</dt><dd>@T.Won(Forecast.MonthlyAverage)</dd></div>
+            <div><dt>@T["월평균 (세후)"]</dt><dd>@T.Won(Forecast.MonthlyAverageAfterTax)</dd></div>
+            <div><dt>@T["연간 (세전)"]</dt><dd>@T.Won(Forecast.AnnualAmount)</dd></div>
+            <div><dt>@T["배당 수익률"]</dt><dd>@DisplayFormat.Percent1(Forecast.Yield)</dd></div>
+        </dl>
+
+        decimal max = Forecast.Months.Max(m => m.Amount);
+        <div class="dividend-bars" role="img" aria-label="@BarsLabel">
+            @foreach (var m in Forecast.Months)
+            {
+                <div class="dividend-bar" title="@($"{m.Year}.{m.Month:00} · {T.Won(m.Amount)}")">
+                    <span class="bar-value">@(m.Amount > 0 ? T.ShortWon(m.Amount) : "")</span>
+                    <span class="bar-track"><span class="bar-fill" style="height: @PortfolioViewModel.CssPercent(max > 0 ? m.Amount / max : 0m)"></span></span>
+                    <span class="bar-month">@T.Month(m.Month)</span>
+                </div>
+            }
+        </div>
+
+        <div class="table-scroll">
+            <table class="table" style="min-width: 520px">
+                <thead>
+                    <tr>
+                        <th scope="col">@T["종목명"]</th>
+                        <th scope="col">@T["지급 월"]</th>
+                        <th scope="col" class="num">@T["주당 (연)"]</th>
+                        <th scope="col" class="num">@T["연간 (세전)"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var h in Forecast.Holdings)
+                    {
+                        <tr>
+                            <td class="name"><a class="stock-link" href="stocks/@h.SymbolCode">@h.SymbolName</a></td>
+                            <td class="months">@(h.PayMonths.Count == 12 ? T["매월"] : string.Join(", ", h.PayMonths.Select(T.Month)))</td>
+                            <td class="num">@T.Won(h.AnnualPerShare)</td>
+                            <td class="num strong">@T.Won(h.AnnualAmount)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <p class="note">@T["최근 12개월에 받은(또는 받기로 정해진) 배당이 앞으로도 같은 달에 같은 금액으로 나온다고 본 추정입니다. 실제 배당은 회사·운용사의 결정에 따라 달라집니다."] @TaxNote</p>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public DividendForecast Forecast { get; set; } = default!;
+
+    private string TaxNote => T[Forecast.TaxType == AccountTaxType.Taxable
+        ? "세후는 배당소득세 15.4% 원천징수를 뺀 금액입니다."
+        : "이 계좌는 배당을 받을 때 세금이 떼어지지 않아 세후와 세전이 같습니다. 해지하거나 연금을 받을 때 과세되며, 그 세금은 계산하지 않았습니다."];
+
+    private string BarsLabel => T["월별 예상 배당"] + ": " + string.Join(", ", Forecast.Months.Select(m => $"{T.Month(m.Month)} {T.Won(m.Amount)}"));
+}

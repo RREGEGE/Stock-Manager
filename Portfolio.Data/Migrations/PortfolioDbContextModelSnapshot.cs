@@ -133,6 +133,52 @@ namespace Portfolio.Data.Migrations
                     b.ToTable("CashBalances");
                 });
 
+            modelBuilder.Entity("Portfolio.Data.DividendFetch", b =>
+                {
+                    b.Property<string>("SymbolCode")
+                        .HasMaxLength(12)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("FetchedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("SymbolCode");
+
+                    b.ToTable("DividendFetches");
+                });
+
+            modelBuilder.Entity("Portfolio.Data.DividendRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("PayDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("PerShare")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("RecordDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SymbolCode")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SymbolCode");
+
+                    b.ToTable("Dividends");
+                });
+
             modelBuilder.Entity("Portfolio.Data.Holding", b =>
                 {
                     b.Property<int>("AccountId")
@@ -221,6 +267,9 @@ namespace Portfolio.Data.Migrations
                     b.Property<int>("SortOrder")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("TaxType")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.ToTable("Accounts", (string)null);
@@ -230,7 +279,8 @@ namespace Portfolio.Data.Migrations
                         {
                             Id = 1,
                             Name = "기본 계좌",
-                            SortOrder = 1
+                            SortOrder = 1,
+                            TaxType = 0
                         });
                 });
 

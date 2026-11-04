@@ -1,12 +1,14 @@
 namespace Portfolio.Kis;
 
-// KIS로 나가는 요청을 토큰 발급과 시세 조회(국내주식, 해외 지수·환율)로만 제한한다 (설계서 7.2 권한 최소화).
+// KIS로 나가는 요청을 토큰 발급과 조회(국내주식 시세, 해외 지수·환율, 예탁원 배당일정)로만 제한한다 (설계서 7.2 권한 최소화).
 // KIS 키는 주문 권한까지 포함하므로, 코드에 주문 호출이 없더라도 실수·변조로 다른 경로가 호출되는 것을 한 번 더 막는다.
 public sealed class KisQuotationOnlyHandler : DelegatingHandler
 {
     public const string QuotationPrefix = "/uapi/domestic-stock/v1/quotations/";
     // 해외 지수·환율 조회용 (설계서 F-09). 조회 전용 경로이며 주문 경로(/trading/)는 계속 막는다.
     public const string OverseasQuotationPrefix = "/uapi/overseas-price/v1/quotations/";
+    // 예탁원 정보(배당일정) 조회용 (설계서 F-16). 읽기 전용 정보 조회 경로다.
+    public const string KsdInfoPrefix = "/uapi/domestic-stock/v1/ksdinfo/";
 
     public static bool IsAllowed(HttpMethod method, Uri? uri)
     {
@@ -16,7 +18,8 @@ public sealed class KisQuotationOnlyHandler : DelegatingHandler
             return path == KisTokenManager.TokenPath;
         if (method == HttpMethod.Get)
             return (path.StartsWith(QuotationPrefix, StringComparison.Ordinal)
-                    || path.StartsWith(OverseasQuotationPrefix, StringComparison.Ordinal))
+                    || path.StartsWith(OverseasQuotationPrefix, StringComparison.Ordinal)
+                    || path.StartsWith(KsdInfoPrefix, StringComparison.Ordinal))
                 && !path.Contains("..");
         return false;
     }

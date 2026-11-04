@@ -123,6 +123,48 @@
                     </div>
                 }
             </section>
+
+            @* 배당 이력 (F-16): 최근 15개월 *@
+            <section class="card" aria-labelledby="h-dividends">
+                <h2 id="h-dividends" class="card-title mine-title">@T["배당 이력"]</h2>
+                @if (_dividends.Count == 0)
+                {
+                    <p class="detail-empty">@T[Portfolio.PriceSourceReady ? "최근 배당 이력이 없습니다." : "KIS 앱키가 설정되지 않아 배당 이력을 받아올 수 없습니다."]</p>
+                }
+                else
+                {
+                    var recent = DividendEstimator.Recent(_dividends, Model.State.Today);
+                    decimal perShare = recent.Sum(r => r.PerShare);
+                    <p class="dividend-sum">
+                        @T.F("최근 12개월 주당 {0}", T.Won(perShare))
+                        @if (_detail is { Price: > 0 } d)
+                        {
+                            <span class="muted"> · @T.F("현재가 기준 배당 수익률 {0}", DisplayFormat.Percent1(perShare / d.Price))</span>
+                        }
+                    </p>
+                    <div class="table-scroll">
+                        <table class="table" style="min-width: 420px">
+                            <thead>
+                                <tr>
+                                    <th scope="col">@T["기준일"]</th>
+                                    <th scope="col">@T["지급일"]</th>
+                                    <th scope="col" class="num">@T["주당 배당금"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var r in _dividends)
+                                {
+                                    <tr>
+                                        <td>@r.RecordDate.ToString("yyyy-MM-dd")</td>
+                                        <td>@(r.PayDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+                                        <td class="num">@T.Won(r.PerShare)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </section>
         }
     }
 </main>
@@ -134,6 +176,7 @@
     private string? _name;
     private StockDetail? _detail;
     private IReadOnlyList<StockPosition> _positions = [];
+    private IReadOnlyList<DividendRecord> _dividends = [];
     private bool _loading;
 
     private static IReadOnlySet<string> HeldCodes(PortfolioViewModel m) => m.State.HoldingRows.Keys.ToHashSet();
@@ -147,6 +190,7 @@
         _loadedCode = Code;
         _name = null;
         _detail = null;
+        _dividends = [];
         _positions = [];
         if (Code is null) return;
 
@@ -174,7 +218,7 @@
             _positions = await Portfolio.GetPositionsAsync(code);
             _detail = await Portfolio.GetStockDetailAsync(code);
         }
-        catch (Exception ex) when (ex is global::Portfolio.Kis.KisApiException or HttpRequestException or TaskCanceledException)
+        catch (Exception ex) when (IsFetchError(ex))
         {
             _detail = null;   // 화면에 '받아오지 못했습니다'로 알린다
         }
@@ -182,7 +226,20 @@
         {
             _loading = false;
         }
+
+        // 배당 이력은 시세와 따로 받는다. 실패해도 시세 정보는 그대로 보여 준다.
+        try
+        {
+            _dividends = await Portfolio.GetDividendHistoryAsync(code);
+        }
+        catch (Exception ex) when (IsFetchError(ex))
+        {
+            _dividends = [];
+        }
     }
+
+    private static bool IsFetchError(Exception ex) =>
+        ex is global::Portfolio.Kis.KisApiException or HttpRequestException or TaskCanceledException;
 
     private static string Tone(decimal value) => value > 0 ? "up" : value < 0 ? "down" : "";
     private static string Arrow(decimal change) => change > 0 ? "▲" : change < 0 ? "▼" : "-";

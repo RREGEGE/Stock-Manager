@@ -78,6 +78,16 @@
             {
                 <SummaryCard Title="@T["오늘 손익"]" Value="-" Unit="" Sub="@T["현재가를 받으면 계산됩니다"]" />
             }
+            @* 예상 월 배당금 (F-16): 최근 12개월 배당 기준 월평균 *@
+            @if (m.Dividend.HasDividends)
+            {
+                <SummaryCard Title="@T["예상 월 배당금"]" Value="@DisplayFormat.Number(m.Dividend.MonthlyAverage)"
+                             Sub="@T.F("세후 {0} · {1} 계좌", T.Won(m.Dividend.MonthlyAverageAfterTax), T.TaxTypeName(m.Dividend.TaxType))" />
+            }
+            else
+            {
+                <SummaryCard Title="@T["예상 월 배당금"]" Value="-" Unit="" Sub="@T["배당 이력이 없습니다"]" />
+            }
             <SummaryCard Title="@T["보유 종목"]" Value="@m.Rows.Count.ToString()" Unit="@T["개"]"
                          Sub="@CountSub(m)" />
         </section>
@@ -132,6 +142,8 @@
             <HoldingTable Rows="FilteredRows(m)" EmptyText="@T["해당하는 종목이 없습니다."]" />
             <p class="note">@T["비중은 소수점 1자리 반올림으로, 합계가 100.0%가 아닐 수 있습니다. 열 제목을 누르면 정렬됩니다."]</p>
         </section>
+
+        <DividendPanel Forecast="m.Dividend" />
     }
 </main>
 

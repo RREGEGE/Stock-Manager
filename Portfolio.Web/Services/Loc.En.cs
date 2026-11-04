@@ -224,6 +224,42 @@ public sealed partial class Loc
         ["보유하지 않은 종목입니다."] = "You do not hold this stock.",
         ["보유 종목에 추가하기"] = "Add it to Holdings",
 
+        // 예상 배당 (F-16)
+        ["예상 월 배당금"] = "Est. monthly dividend",
+        ["세후 {0} · {1} 계좌"] = "{0} after tax · {1} account",
+        ["배당 이력이 없습니다"] = "No dividend history",
+        ["월별 예상 배당"] = "Expected dividends by month",
+        ["{0} 계좌"] = "{0} account",
+        ["최근 12개월에 배당을 준 보유 종목이 없습니다. 배당 이력은 하루 한 번 받아 옵니다."] =
+            "None of your holdings paid a dividend in the last 12 months. Dividend history is fetched once a day.",
+        ["월평균 (세전)"] = "Monthly avg. (pre-tax)",
+        ["월평균 (세후)"] = "Monthly avg. (after tax)",
+        ["연간 (세전)"] = "Annual (pre-tax)",
+        ["배당 수익률"] = "Dividend yield",
+        ["지급 월"] = "Pay months",
+        ["주당 (연)"] = "Per share (yr)",
+        ["매월"] = "Monthly",
+        ["최근 12개월에 받은(또는 받기로 정해진) 배당이 앞으로도 같은 달에 같은 금액으로 나온다고 본 추정입니다. 실제 배당은 회사·운용사의 결정에 따라 달라집니다."] =
+            "An estimate that assumes the dividends paid (or declared) in the last 12 months repeat in the same months and amounts. Actual dividends depend on each company's or fund manager's decisions.",
+        ["세후는 배당소득세 15.4% 원천징수를 뺀 금액입니다."] = "After tax = minus the 15.4% dividend withholding tax.",
+        ["이 계좌는 배당을 받을 때 세금이 떼어지지 않아 세후와 세전이 같습니다. 해지하거나 연금을 받을 때 과세되며, 그 세금은 계산하지 않았습니다."] =
+            "No tax is withheld on dividends in this account, so after tax equals pre-tax. Tax applies when you close the account or receive the pension, and that tax is not included here.",
+        ["일반"] = "Taxable",
+        ["연금(연금저축·IRP)"] = "Pension (savings·IRP)",
+        ["{0} 계좌 종류"] = "Account type of {0}",
+        ["계좌 종류를 '{0}'(으)로 바꿨습니다."] = "Account type changed to '{0}'.",
+        ["계좌 종류(일반·ISA·연금)는 예상 배당의 세후 금액 계산에 쓰입니다."] =
+            "The account type (taxable, ISA, pension) is used to estimate dividends after tax.",
+        ["알 수 없는 계좌 종류입니다."] = "Unknown account type.",
+        ["배당 이력"] = "Dividend history",
+        ["최근 배당 이력이 없습니다."] = "No recent dividends.",
+        ["KIS 앱키가 설정되지 않아 배당 이력을 받아올 수 없습니다."] = "Dividend history is unavailable because no KIS app key is set.",
+        ["최근 12개월 주당 {0}"] = "{0} per share in the last 12 months",
+        ["현재가 기준 배당 수익률 {0}"] = "yield at the current price {0}",
+        ["기준일"] = "Record date",
+        ["지급일"] = "Pay date",
+        ["주당 배당금"] = "Per share",
+
         // 리밸런싱·추가매수
         ["추가매수"] = "Buy only",
         ["추가매수 계산"] = "Buy plan",

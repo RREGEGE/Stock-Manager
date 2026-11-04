@@ -39,6 +39,16 @@ public sealed class TradingAccountRepository(IDbContextFactory<PortfolioDbContex
         await db.SaveChangesAsync(ct);
     }
 
+    // 배당 세금 방식 (F-16)
+    public async Task SetTaxTypeAsync(int id, Core.AccountTaxType taxType, CancellationToken ct = default)
+    {
+        if (!Enum.IsDefined(taxType)) throw new ArgumentException("알 수 없는 계좌 종류입니다.");
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var account = await db.Accounts.FindAsync([id], ct) ?? throw new KeyNotFoundException("계좌를 찾을 수 없습니다.");
+        account.TaxType = taxType;
+        await db.SaveChangesAsync(ct);
+    }
+
     // 표시 순서를 한 칸 위(-1) 또는 아래(+1)로 옮긴다
     public async Task MoveAsync(int id, int direction, CancellationToken ct = default)
     {

@@ -63,6 +63,17 @@ public sealed partial class Loc
     // "1,600주" / "1,600 sh"
     public string Shares(decimal count) => DisplayFormat.Number(count) + (IsEnglish ? " sh" : "주");
 
+    // 달 이름: "11월" / "Nov"
+    public string Month(int month) => IsEnglish ? Months[month - 1] : $"{month}월";
+
+    // 계좌의 배당 세금 방식 이름 (F-16)
+    public string TaxTypeName(AccountTaxType taxType) => this[taxType switch
+    {
+        AccountTaxType.Isa => "ISA",
+        AccountTaxType.Pension => "연금(연금저축·IRP)",
+        _ => "일반",
+    }];
+
     // 한국 시간 기준 "9월 28일" / "Sep 28"
     public string MonthDay(DateTimeOffset value)
     {

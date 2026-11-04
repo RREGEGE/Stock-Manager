@@ -22,6 +22,8 @@ public abstract class UiTestBase : BunitContext
     protected ThemeState Theme { get; } = new();
     // 종목 정보 출처 (테스트에서 바꾸려면 서비스를 쓰기 전에 바꾼다)
     protected IStockDetailProvider StockDetails { get; set; }
+    // 배당 이력 출처 (기본은 시드의 가상 배당)
+    protected IDividendProvider DividendSource { get; set; }
     // 시세를 받아올 수 있는 상태 (테스트에서 바꾸려면 서비스를 쓰기 전에 PriceSource를 바꾼다)
     protected PriceSourceInfo PriceSource { get; set; } = new(Ready: true, SettingsPath: null);
     // 2026-10-02(금) 09:41 KST — 목업의 '장중 · 09:41 시세 갱신'
@@ -33,9 +35,12 @@ public abstract class UiTestBase : BunitContext
     protected UiTestBase()
     {
         StockDetails = new FakeStockDetailProvider(SeedData.Prices, SeedData.PrevCloses, Clock);
+        DividendSource = new FakeDividendProvider(SeedData.Dividends(DateOnly.FromDateTime(Clock.Now.DateTime)));
         SeedData.ApplyAsync(Db.Context).GetAwaiter().GetResult();
         if (StartWithPrices)
             RefreshPricesAsync(SeedData.Prices).GetAwaiter().GetResult();
+        // 배당 이력: 앱에서는 하루 한 번 받아 저장한다. 테스트는 시작할 때 한 번 받아 둔다.
+        new DividendRepository(Db, DividendSource, Clock).RefreshDueAsync().GetAwaiter().GetResult();
 
         Services.AddSingleton<IDbContextFactory<PortfolioDbContext>>(Db);
         Services.AddSingleton<TimeProvider>(Clock);
@@ -49,6 +54,8 @@ public abstract class UiTestBase : BunitContext
         Services.AddSingleton(Indicators);
         Services.AddSingleton<TradingAccountRepository>();
         Services.AddSingleton<IStockDetailProvider>(_ => StockDetails);
+        Services.AddSingleton<IDividendProvider>(_ => DividendSource);
+        Services.AddSingleton(sp => new DividendRepository(Db, DividendSource, Clock, Notifier));
         Services.AddSingleton<PortfolioService>();
         Services.AddSingleton(Account);
         Services.AddSingleton(T);
