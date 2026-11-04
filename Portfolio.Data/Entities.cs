@@ -11,6 +11,26 @@ public class TradingAccount
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public int SortOrder { get; set; }
+    // 배당 세금 방식 (F-16): 일반 / ISA / 연금. 세후 예상 배당금 계산에만 쓴다.
+    public Core.AccountTaxType TaxType { get; set; } = Core.AccountTaxType.Taxable;
+}
+
+// 종목별 배당 이력 (F-16). KIS에서 하루 한 번 받아 저장한다. 계좌와 무관하다.
+public class DividendRow
+{
+    public int Id { get; set; }
+    public string SymbolCode { get; set; } = "";
+    public DateOnly RecordDate { get; set; }
+    public DateOnly? PayDate { get; set; }
+    public decimal PerShare { get; set; }
+    public string Kind { get; set; } = "";
+}
+
+// 종목별 배당 이력을 마지막으로 받은 시각 (배당이 없는 종목도 다시 조회하지 않도록 따로 둔다)
+public class DividendFetch
+{
+    public string SymbolCode { get; set; } = "";
+    public DateTimeOffset FetchedAt { get; set; }
 }
 
 public class Holding

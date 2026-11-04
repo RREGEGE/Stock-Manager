@@ -185,9 +185,9 @@ public partial class LocalizationTests : UiTestBase
         var home = Render<Home>();
         home.WaitForElement(".summary-grid");
         Assert.Equal(
-            ["Total value ₩100,000,000 Cash excluded", "Cost ₩95,500,000 Quantity × average cost", "Unrealized P/L +₩4,500,000 +4.71%", "Today's P/L +₩270,000 +0.27% · vs. previous close", "Holdings 7 0 unclassified · 0 stale"],
+            ["Total value ₩100,000,000 Cash excluded", "Cost ₩95,500,000 Quantity × average cost", "Unrealized P/L +₩4,500,000 +4.71%", "Today's P/L +₩270,000 +0.27% · vs. previous close", "Est. monthly dividend ₩96,000 ₩81,216 after tax · Taxable account", "Holdings 7 0 unclassified · 0 stale"],
             home.FindAll(".summary-card").Select(Text));
-        Assert.Equal(["Name", "Group", "Today", "Value", "Weight", "Return"], home.FindAll("thead th").Select(Text));
+        Assert.Equal(["Name", "Group", "Today", "Value", "Weight", "Return"], home.FindAll("section[aria-labelledby=h-holdings] thead th").Select(Text));
         Assert.Equal("3 groups", home.Find(".donut-label").TextContent);
         Assert.Equal("₩100M", home.Find(".donut-value").TextContent);
         Assert.Equal("+10.0%p over", Text(home.Find(".target-diff")));

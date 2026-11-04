@@ -36,6 +36,25 @@ public static class SeedData
         ["SEED05"] = 10_050m, ["SEED06"] = 14_850m, ["SEED07"] = 5_000m,
     };
 
+    // 배당 이력 (F-16 예상 배당 확인용 가상 값). today 기준 최근 12개월의 월말을 기준일로, 다음 달 3일을 지급일로 만든다.
+    //   SEED07 리츠 ETF: 매월 20원 / SEED06 고배당 ETF: 3·6·9·12월 150원 / SEED02 미국 S&P500 ETF: 1·4·7·10월 60원
+    public static IReadOnlyDictionary<string, IReadOnlyList<Core.DividendRecord>> Dividends(DateOnly today)
+    {
+        var monthEnds = Enumerable.Range(0, 13)
+            .Select(i => new DateOnly(today.Year, today.Month, 1).AddMonths(-i).AddMonths(1).AddDays(-1))
+            .Where(d => d <= today && d > today.AddMonths(-Core.DividendEstimator.LookbackMonths))
+            .ToList();
+        Core.DividendRecord Record(string code, DateOnly recordDate, decimal perShare) =>
+            new(code, recordDate, new DateOnly(recordDate.Year, recordDate.Month, 1).AddMonths(1).AddDays(2), perShare);
+
+        return new Dictionary<string, IReadOnlyList<Core.DividendRecord>>
+        {
+            ["SEED07"] = monthEnds.Select(d => Record("SEED07", d, 20m)).ToList(),
+            ["SEED06"] = monthEnds.Where(d => d.Month % 3 == 0).Select(d => Record("SEED06", d, 150m)).ToList(),
+            ["SEED02"] = monthEnds.Where(d => d.Month % 3 == 1).Select(d => Record("SEED02", d, 60m)).ToList(),
+        };
+    }
+
     // 보유종목이 비어 있을 때만 시드를 넣는다. 그룹(주식/채권/배당, 목표 50/30/20%)은 마이그레이션 초기값을 쓴다.
     public static async Task ApplyAsync(PortfolioDbContext db, CancellationToken ct = default)
     {

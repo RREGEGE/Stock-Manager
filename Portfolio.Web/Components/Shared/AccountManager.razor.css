@@ -16,3 +16,6 @@
 .account-add { display: flex; flex-wrap: wrap; gap: 8px; }
 .account-add .input { flex: 1 1 220px; min-width: 0; }
 .status { margin: 0; font-size: 13px; font-weight: 600; }
+
+/* 계좌 종류 (F-16) */
+.tax-select { min-height: 36px; font-size: 13px; }

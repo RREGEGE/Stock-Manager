@@ -13,6 +13,8 @@ public class PortfolioDbContext(DbContextOptions<PortfolioDbContext> options) : 
     public DbSet<PriceCache> PriceCaches => Set<PriceCache>();
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
     public DbSet<ApiToken> ApiTokens => Set<ApiToken>();
+    public DbSet<DividendRow> Dividends => Set<DividendRow>();
+    public DbSet<DividendFetch> DividendFetches => Set<DividendFetch>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -61,6 +63,18 @@ public class PortfolioDbContext(DbContextOptions<PortfolioDbContext> options) : 
             e.Property(x => x.SymbolCode).HasMaxLength(12);
         });
         b.Entity<ApiToken>(e => e.Property(x => x.Id).ValueGeneratedNever());
+        // 배당 이력 (F-16)
+        b.Entity<DividendRow>(e =>
+        {
+            e.Property(x => x.SymbolCode).HasMaxLength(12);
+            e.Property(x => x.Kind).HasMaxLength(20);
+            e.HasIndex(x => x.SymbolCode);
+        });
+        b.Entity<DividendFetch>(e =>
+        {
+            e.HasKey(x => x.SymbolCode);
+            e.Property(x => x.SymbolCode).HasMaxLength(12);
+        });
         b.Entity<AppSetting>(e =>
         {
             e.HasKey(x => x.Key);

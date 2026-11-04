@@ -95,6 +95,8 @@ if (priceSource == PriceSource.Fake)
     });
     builder.Services.AddSingleton<IMarketIndicatorProvider>(sp => new FakeMarketIndicatorProvider(sp.GetRequiredService<TimeProvider>()));
     builder.Services.AddSingleton<IStockDetailProvider>(sp => new FakeStockDetailProvider(SeedData.Prices, SeedData.PrevCloses, sp.GetRequiredService<TimeProvider>()));
+    builder.Services.AddSingleton<IDividendProvider>(sp => new FakeDividendProvider(SeedData.Dividends(
+        DateOnly.FromDateTime(sp.GetRequiredService<TimeProvider>().GetUtcNow().ToOffset(MarketSchedule.Kst).DateTime))));
     builder.Services.Configure<KisOptions>(builder.Configuration.GetSection(KisOptions.SectionName));
 }
 else
@@ -143,6 +145,8 @@ if (useDataDirectory && backupOptions.Enabled)
 builder.Services.AddSingleton<GroupRepository>();
 builder.Services.AddSingleton<SettingsRepository>();
 builder.Services.AddSingleton<TradingAccountRepository>();
+builder.Services.AddSingleton<DividendRepository>();   // 배당 이력 (F-16)
+builder.Services.AddHostedService<DividendRefreshService>();
 builder.Services.AddSingleton<PortfolioService>();
 builder.Services.AddScoped<CurrentAccount>();   // 화면 연결마다 보고 있는 계좌 (F-11)
 builder.Services.AddScoped<Loc>();              // 화면 연결마다 고른 언어 (F-12)
